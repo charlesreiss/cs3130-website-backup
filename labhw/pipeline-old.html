@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Pipeline Diagrams</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/pipeline-old.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#your-task" id="toc-your-task"><span
+class="toc-section-number">1</span> Your Task</a></li>
+<li><a href="#guidelines" id="toc-guidelines"><span
+class="toc-section-number">2</span> Guidelines</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>10 April 2024: change code slightly for this semester.</li>
+<li>15 April 2024: change specification of arguments to actually match
+function used this semester, since its arguments are passed
+differently</li>
+<li>16 April 2024: also make online tool’s copy of explanation use a
+matching description of the arguments</li>
+<li>22 April 2024: adjust answer sheet to mention choice of
+interpretation re: whether condition codes are in register file</li>
+</ul>
+</div>
+<h1 data-number="1" id="your-task"><span
+class="header-section-number">1</span> Your Task</h1>
+<p>Fill in a pipeline diagram for a small function’s full execution.</p>
+<p>Place you answer in the online tool <a
+href="https://kytos02.cs.virginia.edu/cs3130-fall2024/pld.php"
+class="uri">https://kytos02.cs.virginia.edu/cs3130-fall2024/pld.php</a>.</p>
+<h1 data-number="2" id="guidelines"><span
+class="header-section-number">2</span> Guidelines</h1>
+<p>Consider the following code:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> sum_squared<span class="op">(</span><span class="dt">long</span> <span class="op">*</span>array_start<span class="op">,</span> <span class="dt">long</span> <span class="op">*</span>array_end<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> <span class="op">*</span>pointer<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    pointer <span class="op">=</span> array_start<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> result <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>pointer <span class="op">!=</span> array_end<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">long</span> current <span class="op">=</span> <span class="op">*</span>pointer<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        pointer <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        result <span class="op">+=</span> current <span class="op">*</span> current<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>which has been compiled to (numbers inserted for ease of
+reference)</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum_squared:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>0.      xorl    <span class="op">%</span><span class="kw">eax</span><span class="op">,</span> <span class="op">%</span><span class="kw">eax</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>1.      cmpq    <span class="op">%</span><span class="kw">rsi</span><span class="op">,</span> <span class="op">%</span><span class="kw">rdi</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>2.      <span class="cf">je</span>  <span class="op">.</span>LBB0_2</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.LBB0_1:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>3.      <span class="bu">movq</span>    <span class="op">(%</span><span class="kw">rdi</span><span class="op">),</span> <span class="op">%</span><span class="kw">rcx</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>4.      imulq   <span class="op">%</span><span class="kw">rcx</span><span class="op">,</span> <span class="op">%</span><span class="kw">rcx</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>5.      addq    <span class="op">$</span><span class="bn">8</span><span class="op">,</span> <span class="op">%</span><span class="kw">rdi</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>6.      addq    <span class="op">%</span><span class="kw">rcx</span><span class="op">,</span> <span class="op">%</span><span class="kw">rax</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>7.      cmpq    <span class="op">%</span><span class="kw">rdi</span><span class="op">,</span> <span class="op">%</span><span class="kw">rsi</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>8.      <span class="cf">jne</span> <span class="op">.</span>LBB0_1</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.LBB0_2:</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>9.      retq</span></code></pre></div>
+<p>Assume that this is run on a five-stage pipeline, where</p>
+<ul>
+<li><p>every instruction must go through all five stages in
+order</p></li>
+<li><p>each stage may handle at most one instruction per cycle</p></li>
+<li><p>decode needs to stall until values (program register and
+condition code) are available, but only needs values by the end of its
+cycle.</p>
+<ul>
+<li><p>e.g., if a memory read is followed by an operation on the read
+value, the decode stage of the operation can be co-scheduled with the
+memory stage of the read.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">read</td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">use</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>e.g., if a computation is followed by an operation on the
+computed value, the decode stage of the operation can be co-scheduled
+with the execute stage of the computation.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">compute</td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">use</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+</tr>
+</tbody>
+</table></li>
+</ul></li>
+<li><p>computation not available until the end of execute includes</p>
+<ul>
+<li>results of arithmetic, logic, and address computation</li>
+<li>condition code creation from test, compare, arithmetic, and
+logic</li>
+<li>condition code comparison for conditional moves and jumps</li>
+</ul>
+<p>e.g., if a conditional jump is poorly speculated (predicted), the
+correct instruction will be fetched after the jump completes its execute
+stage.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">jump</td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">guess<sub>1</sub></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">guess<sub>2</sub></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">correct</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+</tr>
+</tbody>
+</table>
+<p>(where guess<sub>1</sub> and guess<sub>2</sub> represent two
+incorrect predicted instructions that are fetched and then squashed
+(cancelled) before they can complete).</p></li>
+<li><p>conditional jumps are speculated using the <q>backwards-taken
+forwards-not-taken</q> branch prediction heuristic (meaning that jumps
+to a later instruction are predicted to be not taken and jumps to an
+earlier instruction are predicted to be taken)</p>
+<p>When a conditional jump is predicted to be taken, the processor will
+fetch the target of the jump in the cycle after the jump is fetched.
+When a conditional jump is predicted to be not taken, the processor will
+fetch the following instruction in memory in the cycle after the jump is
+fetched.</p>
+<p>When a prediction is correct, the processor will continue executing
+instructions without delay:</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">jump</td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">guess</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">F</td>
+<td style="text-align: center;">D</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">M</td>
+<td style="text-align: center;">W</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<p>When a prediction is incorrect, the processor will need to cancel the
+predicted instructions and fetch the correct instruction during the
+jump’s memory stage, as in the example timeline under the previous
+bullet</p></li>
+</ul>
+<p>You’re asked to expand this assuming</p>
+<ol type="1">
+<li>you start with the first instruction after <code>sum_squared</code>
+is called</li>
+<li>the first instruction of <code>sum_squared</code> does not need to
+stall</li>
+<li><code>array_start</code> pointing to the array
+<code>{1, 2}</code></li>
+<li><code>array_end</code> points to <code>array_start + 2</code> (one
+past of the end of the array)</li>
+<li>the <code>retq</code> is the last instruction you need to
+handle</li>
+</ol>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

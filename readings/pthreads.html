@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Using POSIX Threads</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/pthreads.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#jumping-off-point" id="toc-jumping-off-point"><span
+class="toc-section-number">1</span> Jumping-off point</a></li>
+<li><a href="#managing-thread-existence"
+id="toc-managing-thread-existence"><span
+class="toc-section-number">2</span> Managing thread existence</a>
+<ul>
+<li><a href="#pthread_create" id="toc-pthread_create"><span
+class="toc-section-number">2.1</span> <code>pthread_create</code></a>
+<ul>
+<li><a href="#pthreads_attr_t" id="toc-pthreads_attr_t"><span
+class="toc-section-number">2.1.1</span>
+<code>pthreads_attr_t</code></a></li>
+</ul></li>
+<li><a href="#pthread_attr_setdetachstate-and-pthread_join"
+id="toc-pthread_attr_setdetachstate-and-pthread_join"><span
+class="toc-section-number">2.2</span>
+<code>pthread_attr_setdetachstate</code> and
+<code>pthread_join</code></a>
+<ul>
+<li><a href="#return-values" id="toc-return-values"><span
+class="toc-section-number">2.2.1</span> Return values</a></li>
+</ul></li>
+<li><a href="#crashing" id="toc-crashing"><span
+class="toc-section-number">2.3</span> Crashing</a></li>
+<li><a href="#debugging" id="toc-debugging"><span
+class="toc-section-number">2.4</span> Debugging</a></li>
+</ul></li>
+<li><a href="#synchronization-with-pthreads"
+id="toc-synchronization-with-pthreads"><span
+class="toc-section-number">3</span> Synchronization with pthreads</a>
+<ul>
+<li><a href="#mutex" id="toc-mutex"><span
+class="toc-section-number">3.1</span> Mutex</a></li>
+<li><a href="#on-sharing-mutexes-and-other-synchronization-objects"
+id="toc-on-sharing-mutexes-and-other-synchronization-objects"><span
+class="toc-section-number">3.2</span> On sharing mutexes (and other
+synchronization objects)</a></li>
+<li><a href="#barrier" id="toc-barrier"><span
+class="toc-section-number">3.3</span> Barrier</a></li>
+<li><a href="#rwlock" id="toc-rwlock"><span
+class="toc-section-number">3.4</span> Reader-writer lock</a></li>
+<li><a href="#monitors" id="toc-monitors"><span
+class="toc-section-number">3.5</span> Monitors</a></li>
+</ul></li>
+<li><a href="#additional-resources" id="toc-additional-resources"><span
+class="toc-section-number">4</span> Additional resources</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>9 Oct 2023: add explicit pointer to synchronization reading; point
+to relevant additional resources</li>
+</ul>
+</div>
+<p>This document is intended to give a practical overview of using
+pthreads. It leaves out a lot of details.</p>
+<p>For brevity, code in this document does not check error codes. This
+is <strong>bad coding practice</strong>! You should check error codes in
+your code.</p>
+<h1 data-number="1" id="jumping-off-point"><span
+class="header-section-number">1</span> Jumping-off point</h1>
+<p>For those eager to start coding, here’s a parallel summation program
+you might find to be a useful starting point.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;pthread.h&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">/* Allow compiler -DTHREADCOUNT=4 but have a default */</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef THREADCOUNT</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#define THREADCOUNT </span><span class="dv">16</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">/** Defines a particular task to handle */</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> from<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> to<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> <span class="op">(*</span>getnum<span class="op">)(</span><span class="dt">size_t</span><span class="op">);</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> task_description<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"> * Function invoked by each new thread.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"> * The argument must be a task_description *;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"> * the return value is a malloced double *.</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>sum_array<span class="op">(</span><span class="dt">void</span> <span class="op">*</span>args<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    task_description <span class="op">*</span>task <span class="op">=</span> <span class="op">(</span>task_description <span class="op">*)</span>args<span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;  Summing from </span><span class="sc">%zd</span><span class="st"> to </span><span class="sc">%zd</span><span class="st">...</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">,</span> </span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        task<span class="op">-&gt;</span>from<span class="op">,</span> task<span class="op">-&gt;</span>to<span class="op">);</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> work <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">size_t</span> i<span class="op">=</span>task<span class="op">-&gt;</span>from<span class="op">;</span> i<span class="op">&lt;</span>task<span class="op">-&gt;</span>to<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        work <span class="op">+=</span> task<span class="op">-&gt;</span>getnum<span class="op">(</span>i<span class="op">);</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;  ... sub-sum from </span><span class="sc">%zd</span><span class="st"> to </span><span class="sc">%zd</span><span class="st"> = </span><span class="sc">%g\n</span><span class="st">&quot;</span><span class="op">,</span> </span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        task<span class="op">-&gt;</span>from<span class="op">,</span> task<span class="op">-&gt;</span>to<span class="op">,</span> work<span class="op">);</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> <span class="op">*</span>sum <span class="op">=</span> malloc<span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span><span class="dt">double</span><span class="op">));</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>sum <span class="op">=</span> work<span class="op">;</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span><span class="dt">void</span> <span class="op">*)</span>sum<span class="op">;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co">/** A simple reciprocal function */</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> fraction<span class="op">(</span><span class="dt">size_t</span> i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">1.0</span><span class="op">/(</span>i<span class="op">+</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co"> * Sum all fractions 1/n from 1 to pow(2,-28)</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="co"> * in THREADCOUNT parallel threads</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="co">// set up task sizes to take a few seconds on 2020-era laptops</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> max <span class="op">=</span> <span class="dv">1</span><span class="op">&lt;&lt;</span><span class="dv">28</span><span class="op">;</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> step <span class="op">=</span> max <span class="op">/</span> THREADCOUNT<span class="op">;</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="co">// store per-thread information (don&#39;t re-use, memory is shared)</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    pthread_t id<span class="op">[</span>THREADCOUNT<span class="op">];</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    task_description tasks<span class="op">[</span>THREADCOUNT<span class="op">];</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="co">// spawn the threads</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>THREADCOUNT<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>        tasks<span class="op">[</span>i<span class="op">].</span>from <span class="op">=</span> i<span class="op">*</span>step<span class="op">;</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>        tasks<span class="op">[</span>i<span class="op">].</span>to <span class="op">=</span> <span class="op">(</span>i<span class="op">+</span><span class="dv">1</span><span class="op">)*</span>step<span class="op">;</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>        tasks<span class="op">[</span>i<span class="op">].</span>getnum <span class="op">=</span> fraction<span class="op">;</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>        pthread_create<span class="op">(</span>id<span class="op">+</span>i<span class="op">,</span> NULL<span class="op">,</span> sum_array<span class="op">,</span> tasks<span class="op">+</span>i<span class="op">);</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>    <span class="co">// wait for and combine the results</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> result <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>THREADCOUNT<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>        <span class="dt">void</span> <span class="op">*</span>ans<span class="op">;</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>        pthread_join<span class="op">(</span>id<span class="op">[</span>i<span class="op">],</span> <span class="op">&amp;</span>ans<span class="op">);</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>        result <span class="op">+=</span> <span class="op">*(</span><span class="dt">double</span> <span class="op">*)</span>ans<span class="op">;</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>        free<span class="op">(</span>ans<span class="op">);</span> <span class="co">// was malloced in just-joined thread</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;The sum is </span><span class="sc">%g\n</span><span class="st">&quot;</span><span class="op">,</span> result<span class="op">);</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>To see the time impact of threading, try comparing</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clang</span> <span class="at">-lpthread</span> <span class="at">-O3</span> <span class="at">-DTHREADCOUNT</span><span class="op">=</span>8 thiscode.c <span class="kw">&amp;&amp;</span> <span class="bu">time</span> ./a.out</span></code></pre></div>
+<p>and</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clang</span> <span class="at">-lpthread</span> <span class="at">-O3</span> <span class="at">-DTHREADCOUNT</span><span class="op">=</span>1 thiscode.c <span class="kw">&amp;&amp;</span> <span class="bu">time</span> ./a.out</span></code></pre></div>
+<h1 data-number="2" id="managing-thread-existence"><span
+class="header-section-number">2</span> Managing thread existence</h1>
+<p>Every process has at least one thread, the one that invoked
+<code>main</code>. Each other thread is created by invoking a system
+call, wrapped by the various <code>pthread_</code> library
+functions.</p>
+<h2 data-number="2.1" id="pthread_create"><span
+class="header-section-number">2.1</span>
+<code>pthread_create</code></h2>
+<p>The library function <code>pthread_create</code> makes a new thread.
+It is given four arguments:</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Kind</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>pthread_t *</code></td>
+<td style="text-align: left;">output</td>
+<td style="text-align: left;">Set to the ID of the created thread</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>const pthread_attr_t *</code></td>
+<td style="text-align: left;">input</td>
+<td style="text-align: left;">Rules about how the new thread will
+behave</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>void *(*)(void *)</code></td>
+<td style="text-align: left;">input</td>
+<td style="text-align: left;">Pointer to a function the new thread
+runs</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>void *</code></td>
+<td style="text-align: left;">input</td>
+<td style="text-align: left;">Value passed as argument to the new
+thread</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="2.1.1" id="pthreads_attr_t"><span
+class="header-section-number">2.1.1</span>
+<code>pthreads_attr_t</code></h3>
+<p>The second argument of <code>pthread_create</code> is used to control
+how the thread behaves. Much of this is fairly specialized, and passing
+<code>NULL</code> will work in many cases. If you want more control,
+though, you need to use a few extra functions to gain such.</p>
+<p>A <code>pthread_attr_t</code> must be initialized using
+<code>pthread_attr_init</code> before invoking
+<code>pthread_create</code> and cleaned up using
+<code>pthread_attr_destroy</code> afterwards.
+<code>pthread_attr_init</code> is permitted to <code>malloc</code>
+fields inside the <code>pthread_t</code>, and if it did,
+<code>pthread_attr_destroy</code> will <code>free</code> them.</p>
+<div class="example long">
+<p>The following is a skeleton of how to create a thread.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pthread_attr_t attr<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>pthread_attr_init<span class="op">(&amp;</span>attr<span class="op">);</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>pthread_t id<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>argument <span class="op">=</span> <span class="co">/* ... initialize this here */</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">/* ... use various pthread_attr_setXXXX functions to set behavior ... */</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>pthread_create<span class="op">(&amp;</span>id<span class="op">,</span> <span class="op">&amp;</span>attr<span class="op">,</span> run_this<span class="op">,</span> argument<span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>pthread_attr_destroy<span class="op">(&amp;</span>attr<span class="op">);</span></span></code></pre></div>
+
+</div>
+<p>Many of the attributes that can be placed into a
+<code>pthread_attr_t</code> have to do with scheduling priority (how
+often the thread gets CPU time) and stack organization (how large, etc.
+the thread’s stack is) and can be ignored by the casual thread user.
+However, one (the detached or joinable state of the thread) is important
+enough to deserve its own section.</p>
+<h2 data-number="2.2"
+id="pthread_attr_setdetachstate-and-pthread_join"><span
+class="header-section-number">2.2</span>
+<code>pthread_attr_setdetachstate</code> and
+<code>pthread_join</code></h2>
+<p>Every created thread is either detached or joinable.</p>
+<dl>
+<dt><code>pthread_attr_setdetachstate(&amp;attr, PTHREAD_CREATE_JOINABLE)</code></dt>
+<dd>
+A joinable thread (the default if not otherwise set) will, when it
+exits, continue to exist until <code>pthread_join</code> is called to
+retrieve its exit status and reclaim its resources.
+</dd>
+<dt><code>pthread_attr_setdetachstate(&amp;attr, PTHREAD_CREATE_DETACHED)</code></dt>
+<dd>
+A detached thread will, when it exists, immediately be reclaimed by the
+OS. Its exit status is lost, and other threads cannot use
+<code>pthread_join</code> to wait for it to terminate.
+</dd>
+</dl>
+<h3 data-number="2.2.1" id="return-values"><span
+class="header-section-number">2.2.1</span> Return values</h3>
+<p>If a thread with <code>pthread_t id</code> is joinable, then invoking
+<code
+class="sourceCode c">pthread_join<span class="op">(</span>id<span class="op">,</span> <span class="op">&amp;</span>retval<span class="op">)</span></code>
+will cause the invoking thread to suspend operation until thread
+<code>id</code> terminates; when thread <code>id</code> terminates,
+<code>retval</code> stores the results of the thread’s computation.</p>
+<p>The result is one of</p>
+<ul>
+<li>The return value of the start function of the terminated
+thread.</li>
+<li>The argument passed into <code>pthread_exit</code> to terminate the
+thread early.</li>
+<li>The special value <code>PTHREAD_CANCELED</code> if the thread was
+stopped by another thread.</li>
+</ul>
+<p>If you have a joinable thread, you need to join it before exiting. If
+you have detached threads, you cannot wait for them to terminate and the
+program will exit when the main thread does.</p>
+<h2 data-number="2.3" id="crashing"><span
+class="header-section-number">2.3</span> Crashing</h2>
+<p>What happens if one thread crashes? Since a crash means an unhandled
+signal, and since the behavior of an unhandled signal is to terminate
+the process, the whole program crashes.</p>
+<p>However, signals are delivered to specific threads, so if you add a
+signal handler, it will be run by the thread that the OS believes is the
+recipient of the signal.</p>
+<h2 data-number="2.4" id="debugging"><span
+class="header-section-number">2.4</span> Debugging</h2>
+<p>Debugging threaded programs can be tricky. Debuggers like
+<code>lldb</code> work fine on multithreaded programs, but with multiple
+threads there is more information to display. Additionally, some bugs
+(e.g., race conditions and deadlock) can depend on exact instruction
+scheduling, which may be different in a debugger than when run
+normally.</p>
+<p>We will not have time in this course to dive into multithreaded
+debugging in any great detail.</p>
+<h1 data-number="3" id="synchronization-with-pthreads"><span
+class="header-section-number">3</span> Synchronization with
+pthreads</h1>
+<blockquote>
+<p>See first: <a href="sync.html">the reading on synchronization
+generally</a>.</p>
+</blockquote>
+<h2 data-number="3.1" id="mutex"><span
+class="header-section-number">3.1</span> Mutex</h2>
+<p>Recall that a mutex only lets one thread have it locked at a time,
+excluding others until it is unlocked.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>pthread_mutex_t mutex<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>thread_function<span class="op">(</span><span class="dt">void</span> <span class="op">*)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_lock<span class="op">(&amp;</span>mutex<span class="op">);</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* only one thread can get here at a time */</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_unlock<span class="op">(&amp;</span>mutex<span class="op">);</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_init<span class="op">(&amp;</span>mutex<span class="op">,</span> NULL<span class="op">);</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>THREADCOUNT<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="co">/* ... */</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        pthread_create<span class="op">(&amp;</span>id<span class="op">[</span>i<span class="op">],</span> NULL<span class="op">,</span> thread_function<span class="op">,</span> <span class="op">&amp;</span>arg<span class="op">[</span>i<span class="op">]);</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>See also:</p>
+<ul>
+<li><code>pthread_mutex_trylock</code> for the <q>acquire if
+possible</q> behavior</li>
+<li><code>pthread_mutex_destroy</code> for destroying mutexes (freeing
+any resources allocated by init).</li>
+</ul>
+<h2 data-number="3.2"
+id="on-sharing-mutexes-and-other-synchronization-objects"><span
+class="header-section-number">3.2</span> On sharing mutexes (and other
+synchronization objects)</h2>
+<p>Note that operations on mutexes take the <code>pthread_mutex_t</code>
+using a pointer because they modify the mutex object itself. This means
+that two threads need to have <em>same</em> <code>pthread_mutex_t</code>
+object, like is achieved using global variables above. You could also do
+this without global variables, such as by passings pointers to a mutex
+stored elsewhere:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_t <span class="op">*</span>ptr_to_mutex<span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> task_description<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>thread_function<span class="op">(</span><span class="dt">void</span> <span class="op">*</span>args<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    task_description <span class="op">*</span>task <span class="op">=</span> <span class="op">(</span>task_description <span class="op">*)</span>args<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_lock<span class="op">(</span>args<span class="op">-&gt;</span>ptr_to_mutex<span class="op">);</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* only one thread can get here at a time */</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_unlock<span class="op">(</span>args<span class="op">-&gt;</span>ptr_to_mutex<span class="op">);</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_t mutex<span class="op">;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    task_description tasks<span class="op">[</span>THREADCOUNT<span class="op">];</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    pthread_mutex_init<span class="op">(&amp;</span>mutex<span class="op">,</span> NULL<span class="op">);</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>THREADCOUNT<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        tasks<span class="op">[</span>i<span class="op">].</span>ptr_to_mutex <span class="op">=</span> <span class="op">&amp;</span>mutex<span class="op">;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        <span class="co">/* ... */</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        pthread_create<span class="op">(&amp;</span>id<span class="op">[</span>i<span class="op">],</span> NULL<span class="op">,</span> thread_function<span class="op">,</span> tasks<span class="op">+</span>i<span class="op">);</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>However, passing by value (like modifying the above code to have a
+<code>pthread_mutex_t</code> in the <code>task_description</code>
+struct) would <strong>not</strong> work — each thread would have a
+separate mutex. (Also</p>
+<p>Most of POSIX’s other synchronization objects (such as barriers,
+reader-writer locks, semaphores) work similarly.</p>
+<h2 data-number="3.3" id="barrier"><span
+class="header-section-number">3.3</span> Barrier</h2>
+<p>Recall that a barrier acts like a meet-up: no one moves until
+everyone expected arrives. In pthreads, that <q>everyone</q> criterion
+is determined by a count: once that number of threads arrive, all will
+be allowed to proceed.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>pthread_barrier_t barrier<span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>thread_function<span class="op">(</span><span class="dt">void</span> <span class="op">*)</span> <span class="op">{</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* each thread reaches here at its own time */</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    pthread_barrier_wait<span class="op">(&amp;</span>barrier<span class="op">);</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* all threads proceed from here together */</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    pthread_barrier_init<span class="op">(&amp;</span>barrier<span class="op">,</span> NULL<span class="op">,</span> THREADCOUNT<span class="op">);</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>THREADCOUNT<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="co">/* ... */</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        pthread_create<span class="op">(&amp;</span>id<span class="op">[</span>i<span class="op">],</span> NULL<span class="op">,</span> thread_function<span class="op">,</span> <span class="op">&amp;</span>arg<span class="op">[</span>i<span class="op">]);</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Like with <code>pthread_mutex_t</code>’s, the
+<code>barrier_wait</code> operation modifies the barrier object, so
+barrier objects need to shared between threads; they cannot be passed by
+value.</p>
+<p>See also <code>pthread_barrier_destroy</code> for destroying barriers
+(freeing any resources allocated by <code>pthread_barrier_init</code>).
+Note that less recent versions of <code>pthread_barrier_destroy</code>
+(such as on portal/our testing machines as of 2023) require that all
+calls to <code>pthread_barrier_wait</code> have completed
+(returned).</p>
+<h2 data-number="3.4" id="rwlock"><span
+class="header-section-number">3.4</span> Reader-writer lock</h2>
+<p>Recall that a reader-writer lock has two modes: either it can be used
+by exactly one writer (like a mutex) or by any number of readers (like
+unsynchronized data), but not both at once.</p>
+<p>The relevant functions are documented in the following manual
+pages:</p>
+<ul>
+<li><code>pthread_rwlock_init</code> – this is complicated because they
+have multiple attributes to handle how they handle if a writer is
+waiting for the readers to finish and a new reader arrives.</li>
+<li><code>pthread_rwlock_rdlock</code> and
+<code>pthread_rwlock_wrlock</code> – acquire the lock in two different
+ways.</li>
+<li><code>pthread_rwlock_timedrdlock</code> and
+<code>pthread_rwlock_timedwrlock</code> – try to acquire the lock, but
+if a specified time passes without success, return an error code
+instead.</li>
+<li><code>pthread_rwlock_unlock</code> – release the lock (no matter how
+it was acquired).</li>
+<li><code>pthread_rwlock_destroy</code> – free any resources allocated
+by <code>pthread_rwlock_init</code></li>
+</ul>
+<p>However, these details, aside from the overall usage, looks similar
+to how <a href="#mutex">mutexes</a> are used with pthreads.</p>
+<h2 data-number="3.5" id="monitors"><span
+class="header-section-number">3.5</span> Monitors</h2>
+<p>Pthreads supplies separate condition variables that can be used with
+a mutex to construct a monitor.</p>
+<p>The relevant functions are documented in the following manpages:</p>
+<ul>
+<li><code>pthread_cond_init</code> – create a condition variable</li>
+<li><code>pthread_cond_wait</code> – atomically unlock a mutex and add
+the current thread to the condition monitor’s wait queue. When the
+thread is woken up from the wait queue, lock the mutex again before
+returning.</li>
+<li><code>pthread_cond_timedwait</code> — like
+<code>pthread_cond_wait</code>, but stop waiting on the wait queue if a
+specified time passes and return an error</li>
+<li><code>pthread_cond_destory</code> – free any resources allocated by
+<code>pthread_cond_init</code></li>
+</ul>
+<h1 data-number="4" id="additional-resources"><span
+class="header-section-number">4</span> Additional resources</h1>
+<ul>
+<li><a href="https://hpc-tutorials.llnl.gov/posix/">LLNL’s POSIX Threads
+Programming Guide</a></li>
+<li><a
+href="https://diveintosystems.org/book/C14-SharedMemory/index.html">Dive
+Into Systems chapter 14</a></li>
+<li><a href="https://pages.cs.wisc.edu/~remzi/OSTEP/">OS:TEP</a>’s
+chapters 28–31</li>
+</ul>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

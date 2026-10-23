@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Buses (and networks)</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/bus.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#channel-characterization"
+id="toc-channel-characterization"><span
+class="toc-section-number">1</span> Channel characterization</a>
+<ul>
+<li><a href="#simplex" id="toc-simplex"><span
+class="toc-section-number">1.1</span> Simplex</a></li>
+<li><a href="#half-duplex" id="toc-half-duplex"><span
+class="toc-section-number">1.2</span> Half-duplex</a></li>
+<li><a href="#full-duplex" id="toc-full-duplex"><span
+class="toc-section-number">1.3</span> Full-duplex</a></li>
+<li><a href="#duplexing" id="toc-duplexing"><span
+class="toc-section-number">1.4</span> Duplexing</a></li>
+</ul></li>
+<li><a href="#network-topology" id="toc-network-topology"><span
+class="toc-section-number">2</span> Network topology</a>
+<ul>
+<li><a href="#fully-connected" id="toc-fully-connected"><span
+class="toc-section-number">2.1</span> Fully-connected</a></li>
+<li><a href="#star" id="toc-star"><span
+class="toc-section-number">2.2</span> Star</a></li>
+<li><a href="#bus" id="toc-bus"><span
+class="toc-section-number">2.3</span> Bus</a></li>
+</ul></li>
+<li><a href="#the-bus" id="toc-the-bus"><span
+class="toc-section-number">3</span> <q>The Bus</q></a>
+<ul>
+<li><a href="#the-system-bus" id="toc-the-system-bus"><span
+class="toc-section-number">3.1</span> The system bus</a></li>
+<li><a href="#modern-processors-and-buses"
+id="toc-modern-processors-and-buses"><span
+class="toc-section-number">3.2</span> Modern processors and
+buses</a></li>
+<li><a href="#memory-and-io-buses" id="toc-memory-and-io-buses"><span
+class="toc-section-number">3.3</span> Memory and I/O buses</a></li>
+</ul></li>
+</ul></nav>
+<p>In COA1, you learned about transistors and gates connected by wires.
+These wires could have multiple destinations, but only one source. The
+single-source design limitation is important for efficient
+transistor-level design, but makes extending a system by adding new
+components challenging if not impossible.</p>
+<h1 data-number="1" id="channel-characterization"><span
+class="header-section-number">1</span> Channel characterization</h1>
+<p>This writeup provides a brief description of a several connection
+types, organized from simplest to most flexible.</p>
+<p>Some general terminology:</p>
+<dl>
+<dt>Channel</dt>
+<dd>
+A medium capable of transmitting information. Wires, fiber optic cables,
+and radio frequency bands are examples of channels.
+</dd>
+<dt>Signal</dt>
+<dd>
+Information conveyed through a channel. Voltage changes, photons, and
+sound waves are examples of signals.
+</dd>
+<dt>Message</dt>
+<dd>
+Data conveyed via signals on a channel. <code>1</code> and
+<code>0</code>, songs, text, and pictures are examples of messages.
+</dd>
+<dt>Sender</dt>
+<dd>
+A party or device converting messages into a signal and placing it on a
+channel.
+</dd>
+<dt>Receiver</dt>
+<dd>
+A party or device noticing a signal on a channel and converting it back
+into messages.
+</dd>
+</dl>
+<h2 data-number="1.1" id="simplex"><span
+class="header-section-number">1.1</span> Simplex</h2>
+<p>In simplex communication, information only flows in one direction:
+receivers are not also senders. Wires between transistors and gates are
+simplex. So are broadcast radio, baby monitors, surveillance cameras,
+and streaming video.</p>
+<p>Simplex communications generally require separate designs for the
+sender and receiver. Most simplex communication systems allow a message
+to be delivered to many receivers via the same signal.</p>
+<p>If multiple parties try to send information on a simplex channel at
+the same time, a <strong>collision</strong> occurs. This is almost
+always bad, varying from confusion (as when two radio stations overlap)
+to destruction (as when two transistors connect to the same output wire,
+creating a short and burning the chip). Because simplex systems have no
+way to send back-and-forth data, collision is difficult to avoid if
+multiple sources exist.</p>
+<h2 data-number="1.2" id="half-duplex"><span
+class="header-section-number">1.2</span> Half-duplex</h2>
+<p>In a half-duplex system, every sender is also a receiver, but only
+one may place a signal on the channel at a time. Conversations can be
+seen as such a system: sound travels though shared air, but if both
+speak at once neither can understand the other.</p>
+<p>Half-duplex systems typically require some type of protocol for
+resolving who gets to use the channel when and for how long. Because
+that protocol may mean that the channel might not be available when a
+sender wishes to use it, there is often a need to queue messages until
+the channel is available for sending.</p>
+<h2 data-number="1.3" id="full-duplex"><span
+class="header-section-number">1.3</span> Full-duplex</h2>
+<p>In a full-duplex system, every sender is also a receiver, and every
+party may send at the same time without messages being lost. Voting by
+raised hands can be seen as such a system: one person’s raised hand does
+not prevent another person’s lowered hand from being simultaneously
+visible, and each can both send and receive information
+simultaneously.</p>
+<p>Full-duplex channels are generally implemented as one simplex channel
+per potential sender/receiver pair. In the raised hands example, the
+line-of-sight channel between a given sender’s hand and receiver’s eyes
+form that simplex channel. Because of this, full-duplex systems do not
+scale to an arbitrary number of parties.</p>
+<p>Even if extremely large full-duplex channels can be created, their
+efficacy is limited by the processing needed to receive many messages.
+If instead of raising hands, everyone had a digital screen and flipped
+through text-heavy slides, the limiting factor would be how many
+messages each receiver could process, not the number of screen-to-eye
+simplex channels we could create.</p>
+<h2 data-number="1.4" id="duplexing"><span
+class="header-section-number">1.4</span> Duplexing</h2>
+<p>Duplexing, also known as full-duplex emulation, is the process of
+using a protocol over a half-duplex channel to simulate full-duplex
+communication. Duplexing always involves delays in message delivery, but
+can provide the illusion of messages traveling simultaneously in both
+directions, though at a slower pace than the channel would be able to
+support in half-duplex mode.</p>
+<p>There are many methods of duplexing possible. Alternating bytes from
+each sender is one of the simplest to describe, but more complicated
+approaches can be more efficient in most situations.</p>
+<h1 data-number="2" id="network-topology"><span
+class="header-section-number">2</span> Network topology</h1>
+<p>The way that channels are used to connect many components can be
+characterized by its topology. There are many named topologies and many
+more unnamed or idiosyncratic topologies; three topologies will suffice
+for this overview.</p>
+<p>The channels used to connect components in a network are
+traditionally called <strong>links</strong>.</p>
+<h2 data-number="2.1" id="fully-connected"><span
+class="header-section-number">2.1</span> Fully-connected</h2>
+<p>If every pair of components has a link between then, the network is
+said to be <em>fully connected</em>. For <span
+class="math inline">n</span> components, that means <span
+class="math inline">\sum_{i=1}^ni=\frac{n(n-1)}{2}</span> separate
+links.</p>
+<p>While fully-connected networks provide arbitrary communication, they
+are expensive to construct at scale. Adding an additional component to a
+fully-connected network requires adding another link to each existing
+component, which is often impractical. Fully-connected networks are
+uncommon except in small networks with a limited, unchanging number of
+nodes.</p>
+<h2 data-number="2.2" id="star"><span
+class="header-section-number">2.2</span> Star</h2>
+<p>If there is one central component that is connected to every other
+component, the network is said to be a <em>star</em> and the component
+all others connect to is called the <em>hub</em>. For <span
+class="math inline">n</span> components, that means <span
+class="math inline">n-1</span> separate links.</p>
+<p>Star networks are simple to design, implement, and extend. However,
+they are highly dependent on the hub, being limited by its capabilities
+and going down if it does.</p>
+<h2 data-number="2.3" id="bus"><span
+class="header-section-number">2.3</span> Bus</h2>
+<p>If every component is attached to the same half-duplex channel, the
+network is said to have a <q>bus topology</q> and that single channel is
+called the <q>bus.</q> For <span class="math inline">n</span>
+components, that means <span class="math inline">1</span> link.</p>
+<p>Buses are relatively simple to construct but need to handle the
+potential for collision in some way. Adding new components to a bus is
+straightforward, but the likelihood of collision increases as more
+components are attached to the channel, so buses are good for situations
+when a small-but-variable number of components are to be connected.
+Buses can be very efficient if each component desires to communicate
+rarely but to have messages travel at speed, or when many receivers want
+access to the same message.</p>
+<p>Buses are also roughly the topology that a wireless network naturally
+takes — radio signals are received by all receivers within range of the
+transmitter, and two simultaneous transmitters will likely collide. In
+practice, wireless networks are not quite modeled by the bus topology
+because, for example, two transmitters can be in range of one receiver
+but not of each other (called the <q>hidden terminal problem</q>).</p>
+<h1 data-number="3" id="the-bus"><span
+class="header-section-number">3</span> <q>The Bus</q></h1>
+<p>Inside a computer’s casing, it is common to have several
+special-purpose networks to connect various components of the system.
+Because early implementations had a bus topology, these are all commonly
+called buses, and in many cases referred to simply as the
+<q>bus.</q></p>
+<h2 data-number="3.1" id="the-system-bus"><span
+class="header-section-number">3.1</span> The system bus</h2>
+<p>In historical processor designs, the <q>system bus,</q> also known as
+the <q>front-side bus,</q> connects the processor with memory, I/O
+devices, and other processors. In a typical implementation, though this
+bus is a single channel, it is not a single wire connecting components
+but a collection of wires, some dedicated to the addresses and some
+dedicated to the data. There will be enough address wires so that an
+entire address can be specified all at once (for example, on the Intel
+80386, using 30 binary wires to specify a 30-bit address) and usually
+enough data wires to transfer at least a byte of data at a time (on the
+Intel 80386, up to 32 bits at a time using 32 binary wires).</p>
+<p>In addition to wires for data and addresses, there will be wires
+dedicated to controlling which device uses the shared bus and preventing
+conflicts.</p>
+<p>Components like memory, graphics cards, I/O devices, etc. were
+generally not connected directly to the system bus. Instead,
+intermediate chips would translate from the processor bus to other types
+of buses. In the Intel design, there were originally two of these chips
+called the <em>Memory Controller Hub</em> or <em>Northbrige</em> (for
+memory and higher-speed devices) and the <em>I/O Controller Hub</em> or
+<em>Southbridge</em> (for lower-speed devices). These chips would often
+use a bus topology to communicate with their devices.</p>
+<h2 data-number="3.2" id="modern-processors-and-buses"><span
+class="header-section-number">3.2</span> Modern processors and
+buses</h2>
+<p>More recent processors have tended to move some of the functionality
+that was typically on these intermediate chips to the main processor
+package. In addition, processor manufacturers prioritized making
+multi-core systems more efficient, and the bus topology does not work
+well to connect many cores.</p>
+<p>The design that AMD and Intel seem to have settled on in the current
+generation<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> generally has the processor package
+feature separate <q>buses</q> for communicating with memory and for
+communicating with I/O devices or other processor packages. Within a
+processor package, there are generally internal networks that connect
+cores, caches, memory bus controllers, and other components. Since the
+design of these internal networks can change without the involvement of
+motherboard manufacturers and the like, processor manufacturers have
+more flexibility to change the design of these networks.</p>
+<h2 data-number="3.3" id="memory-and-io-buses"><span
+class="header-section-number">3.3</span> Memory and I/O buses</h2>
+<p>Connecting the processor to memory and I/O devices is often done
+through various other buses:</p>
+<ul>
+<li><p><q>memory buses</q> for memory devices. In many current<a
+href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> desktop and laptop machines, this
+bus would follow a standard called DDR4 SDRAM.</p></li>
+<li><p>various types of specialized buses for I/O devices:</p>
+<dl>
+<dt>PCI<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a></dt>
+<dd>
+a name used both for a deprecated standard and the family of subsequent
+standards including the current<a href="#fn4" class="footnote-ref"
+id="fnref4" role="doc-noteref"><sup>4</sup></a> PCI-e standards.
+</dd>
+<dt>SATA</dt>
+<dd>
+The Serial ATA<a href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a> is typically used to connect drives
+(hard drives, optical drives, etc.) to the system bus. Topologically,
+this is a point-to-point network with port multipliers; basically this
+means the maximal number of connections (or <q>ports</q>) has to be
+decided in advance, but devices can be added that connect several other
+devices to a single port.
+</dd>
+<dt>Universal Serial Bus</dt>
+<dd>
+A technology for connecting removable peripheral components to
+computers. Despite the <q>bus</q> name, this is a pure <a
+href="https://en.wikipedia.org/wiki/Tree_network">tree-topology
+network</a>: pair-wise links with multiple star-like hubs.
+</dd>
+</dl></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>as of 2022<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>as of 2022<a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>This stands for <q>peripheral component interconnect</q>
+but is almost universally called by its acronym, so much so that I’d
+expect that using the full name would confuse people.<a href="#fnref3"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>as of 2019<a href="#fnref4" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>ATA stands for <q>AT Attachment.</q> AT is short for
+<q>IBM Personal Computer AT,</q> the product which popularized this
+attachment technology. In that computer’s name, AT stood for <q>advanced
+technology</q>.<a href="#fnref5" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

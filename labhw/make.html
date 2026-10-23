@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Make lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/make.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>This lab is designed to help you feel comfortable using GNU Make, one
+of the oldest and still most-common build tools; as well as with
+many-file C projects.</p>
+<div class="exercise long">
+<p>Your task:</p>
+<p>We would recommend working with a partner, but it is also fine if you
+do this alone.</p>
+<ol type="1">
+<li><p>Download <a
+href="../files/make-lab.tar"><code>make-lab.tar</code></a> (you can do
+this using the link on this page, or from a command line via <code
+class="sourceCode bash"><span class="fu">wget</span> https://www.cs.virginia.edu/~cr4bd/3130/F2026/files/make-lab.tar</code>)</p></li>
+<li><p>Expand it using <code
+class="sourceCode bash"><span class="fu">tar</span> xvf make-lab.tar</code></p></li>
+<li><p>Read enough of the files to get an idea what they do. Then build
+them with <code>gcc *.c</code> and run <code>./a.out</code> to verify
+your understanding. Ask a TA for help if you are not sure you fully
+understand.</p></li>
+<li><p>Add a <code>Makefile</code> in the resulting
+<code>make-lab</code> directory, which</p>
+<ul>
+<li>has rules for the following
+<ul>
+<li>building each <code>.c</code> file into a <code>.o</code> file</li>
+<li>combining <code>cheer.o</code> and <code>grunt.o</code> into a
+library (either <code>libsay.a</code> or <code>libsay.so</code>)</li>
+<li>combining the library and <code>guesser.o</code> into program
+<code>guesser</code></li>
+</ul></li>
+<li>has <code>CC</code>, <code>CFLAGS</code>, and <code>LDFLAGS</code>
+we can edit; <code>CC</code> and <code>CFLAGS</code> must be used when
+running the compiler, and <code>LDFLAGS</code> when generating any
+<code>.so</code> library or executable</li>
+<li><code>make all</code> creates <code>guesser</code> and its
+dependencies</li>
+<li><code>make clean</code> deletes all files that <code>make</code> can
+recreate</li>
+</ul>
+<p>Your <code>Makefile</code> must have correct dependencies for all
+rules, so for example,</p>
+<ul>
+<li>running <code>make</code> twice in a row without editing anything
+does not cause anything to rebuilt the second time</li>
+<li>editing <code>say.h</code> and running <code>make</code> should
+cause all files to be rebuilt</li>
+<li>editing any .c file and running <code>make</code> causes its .o file
+to be rebuilt, along with the library and/or program if they depend on
+the .c file
+<ul>
+<li>Note: if you chose library format <code>libsay.a</code>, then
+<code>guesser</code> should be rebuilt if <code>libsay.a</code> changes;
+but if you chose library format <code>libsay.so</code>, then
+<code>guesser</code> should not be rebuilt if <code>libsay.so</code>
+changes, only if <code>say.h</code> or <code>guesser.c</code>
+change.</li>
+</ul></li>
+<li>editing <code>cheer.c</code> or <code>grunt.c</code> should cause
+libsay and possibly <code>guesser</code> to be rebuilt, but should not
+cause <code>guesser.o</code> to be rebuilt</li>
+</ul>
+<p>Also, your Makefile should not rely on <q>built-in</q> rules<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>; you can test this using
+<code>make --no-builtin-rules ...</code> instead of
+<code>make ...</code>.</p></li>
+<li><p>Either:</p>
+<ul>
+<li>Place a comment (line starting with <code>#</code>) at the top of
+your Makefile indicating who you worked with and submit your Makefile to
+the <a
+href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/task.php?task=make">submission
+site</a>. (If working with a partner, both must submit.)
+<em>and/or</em></li>
+<li>Show a TA your <code>Makefile</code>. They may ask you to show it
+working, or to look at its contents, or both.</li>
+</ul></li>
+</ol>
+
+</div>
+<p>Refer to the <a href="../readings/compilation.html">compilation and
+libraries</a> and <a href="../readings/make.html">makefiles</a> reading
+and/or the corresponding C material for information on how to achieve
+these goals. We recommend you read it in full, discussing it with a
+partner and asking clarifying questions of TAs as you go, then return to
+the tasks above.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>make has some default rules, for example for building .o
+files from .c files, intended to allow Makefiles to avoid boilerplate
+for common tasks. For this lab, we want to write all the needed make
+rules explicitly.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

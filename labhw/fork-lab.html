@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Fork and run</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/fork-lab.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#int-my_systemconst-char-command"
+id="toc-int-my_systemconst-char-command"><span
+class="toc-section-number">1</span>
+<code>int my_system(const char *command)</code></a></li>
+</ul></nav>
+<div class="exercise long">
+<ol type="1">
+<li><p>Possibly working with a partner, write a single file
+<code>my_system.c</code> that defines the <code>my_system</code>
+function specified below. You may include helper functions in the file,
+but it should not contain <code>main</code>.</p></li>
+<li><p>In a separate file, write a <code>main</code> to test your
+<code>my_system</code> function and make sure it works as
+intended.</p></li>
+<li><p>Show your working function to a TA <em>or</em> submit
+<strong><em>both</em></strong> your <code>.c</code> files to the
+submission site.</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="int-my_systemconst-char-command"><span
+class="header-section-number">1</span>
+<code>int my_system(const char *command)</code></h1>
+<p>This is a simplified version of the <code>system</code> standard
+library function (see <a
+href="http://man7.org/linux/man-pages/man3/system.3.html"><code
+class="sourceCode bash"><span class="fu">man</span> 3 system</code></a>
+for details). You should handle all aspects of the function as described
+in the manual page <strong>except</strong></p>
+<ol type="1">
+<li>you do not need to ignore or block any signals</li>
+<li>you do not need to check <q>if a shell is available</q> for
+<code>NULL</code> commands</li>
+</ol>
+<p>You must not use <code>system</code> in your implementation. You
+should use <code>fork</code>; <code>wait</code> or <code>waitpid</code>;
+and either <code>execve</code> or one of its front-ends
+(<code>execl</code>, <code>execlp</code>, <code>execle</code>,
+<code>execv</code>, <code>execvp</code>, or <code>execvpe</code>).</p>
+<p>In addition to manpages for the above functions, you may find it
+useful to refer to the lecture slides and/or the <a
+href="../readings/thread.html">threads reading</a>.</p>
+<p>Note that the <q>wait status</q> that <code>my_system</code> should
+return can be retrieved using <code>wait</code> or
+<code>waitpid</code>.</p>
+<p>Because <code>my_system</code> needs to be thread-safe, do not use
+any global variables.</p>
+<div class="example long">
+<p>The following main function</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a1 <span class="op">=</span> my_system<span class="op">(</span><span class="st">&quot;sleep 1; echo hi&quot;</span><span class="op">);</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a2 <span class="op">=</span> my_system<span class="op">(</span><span class="st">&quot;echo bye&quot;</span><span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a3 <span class="op">=</span> my_system<span class="op">(</span><span class="st">&quot;flibbertigibbet 23&quot;</span><span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%d</span><span class="st"> </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        WEXITSTATUS<span class="op">(</span>a1<span class="op">),</span> WEXITSTATUS<span class="op">(</span>a2<span class="op">),</span> WEXITSTATUS<span class="op">(</span>a3<span class="op">));</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>should print</p>
+<pre><code>hi
+bye
+sh: 1: flibbertigibbet: not found
+0 0 127</code></pre>
+<p>(note: the details of the <q>not found</q> line will vary based on
+the version of <code>sh</code> installed on the computer)</p>
+
+</div>
+<div class="example long">
+<p>The following main function</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    my_system<span class="op">(</span><span class="st">&quot;echo -n &#39;type something: &#39;;&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot; read got;&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot; echo Thanks for typing </span><span class="sc">\\\&quot;\&quot;</span><span class="st">$got</span><span class="sc">\&quot;\\\&quot;</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>should prompt for user input, wait until it is provided, and then
+repeat what they typed, as e.g.</p>
+<pre><code>type something: this is a test
+Thanks for typing &quot;this is a test&quot;</code></pre>
+
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By adapted from HW by Luther Tychnoviech by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

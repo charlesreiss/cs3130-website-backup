@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: warmup</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/warmup.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#your-task" id="toc-your-task"><span
+class="toc-section-number">1</span> Your task</a></li>
+<li><a href="#examples" id="toc-examples"><span
+class="toc-section-number">2</span> Examples</a>
+<ul>
+<li><a href="#string_split" id="toc-string_split"><span
+class="toc-section-number">2.1</span> <code>string_split</code></a></li>
+<li><a href="#split-executable" id="toc-split-executable"><span
+class="toc-section-number">2.2</span> <code>split</code> executable</a>
+<ul>
+<li><a href="#example-1" id="toc-example-1"><span
+class="toc-section-number">2.2.1</span> Example 1</a></li>
+<li><a href="#example-2" id="toc-example-2"><span
+class="toc-section-number">2.2.2</span> Example 2</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#hints" id="toc-hints"><span
+class="toc-section-number">3</span> Hints</a></li>
+</ul></nav>
+<h1 data-number="1" id="your-task"><span
+class="header-section-number">1</span> Your task</h1>
+<ol type="1">
+<li><p>Create C files as follows:</p>
+<ul>
+<li><p>in <code>split.c</code>, write an implementation of the
+function</p>
+<pre><code> char **string_split(const char *input, const char *sep, int *num_words);</code></pre>
+<p>You can see examples of what this function should do below.</p>
+<p>The function takes a <code>\0</code>-terminated string
+<code>input</code> and a <code>\0</code>-terminated string listing
+separating characters in <code>sep</code>.</p>
+<p>The function interprets <code>input</code> into a sequence of
+<q>words</q> (which it returns as described in the next paragraph).
+These words are separated by one or more of the separating characters in
+<code>sep</code>. <code>input</code> should be considered to always
+start and end with a word. If the <code>input</code> starts or ends with
+a separating character, this word will be empty (zero-length). Empty
+words must not be generated in any other circumstance.</p>
+<p>The function should return the words using a dynamically allocated
+array of <code>\0</code>-terminated strings. It must possible to free
+the array by calling <code>free()</code> on each element of the array
+and the array itself. The function must store the length of the array in
+<code>*num_words</code>.</p>
+<p>In addition:</p>
+<ul>
+<li>The function may not modify the input strings.</li>
+<li>The function may not leak memory. (When the function returns, the
+only newly allocated memory should be pointed to by the value
+returned.)</li>
+<li>We do not care what your function does if <code>input</code> is an
+empty string or if <code>sep</code> is an empty string.</li>
+<li>We do not care what your function does if allocating memory fails
+(provided that your function does not try to allocate a huge amount of
+memory relative to the size of its arguments)</li>
+</ul>
+<p>Your implementation may use additional utility functions, provided
+those are also in <code>split.c</code> (so we can easily test your
+<code>split.c</code> with our own <code>main.c</code>). It may also use
+library functions that are part of the C standard or the POSIX standard.
+This includes most functions you may be familiar with declared in
+<code>&lt;string.h&gt;</code> and <code>&lt;stdio.h&gt;</code>, with the
+notable exceptions of <code>strsep</code>, <code>index</code>, and
+<code>rindex</code>. You can determine if a function meets this criteria
+by looking for</p>
+<ul>
+<li>the <q>CONFORMING TO</q> section of its manpage listing some version
+of <q>POSIX</q> or C89 or C99 or C11 (or multiple of these); or</li>
+<li>it appearing in <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/idx/functions.html">this
+list of functions</a> from the 2018 POSIX specification</li>
+</ul>
+<p>Some examples of how <code>string_split</code> should behave, that
+you can use to test your function, are shown below.</p></li>
+<li><p>in <code>split.h</code>, write an appropriate header file
+declaring <code>string_split()</code> and include <a
+href="https://en.wikipedia.org/wiki/Include_guard"><code>#include</code>
+guards</a> to protect against multiple inclusion.</p></li>
+<li><p>in <code>main.c</code>, write a <code>main()</code> function
+that:</p>
+<ul>
+<li><p>constructs a value for <code>sep</code> by the command line
+arguments, or, if no command line arguments are provided, uses
+<code>" \t"</code> [a space character followed by a tab character]. When
+there are command-line arguments, the value of <code>sep</code> should
+be the result of concatenating all the command line arguments. For
+example, if the <code>main()</code> is compiled into an executable
+<code>split</code>, then running</p>
+<pre><code>  ./split a b c</code></pre>
+<p>or</p>
+<pre><code> ./split abc</code></pre>
+<p>or</p>
+<pre><code> ./split ab c</code></pre>
+<p>should choose a sep value of <code>"abc"</code>.</p></li>
+<li><p>reads lines of input (without prompting). For each line, it
+should:</p>
+<ul>
+<li>exit if the line is one period (<code>.</code>) with no other text
+or whitespace (other than a trailing newline, which we will not consider
+part of the line);</li>
+<li>otherwise call <code>string_split</code> with that input (without
+any trailing newline or similar), and the chosen <code>sep</code> value,
+then print out the resulting array with each word surrounded by square
+brackets (<code>[</code> and <code>]</code>) and without spaces between
+words, followed by a newline, then frees the resulting array.</li>
+</ul></li>
+</ul>
+<p>Some examples of expected transcripts from the <code>split</code>
+program are shown below.</p>
+<p>Your program must support lines of input lines of at least 5000
+bytes. If an input line is more than 5000 bytes, your program may not
+access out of bounds memory (such as might cause a segfault), but
+otherwise we do not care what it does. Your <code>string_split</code>
+function may not have any arbitrary limits on the size of its arguments
+(but we do not care how it handles running out of memory).</p>
+<p>We will test your <code>main.c</code> with our own
+<code>split.c</code>, so put any functions other than
+<code>string_split</code> that it needs within
+<code>main.c</code>.</p></li>
+</ul></li>
+<li><p>Create a Makefile such that typing <code>make</code> will build
+(if necessary) <code>split.o</code>, <code>main.o</code> and link them
+into an executable <code>split</code>.</p></li>
+<li><p>Make sure your C files do not produce any warnings when compiled
+with <code>-D_XOPEN_SOURCE=700 -Og -g -std=c11 -Wall -pedantic</code>
+(assuming GCC or Clang). (It is okay if your Makefile uses different
+options.)</p></li>
+<li><p>Make sure your code does not have memory leaks or errors. We will
+test your code with AddressSanitizer enabled to help check for this
+(which can be enabled by compiling and linking with
+<code>-fsanitize=address</code>; you should also add <code>-g</code> so
+AddressSanitizer can show line numbers).</p>
+<p>Also, we will test your <code>string_split</code> by calling it with
+buffers that are just big enough for the arguments, so going just one
+byte out of bounds would be an error. (This may not match how your
+<code>main.c</code> calls <code>string_split</code>.)</p></li>
+<li><p>We may use automated tests to assess your submission. Your
+solution may not hard-code the solution for any of the test cases or
+intentionally interfere with the testing environment. <small>(By
+<q>hard-code the solution</q>, we mean code that looks for our specific
+test inputs (such as checking if the input contains the <q>XfooX</q>
+because one of the test cases is <q>XfooXbar</q>) rather than the more
+general situation being tested (such as checking for separator
+characters at the beginning of the input); it’s not a prohibition on
+having less specific special cases.)</small></p></li>
+<li><p>Submit your solution to the <a
+href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">submission
+site</a></p></li>
+</ol>
+<h1 data-number="2" id="examples"><span
+class="header-section-number">2</span> Examples</h1>
+<h2 data-number="2.1" id="string_split"><span
+class="header-section-number">2.1</span> <code>string_split</code></h2>
+<ol type="1">
+<li><p>Running</p>
+<pre><code>char **result;
+int size = ANY_VALUE;
+result = string_split(&quot;foo&quot;, &quot;:&quot;, &amp;size);</code></pre>
+<p>should have the same effect as</p>
+<pre><code>char **result;
+int size;
+result = calloc(sizeof(char *), 1);
+result[0] = malloc(4);
+strcpy(result[0], &quot;foo&quot;);
+size = 1;</code></pre></li>
+<li><p>Running</p>
+<pre><code>char **result;
+int size;
+result = string_split(&quot;foo:bar:quux&quot;, &quot;:&quot;, &amp;size);</code></pre>
+<p>or</p>
+<pre><code>char **result;
+int size;
+result = string_split(&quot;foo:bar!quux&quot;, &quot;!:&quot;, &amp;size);</code></pre>
+<p>or</p>
+<pre><code>char **result;
+int size;
+result = string_split(&quot;foo:bar!quux&quot;, &quot;:!&quot;, &amp;size);</code></pre>
+<p>should have the same effect as</p>
+<pre><code>char **result;
+int size;
+result = calloc(sizeof(char *), 3);
+result[0] = malloc(4);
+strcpy(result[0], &quot;foo&quot;);
+result[1] = malloc(4);
+strcpy(result[1], &quot;bar&quot;);
+result[2] = malloc(5);
+strcpy(result[2], &quot;quux&quot;);
+size = 3;</code></pre></li>
+<li><p>Running</p>
+<pre><code>char **result;
+int size;
+result = string_split(&quot;:foo!:bar::quux!&quot;, &quot;:!&quot;, &amp;size);</code></pre>
+<p>should have the same effect as</p>
+<pre><code>char **result;
+int size;
+result = calloc(sizeof(char *), 5)
+result[0] = malloc(1);
+strcpy(result[0], &quot;&quot;);
+result[1] = malloc(4);
+strcpy(result[1], &quot;foo&quot;);
+result[2] = malloc(4);
+strcpy(result[2], &quot;bar&quot;);
+result[3] = malloc(5);
+strcpy(result[3], &quot;quux&quot;);
+result[4] = malloc(1);
+strcpy(result[4], &quot;&quot;);
+size = 5;</code></pre></li>
+</ol>
+<h2 data-number="2.2" id="split-executable"><span
+class="header-section-number">2.2</span> <code>split</code>
+executable</h2>
+<p>In the following example transcripts <strong>bold</strong> represents
+input typed in and <code>$</code> represents the shell’s prompt:</p>
+<h3 data-number="2.2.1" id="example-1"><span
+class="header-section-number">2.2.1</span> Example 1</h3>
+<p><code><tt> $ <b>./split</b><br> <b>foo     bar   baz</b><br>
+[foo][bar][baz]<br> <b>quux-no-space quux-with space !</b><br>
+[quux-no-space][quux-with][space][!]<br> <b>   indented</b><br>
+[][indented]<br> <b>.</b><br> $ <br> </tt></code></p>
+<h3 data-number="2.2.2" id="example-2"><span
+class="header-section-number">2.2.2</span> Example 2</h3>
+<p><code><tt> $ <b>./split XY Z</b><br>
+<b>fooXXXXbarZXYXYXZbazYYYYY</b><br> [foo][bar][baz][]<br>
+<b>XXXXXXXXXXXXX</b><br> [][]<br> <b>X.X</b><br> [][.][]<br>
+<b>.</b><br> $ <br> </tt></code></p>
+<h1 data-number="3" id="hints"><span
+class="header-section-number">3</span> Hints</h1>
+<ol type="1">
+<li><p>To get access to <code>clang</code> on portal, you may need to
+use something like <code>module load gcc clang</code>.</p></li>
+<li><p>I found the C standard library functions <code>strspn</code> and
+<code>strcspn</code> useful in my solution.</p></li>
+<li><p>To avoid scanning the string multiple times, you can use
+<code>realloc</code> to change the size of a dynamically allocated
+array. (But note that you might need to initialize space made by
+<code>realloc</code> — it might not default to 0/NULL.)</p></li>
+<li><p>You may find referencing the CSO1 labs on using C helpful, see
+for example labs 9 through 12 of the <a
+href="https://www.cs.virginia.edu/~jh2jf/courses/cs2130/spring2023/labs/">Spring
+2023 offering of CSO1</a></p></li>
+<li><p>When using AddressSanitizer or debuggers, if you want to get line
+numbers, local variables, etc., you may neeed to compile with
+<code>-g</code> or a simlar option.</p></li>
+<li><p>In addition to the problems caught by AddressSanitizer, you might
+have memory errors that arise from assuming local variables are
+initialized in a particular way even though you don’t set them
+explicitly. With recent versions of GCC and with clang you can use the
+<code>-ftrivial-auto-var-init=pattern</code> flag to help catch this —
+this will make the compiler initialize any uninitialized local variables
+to a pattern likely to cause issues if it is used.</p></li>
+</ol>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

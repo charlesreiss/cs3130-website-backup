@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: From C to C++</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/cpp.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#how-this-lab-works" id="toc-how-this-lab-works"><span
+class="toc-section-number">1</span> How this lab works</a>
+<ul>
+<li><a href="#compiling" id="toc-compiling"><span
+class="toc-section-number">1.1</span> Compiling</a></li>
+</ul></li>
+<li><a href="#function-name-overloading"
+id="toc-function-name-overloading"><span
+class="toc-section-number">2</span> Function name overloading</a></li>
+<li><a href="#namespaces" id="toc-namespaces"><span
+class="toc-section-number">3</span> Namespaces</a></li>
+<li><a href="#operator-overloading" id="toc-operator-overloading"><span
+class="toc-section-number">4</span> Operator overloading</a></li>
+<li><a href="#other-odds-and-ends" id="toc-other-odds-and-ends"><span
+class="toc-section-number">5</span> Other odds and ends</a></li>
+<li><a href="#classes" id="toc-classes"><span
+class="toc-section-number">6</span> Classes</a>
+<ul>
+<li><a href="#member-functions" id="toc-member-functions"><span
+class="toc-section-number">6.1</span> Member functions</a></li>
+<li><a href="#constructors-destructors-new-and-delete"
+id="toc-constructors-destructors-new-and-delete"><span
+class="toc-section-number">6.2</span> constructors, destructors,
+<code>new</code> and <code>delete</code></a></li>
+<li><a href="#inheritance-and-overloading"
+id="toc-inheritance-and-overloading"><span
+class="toc-section-number">6.3</span> Inheritance and
+overloading</a></li>
+<li><a href="#templates" id="toc-templates"><span
+class="toc-section-number">6.4</span> Templates</a></li>
+<li><a href="#reference-arguments" id="toc-reference-arguments"><span
+class="toc-section-number">6.5</span> Reference arguments</a></li>
+<li><a href="#templates-1" id="toc-templates-1"><span
+class="toc-section-number">6.6</span> Templates</a></li>
+<li><a href="#operator-overloading-and-friends"
+id="toc-operator-overloading-and-friends"><span
+class="toc-section-number">6.7</span> Operator Overloading and
+Friends</a></li>
+</ul></li>
+<li><a href="#stl-and-standard-library"
+id="toc-stl-and-standard-library"><span
+class="toc-section-number">7</span> STL and standard library</a></li>
+<li><a href="#your-task" id="toc-your-task"><span
+class="toc-section-number">8</span> Your Task</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>19 Apr 2023: correct link to postfix assignment</li>
+<li>21 Apr 2023: tone down <code>using namespace std</code> suggestion
+since that (in my opinion) is very bad style; add mention of
+<code>using std::foo;</code></li>
+<li>21 Apr 2023: adjust note about the term <q>STL</q></li>
+<li>26 Apr 2023: remove nongramatical due-to-edits text that was meant
+to regard <code>using namespace std</code> from <q>My Task</q></li>
+<li>26 Apr 2023: make recommendatoin re: stringstream explicitly suggest
+making a new one each time, or alternately giving reset
+instructions</li>
+</ul>
+</div>
+<p>The goal of this lab is to explore how C++ adds minimal extensions to
+C in order to provide several features that have become common in
+object-oriented languages. The subsequent lab will have you use these
+features to work with some basic C++ code.</p>
+<h1 data-number="1" id="how-this-lab-works"><span
+class="header-section-number">1</span> How this lab works</h1>
+<p>This lab introduces key features <code>C++</code>, and describes how
+it deffers from <code>C</code>. Once you’ve completed the reading, we
+ask you implement a postfix calculator using <code>C++</code>. If you
+already know C++, skip to end of lab and start coding.</p>
+<h2 data-number="1.1" id="compiling"><span
+class="header-section-number">1.1</span> Compiling</h2>
+<p>Many parts of this writeup will ask you to inspect various aspects of
+compiled C++ code. You can run a C++ compiler by using
+<code>clang++</code> (or <code>g++</code>); to access the resulting
+assembly use the <code>-S</code> flag (e.g., <code
+class="sourceCode bash"><span class="fu">clang</span>++ <span class="at">-S</span> ex.cpp</code>
+generates assembly in <code>ex.s</code>); to inspect the data set by the
+code use <code>lldb</code> (or <code>gdb</code>).</p>
+<p>You’ll likely find that <code>-O1</code> will generally create much
+shorter code without removing useless code that you might have wanted to
+test something.</p>
+<p>You should always give your C++ files the extension
+<code>.cpp</code>. Some</p>
+<h1 data-number="2" id="function-name-overloading"><span
+class="header-section-number">2</span> Function name overloading</h1>
+<p>In C, if you name a function <code>baz</code> then it is compiled
+with label <code>baz</code>. That means you cannot re-use the name
+<code>baz</code> for more than one function.</p>
+<p>In C++, function names are only part of the compiled label: argument
+types and where the name appeared are also part of it. This allows code
+like</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> abs_val<span class="op">(</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="op">-</span>x <span class="op">:</span> x<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> abs_val<span class="op">(</span><span class="dt">double</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="op">-</span>x <span class="op">:</span> x<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%f</span><span class="st">&quot;</span><span class="op">,</span> abs_val<span class="op">(-</span><span class="dv">23</span><span class="op">),</span> abs_val<span class="op">(-</span><span class="fl">20.3</span><span class="bu">f</span><span class="op">));</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>to be compiled; the compiler picks which version of
+<code>abs_val</code> to invoked in each instance using information
+derived during type checking.</p>
+<p>This renaming of functions to arrive at labels is called <strong>name
+mangling</strong>.</p>
+<h1 data-number="3" id="namespaces"><span
+class="header-section-number">3</span> Namespaces</h1>
+<p>In C, every function and global variable’s name must be unique among
+all the files you link with. When you write all your own code, that’s
+not too hard to do; but when you are using third-party libraries there
+is no reason to expect them not to conflict in names. Because of this,
+major C libraries generally pick some kind of prefix to all function
+names, but it can be annoying to read and write code when virtually
+every function starts with the same prefix.</p>
+<p>Later languages have added in a full module or package system, with
+full scoping and so on, but C++ uses a simpler mechanism called
+<strong>namespaces</strong>. These are included in the name mangling to
+further decrease the chance of name collisions.</p>
+<p>Name mangling for namespaces uses a length-before-name technique, so
+that namespace <code>welcome</code> would become <code>7welcome</code>
+in the mangled name. This is important to be able to have numbers in the
+namespace hierarchy: <code>7welcome2it</code> represents the two nested
+namespaces <code>welcome::it</code> while <code>10welcome2it</code> is
+the single namespace <code>welcome2it</code></p>
+<h1 data-number="4" id="operator-overloading"><span
+class="header-section-number">4</span> Operator overloading</h1>
+<p>C++ allows you to redefine what almost every operator does. You can
+define functions whose name is <code>operator+</code>,
+<code>operator&lt;&lt;=</code>, etc, and they will be used in place of
+built-in behavior for <code>+</code>, <code>&lt;&lt;=</code>, etc, when
+those operators are applied to the appropriate types.</p>
+<h1 data-number="5" id="other-odds-and-ends"><span
+class="header-section-number">5</span> Other odds and ends</h1>
+<p>C++ compilation also makes use of a few other syntactic sugar pieces
+to help make code easier to write. One example is the <q>pass by
+reference</q> syntax, a short-hand way of using pointers. For example,
+what in C might be</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>strsep_c<span class="op">(</span><span class="dt">char</span> <span class="op">**</span>txt<span class="op">,</span> <span class="dt">char</span> delim<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>txt <span class="op">||</span> <span class="op">!*</span>txt<span class="op">)</span> <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>ans <span class="op">=</span> <span class="op">*</span>txt<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span><span class="op">(**</span>txt <span class="op">&amp;&amp;</span> <span class="op">**</span>txt <span class="op">!=</span> delim<span class="op">)</span> <span class="op">*</span>txt <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(**</span>txt <span class="op">==</span> delim<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>txt <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>txt <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ans<span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>can be written in C++ as</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>strsep_c<span class="op">(</span><span class="dt">char</span> <span class="op">*&amp;</span> txt<span class="op">,</span> <span class="dt">char</span> delim<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>txt<span class="op">)</span> <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>ans <span class="op">=</span> txt<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span><span class="op">(*</span>txt <span class="op">&amp;&amp;</span> <span class="op">*</span>txt <span class="op">!=</span> delim<span class="op">)</span> txt <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(*</span>txt <span class="op">==</span> delim<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        txt <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        txt <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ans<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>These two compile to virtually the assembly except that the compiler
+takes care of ensuring that the second, which uses pass-by-reference
+syntax, is always given a valid reference so the two-part check in the
+first is just a 1-part check in the second</p>
+<p>Recent versions of C++ have added many other similar tricks for
+efficient coding with more compile-time checking, such as more careful
+casts, self-deallocating pointers, etc.</p>
+<h1 data-number="6" id="classes"><span
+class="header-section-number">6</span> Classes</h1>
+<p>C++ is often characterized as <q>C supporting objected oriented
+coding</q>. This section explores several of those concepts:</p>
+<p>C++ adds a <code>class</code> keyword that is identical to
+<code>struct</code> in almost every way, except a <code>class</code>
+defaults to <code>private:</code> members and a <code>struct</code> to
+<code>public:</code>. C++ also removes the need to <code>typedef</code>
+to get a simple name for a <code>struct</code> or
+<code>class</code>.</p>
+<h2 data-number="6.1" id="member-functions"><span
+class="header-section-number">6.1</span> Member functions</h2>
+<p>C++ also extends <code>struct</code> and <code>class</code> to allow
+them to declare member functions as well as member attributes:</p>
+<table style="width:78%;">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 44%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>.hpp</code> header</th>
+<th><code>.cpp</code> implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><div class="sourceCode" id="cb4"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> gleam <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> b<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> inOrder<span class="op">();</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div></td>
+<td><div class="sourceCode" id="cb5"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> gleam<span class="op">::</span>inOrder<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">this</span><span class="op">-&gt;</span>a <span class="op">&lt;=</span> <span class="kw">this</span><span class="op">-&gt;</span>b<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div></td>
+</tr>
+</tbody>
+</table>
+<h2 data-number="6.2" id="constructors-destructors-new-and-delete"><span
+class="header-section-number">6.2</span> constructors, destructors,
+<code>new</code> and <code>delete</code></h2>
+<p>Constructors are an important part of how OO objects are initialized.
+C++ has added an operator <code>new</code> that acts like
+<q><code>malloc</code><a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> and then invoke a constructor</q>
+and an operator <code>delete</code> that acts like <q>invoke a
+destructor and then <code>free</code></q>,</p>
+<p>Thus, we could test the code above with</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>gleam <span class="op">*</span>a <span class="op">=</span> <span class="kw">new</span> gleam<span class="op">();</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> b <span class="op">=</span> a<span class="op">-&gt;</span>inOrder<span class="op">();</span></span></code></pre></div>
+<p>To add a constructor, make a member function with the same name as
+the class; a destructor’s name is preceded by a tilde <code>~</code>.
+Neither should have a return type specified. Destructors are usually
+used to <code>delete</code> anything the constructor <code>new</code>ed,
+and are typically omitted if there is no need to do that.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> gleam2 <span class="op">{</span>     </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a<span class="op">;</span>        </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> b<span class="op">;</span>        </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span>           </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> inOrder<span class="op">();</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    gleam2<span class="op">(</span><span class="dt">int</span> x<span class="op">,</span> <span class="dt">int</span> y<span class="op">)</span> <span class="op">{</span> <span class="kw">this</span><span class="op">-&gt;</span>a <span class="op">=</span> x<span class="op">;</span> <span class="kw">this</span><span class="op">-&gt;</span>b <span class="op">=</span> y<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">~</span>gleam2<span class="op">()</span> <span class="op">{</span> puts<span class="op">(</span><span class="st">&quot;Gone&quot;</span><span class="op">);</span> <span class="op">}</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<h2 data-number="6.3" id="inheritance-and-overloading"><span
+class="header-section-number">6.3</span> Inheritance and
+overloading</h2>
+<p>We’ll talk about how C++ implements inheritance and overloading in
+lecture.</p>
+<h2 data-number="6.4" id="templates"><span
+class="header-section-number">6.4</span> Templates</h2>
+<p>C++ also has a <q>template language</q>, which looks superficially
+like Java’s generic syntax but is actually a full programming language
+in its own right. Most casual C++ programmers I know only use the basic
+type-generic aspect of templates, not any of their advanced
+features.</p>
+<h2 data-number="6.5" id="reference-arguments"><span
+class="header-section-number">6.5</span> Reference arguments</h2>
+<p>In C, if you have an argument of type <code
+class="sourceCode c"><span class="dt">int</span> <span class="op">*</span></code>
+you don’t know if it is an array or just a value you are supposed to
+set. C++ adds syntax to allow these to look different the
+<q>reference</q> argument type.</p>
+<p>If you write a function where an argument name is followed by an
+ampersand (e.g., <code
+class="sourceCode cpp"><span class="dt">int</span> <span class="op">&amp;</span>x</code>)
+then C++ will compile it to be a pointer, but have your syntax look like
+it is a variable.</p>
+<div class="example">
+<p>The following two pieces of code are equivalent in how they run</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>C code</th>
+<th>C++ code</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><div class="sourceCode" id="cb8"><pre
+class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> f<span class="op">(</span><span class="dt">int</span> <span class="op">*</span>x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> ans <span class="op">=</span> <span class="op">*</span>x <span class="op">+</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>x <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ans<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div></td>
+<td><div class="sourceCode" id="cb9"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> f<span class="op">(</span><span class="dt">int</span> <span class="op">&amp;</span>x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> ans <span class="op">=</span> x <span class="op">+</span> <span class="dv">2</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ans<span class="op">;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div></td>
+</tr>
+</tbody>
+</table>
+<p>Both pieces of code turn into equivalent <em>assembly</em>, but the
+C++ version uses <em>type-checking</em> to ensure that <code>x</code> is
+never treated as if it were an array instead of a single reference.</p>
+</div>
+<h2 data-number="6.6" id="templates-1"><span
+class="header-section-number">6.6</span> Templates</h2>
+<p>A <strong>template</strong> in C++ is an outline of how to create
+code if it is needed. Templates uses angle-brackets, like generics in
+Java. Java, however, discards the generics during compilation as part of
+the type checking step. C++ instead uses them to generate special code
+for each template argument created. Thus, C++ code like</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span> T foo<span class="op">(</span>T x<span class="op">)</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span></span></code></pre></div>
+<p>does not create any code, by itself. Instead, each time you use the
+template with different template parameters the compiler creates code
+for that parameterization. Thus, if you later have</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x <span class="op">=</span> foo<span class="op">(</span><span class="dv">3</span><span class="op">);</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> y <span class="op">=</span> foo<span class="op">(</span><span class="fl">3.14</span><span class="op">);</span></span></code></pre></div>
+<p>the compiler will create two different <code>foo</code> functions:
+one that has an <code>int</code> parameter and return type and another
+that has <code>double</code>.</p>
+<p>Note that the compiler will try to guess what template parameters
+were missing; if you want to be explicit, you can also write</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x0 <span class="op">=</span> foo<span class="op">(</span><span class="dv">3</span><span class="op">);</span> <span class="co">// compiler figures out it is a template, and deduces type</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x1 <span class="op">=</span> foo<span class="op">&lt;&gt;(</span><span class="dv">3</span><span class="op">);</span> <span class="co">// told it is a template, compiler deduces type</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x2 <span class="op">=</span> foo<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="dv">3</span><span class="op">);</span> <span class="co">// told it is a template and type</span></span></code></pre></div>
+<div class="aside">
+<p>Another difference from Java is that the parameters of a template do
+not need to be type names; they could also be values, like integers.
+Value templates are unusual enough in C++ we’ll say no more about them
+here.</p>
+
+</div>
+<div class="aside">
+<p>C++ template metaprogramming is a complicated topic on which entire
+books have been written. Some libraries, such as <a
+href="https://www.boost.org/">boost</a> and <a
+href="http://fftw.org/">FFTW</a> are well-known for complicated template
+usage.</p>
+
+</div>
+<h2 data-number="6.7" id="operator-overloading-and-friends"><span
+class="header-section-number">6.7</span> Operator Overloading and
+Friends</h2>
+<p>C++ recognizes that there is no magic to operators, and it is awkward
+to write your matrix class with <code>x.add(y)</code> when you write
+your numbers as <code>x + y</code> instead, so it lets you overload
+operators. In essence, this lets you add, to any class you want to work
+with, functions that are the implementation of operators. This lets you
+write math with your custom matrix class just like you do with the
+built-in number types.</p>
+<p>Once you have this, though, it becomes tempting to use in other ways.
+One of the most famous is the <code>ostream</code> type, C’s wrapper
+over file writing, which overloads the left-shift operator to mean
+<q>write</q>.</p>
+<div class="example">
+<p>The following C++ code writes <q>Hello, world!</q> and then an
+end-of-line. There are no integers being shifted; <code>&lt;&lt;</code>
+means <q>left-shift</q> for integers, but it means <q>here’s some
+output</q> with ostreams like <code>cout</code></p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="st">&quot;Hello, world!&quot;</span> <span class="op">&lt;&lt;</span>  <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This code also uses a namespace; namespaces are a way of avoiding
+name collisions, and most of the common C++ libraries we’ll use are in
+the <code>std</code> namespace. We could have equivalently written it
+as</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="bu">std::</span>cout<span class="op">;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    cout <span class="op">&lt;&lt;</span> <span class="st">&quot;Hello, world!&quot;</span> <span class="op">&lt;&lt;</span> endl<span class="op">;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>or</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> std<span class="op">;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    cout <span class="op">&lt;&lt;</span> <span class="st">&quot;Hello, world!&quot;</span> <span class="op">&lt;&lt;</span> endl<span class="op">;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Because <code>&lt;&lt;</code> is also overloaded to work with
+multiple types, we can write</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="st">&quot;Hello, all &quot;</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="st">&quot; dimensions!&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><code>cout</code>, by the way, is C++’s <code>ostream</code> wrapper
+around file descriptor <code>1</code>, just as <code>stdout</code> is
+C’s <code>FILE *</code> wrapper around the same.</p>
+</div>
+<p>Not all <code>ostream</code>s will flush output as promptly as
+others. For debugging, you should definitely use <code>cerr</code>
+instead of <code>cout</code> as it is better about showing everything
+when you ask it to be shown instead of delaying until later.</p>
+<p>C++ also allows what it calls <q><code>friend</code></q> functions,
+which are used to add functions and operators to existing classes in new
+files. A common example is to add <code>ostream &lt;&lt; mytype</code>
+operators for new types.</p>
+<h1 data-number="7" id="stl-and-standard-library"><span
+class="header-section-number">7</span> STL and standard library</h1>
+<p>The C++ Standard Library has a variety of types and algorithms in it.
+Some of the best known of these are part of the <q>Standard Template
+Library (STL)</q><a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>, and sometimes people use <q>STL</q>
+informally to mean the full C++ Standard Lbirary. There is more in the
+library than we can fully cover, but the following will get you
+going:</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 22%" />
+<col style="width: 33%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">include</th>
+<th style="text-align: left;">provides</th>
+<th style="text-align: center;">STL?</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;list&gt;</code></td>
+<td style="text-align: left;"><code>std::list&lt;T&gt;</code></td>
+<td style="text-align: center;">STL</td>
+<td style="text-align: left;">doubly-linked list; key functions
+<code>push_</code>/<code>pop_front</code>,
+<code>push_</code>/<code>pop_back</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;map&gt;</code></td>
+<td style="text-align: left;"><code>std::map&lt;K,V&gt;</code></td>
+<td style="text-align: center;">STL</td>
+<td style="text-align: left;">tree-map; key function
+<code>[key]</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;stack&gt;</code></td>
+<td style="text-align: left;"><code>std::stack&lt;T&gt;</code></td>
+<td style="text-align: center;">STL</td>
+<td style="text-align: left;">stack; key functions <code>push</code>,
+<code>pop</code>, <code>top</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;queue&gt;</code></td>
+<td style="text-align: left;"><code>std::queue&lt;T&gt;</code></td>
+<td style="text-align: center;">STL</td>
+<td style="text-align: left;">queue; key functions <code>push</code>
+<code>pop</code>, <code>front</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;vector&gt;</code></td>
+<td style="text-align: left;"><code>std::vector&lt;T&gt;</code></td>
+<td style="text-align: center;">STL</td>
+<td style="text-align: left;">resizable array; key functions
+<code>[index]</code>, <code>insert</code>,
+<code>push_</code>/<code>pop_back</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;iterator&gt;</code></td>
+<td style="text-align: left;"><code>std::iterator&lt;T&gt;</code></td>
+<td style="text-align: center;">STL</td>
+<td style="text-align: left;">use as <code
+class="sourceCode cpp"><span class="cf">for</span><span class="op">(</span>it <span class="op">=</span> c<span class="op">.</span>begin<span class="op">();</span> it <span class="op">!=</span> c<span class="op">.</span>end<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span></code>
+for STL iterator <code>it</code> and collection <code>c</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;string&gt;</code></td>
+<td style="text-align: left;"><code>std::string</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: left;">Wraps a <code>const char *</code> with
+various useful methods (<code>find</code>, <code>replace</code>,
+<code>size</code>, <code>+=</code>, <code>==</code>, etc)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;iostream&gt;</code></td>
+<td style="text-align: left;"><code>std::istream</code> and
+<code>std:ostream</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: left;">C++ file handling; operator
+<code>&lt;&lt;</code> writes and <code>&gt;&gt;</code> reads; defines
+<code>cin</code>, <code>cout,</code> and <code>cerr</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;sstream&gt;</code></td>
+<td style="text-align: left;"><code>std::stringstream</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: left;">Lets you treat a string like a file</td>
+</tr>
+</tbody>
+</table>
+<p>There are many others not listed above; see <a
+href="https://en.wikipedia.org/wiki/C%2B%2B_Standard_Library">wikipedia</a>
+and/or <a href="https://en.cppreference.com/w/">the excellent reference
+cppreference.com</a> for a reasonable overview.</p>
+<p>Note that many C++ types overload <code>==</code> to compare values
+the way that <code>.equals()</code> does in Java. Hence <code
+class="sourceCode c"><span class="st">&quot;Hi&quot;</span> <span class="op">==</span> <span class="st">&quot;Hi&quot;</span></code>
+compares pointers, but <code
+class="sourceCode cpp"><span class="bu">std::</span>string<span class="op">(</span><span class="st">&quot;Hi&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="bu">std::</span>string<span class="op">(</span><span class="st">&quot;Hi&quot;</span><span class="op">)</span></code>
+compares words.</p>
+<h1 data-number="8" id="your-task"><span
+class="header-section-number">8</span> Your Task</h1>
+<div class="exercise">
+<p>Implement a postfix calculator, like you did in <a
+href="https://www.cs.virginia.edu/~jh2jf/courses/cs2130/spring2023/homework/hw9-postfix.html">CSO1</a>
+but this time use C++.</p>
+<ul>
+<li><p>You must use <code>cin</code> to read input,
+<code>&gt;&gt;</code> to parse numbers, <code>string</code> and
+<code>==</code> to find operators, and <code
+class="sourceCode cpp">stack<span class="op">&lt;</span><span class="dt">double</span><span class="op">&gt;</span></code>
+as your stack.</p></li>
+<li><p>You must print your stack by repeated display-and-pop, as
+<code>stack</code> does not have printing capability.</p>
+<ul>
+<li>If you have time, implement <code
+class="sourceCode cpp">ostream <span class="op">&amp;</span> <span class="kw">operator</span><span class="op">&lt;&lt;(</span>ostream <span class="op">&amp;</span> o<span class="op">,</span> stack<span class="op">&lt;</span><span class="dt">double</span><span class="op">&gt;</span> s<span class="op">)</span></code>
+to display a stack, and end your program with <code
+class="sourceCode cpp">cout <span class="op">&lt;&lt;</span> my_stack<span class="op">;</span></code>
+instead.</li>
+</ul></li>
+</ul>
+<p>We strongly recommend, but do not require, using a two-step read:
+read a word from <code>cin</code> into a <code>string</code>, then feed
+the <code>string</code> into a <code>stringstream</code> and use the
+stringstream to parse a number. However, there are other solutions and
+you do not have to do this if you do not want to.</p>
+<p>When you are done either show your TA your code for a checkoff or
+submit it to the submission site.</p>
+</div>
+<p>The input processing can look like a loop which, as long as
+<code>cin</code> is <code>.good()</code> (i.e., not closed and with no
+read errors)</p>
+<ol type="1">
+<li><p><code>&gt;&gt;</code> a <code>string</code> from
+<code>cin</code></p></li>
+<li><p>make a new <code>stringstream</code> and <code>&lt;&lt;</code> a
+<code>string</code> into it</p></li>
+<li><p><code>&gt;&gt;</code> a <code>double</code> from the
+<code>stringstream</code></p></li>
+<li><p>if that <code>&gt;&gt;</code>ing into the
+<code>stringstream</code> causes the <code>stringstream</code> to
+<code>.fail()</code>,</p>
+<ol type="a">
+<li><p>check if the <code>string</code> is <code>==</code> to an
+operator, and</p>
+<ol type="i">
+<li><p>if so apply the operator (ending if there are fewer than 2
+operands)</p>
+<p>otherwise, end the loop</p></li>
+</ol>
+<p>otherwise, push the <code>double</code></p></li>
+</ol></li>
+</ol>
+<p>I recommend making a new stringstream object each time. (Otherwise,
+you need to make sure you properly reset the state of the stringstream,
+such as by calling <code>stream.str("")</code> to clear the internal
+buffer and <code>stream.clear()</code> to reset the EOF/fail
+information.)</p>
+<p>Use a <code>std::stack&lt;double&gt;</code> as your stack. Note that
+<code>pop</code> returns <code>void</code>; you’ll need to use
+<code>top</code> to retrieve a value before <code>pop</code>ing it off
+the stack.</p>
+<p>Displaying a <code>stack</code> is not something the standard library
+natively supports, so you’ll need to do that manually.</p>
+<p>If you have time, implement your own <code
+class="sourceCode cpp">ostream <span class="op">&amp;</span> <span class="kw">operator</span><span class="op">&lt;&lt;(</span>ostream <span class="op">&amp;</span> o<span class="op">,</span> stack<span class="op">&lt;</span><span class="dt">double</span><span class="op">&gt;</span> s<span class="op">)</span></code>
+which repeatedly displays (with <code>&lt;&lt;</code>) the
+<code>top()</code> and then <code>pop()</code>s until the stack is
+<code>.empty()</code>. Note that we pass in the ouput stream by
+reference (with <code>&amp;</code>), but pass the stack by value.
+Passing by value means passing a copy, so <code>pop</code>ing
+<code>s</code> does not <code>pop</code> the stack that was passed in,
+only the local copy of it that the <code>operator&lt;&lt;</code>
+function contains.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>C++ generally manages the heap slightly differently when
+using <code>malloc</code> vs <code>new</code>, so never
+<code>free</code> something allocated with <code>new</code> or vice
+verse.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Historically, the Standard Template Library was
+distributed separately from the rest of the C++ standard library, which
+is why you’ll often see it distinguished from it.<a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

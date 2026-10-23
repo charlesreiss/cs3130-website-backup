@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Makefiles</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/make.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#the-make-tool" id="toc-the-make-tool"><span
+class="toc-section-number">1</span> The <code>make</code> tool</a>
+<ul>
+<li><a href="#rules" id="toc-rules"><span
+class="toc-section-number">1.1</span> Rules</a></li>
+<li><a href="#macros" id="toc-macros"><span
+class="toc-section-number">1.2</span> Macros</a></li>
+<li><a href="#targets-that-arent-files"
+id="toc-targets-that-arent-files"><span
+class="toc-section-number">1.3</span> Targets that aren’t files</a></li>
+<li><a href="#pattern-rules" id="toc-pattern-rules"><span
+class="toc-section-number">1.4</span> Pattern rules</a></li>
+<li><a href="#suffix-rules" id="toc-suffix-rules"><span
+class="toc-section-number">1.5</span> Suffix rules</a></li>
+<li><a href="#identifying-dependencies"
+id="toc-identifying-dependencies"><span
+class="toc-section-number">2.1</span> Identifying dependencies</a></li>
+</ul></li>
+<li><a href="#multi-file-project-design"
+id="toc-multi-file-project-design"><span
+class="toc-section-number">3</span> Multi-file project design</a></li>
+<li><a href="#some-additionalalternate-references"
+id="toc-some-additionalalternate-references"><span
+class="toc-section-number">4</span> Some additional/alternate
+references</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>17 Jan 2024: move text previously in glossary here to compilation;
+add text about automatically finding dependencies</li>
+<li>18 Jan 2024: add section on suffix rules</li>
+<li>18 Jan 2024: correct typo in := versus = example code; format that
+discussion as endnote as intended</li>
+<li>24 Jan 2024: mention that variables can be overriden on command
+line</li>
+<li>27 Jan 2026: reference Dive Into Systems as alternate reference</li>
+<li>7 Sep 2026: add note about <code>$*</code> in pattern rules and that
+<code>%</code> does not work in system commands of pattern rules</li>
+</ul>
+</div>
+<h1 data-number="1" id="the-make-tool"><span
+class="header-section-number">1</span> The <code>make</code> tool</h1>
+<p><code>make</code> is a tool that reads a file (called a makefile,
+named <code>Makefile</code> by default) and decides what commands it
+need to run to update your project. To avoid redundant commands when
+only a small part of the project has been updated, <code>make</code>
+checks file modifications times when it determines which commands to
+generate. A well-constructed makefile can simplify building and running
+code on many platforms.</p>
+<h2 data-number="1.1" id="rules"><span
+class="header-section-number">1.1</span> Rules</h2>
+<p>The key component of a makefile is a <strong>rule</strong>,
+consisting of three parts:</p>
+<ol type="1">
+<li>A <strong>target</strong>, the name of a file that will be created
+or updated by the rule.</li>
+<li>A list of <strong>dependencies</strong> (or <q>prerequisites</q>):
+if the <em>target</em> is missing or is older than at least one
+dependency, the <em>system commands</em> will be run.</li>
+<li>A list of <strong>system commands</strong> (or the <q>recipe</q>):
+shell commands that should result in (re)making the <em>target</em></li>
+</ol>
+<p>The <em>target</em> must begin a line (i.e., must not be indented)
+and end in a colon. Anything after that colon is a <em>dependency</em>.
+Indented lines that follow (which must be indented with a single tab
+character, not spaces) are <em>system commands</em>.</p>
+<div class="example long">
+<p>The following rule will build <code>hello.o</code> if either
+<code>hello.c</code> or <code>hello.h</code> is newer than
+<code>hello.o</code>. Otherwise, it will do nothing.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dv">hello.o:</span><span class="dt"> hello.c hello.h</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>clang -c hello.c</span></code></pre></div>
+
+</div>
+<p>When you run <code>make</code> it reads <code>Makefile</code> and
+executes the <em>first</em> rule it finds. If you want to run a
+different rule, you can give its target as an argument to
+<code>make</code>.</p>
+<div class="example long">
+<p>Consider the following <code>Makefile</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dv">hello.o:</span><span class="dt"> hello.c hello.h</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>clang -c hello.c</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dv">bye.o:</span><span class="dt"> bye.c bye.h</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>clang -c bye.c</span></code></pre></div>
+<p>Running <code>make</code> will ensure <code>hello.o</code> is up to
+date. Running <code>make bye.o</code> will ensure <code>bye.o</code> is
+up to date.</p>
+
+</div>
+<p>If a dependency of an executed rule is the target of another rule,
+that other rule will be executed first.</p>
+<div class="example long">
+<p>Consider the following <code>Makefile</code>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dv">runme:</span><span class="dt"> hello.o bye.o main.c main.h</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>clang main.c hello.o bye.o -o runme</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dv">hello.o:</span><span class="dt"> hello.c hello.h</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>clang -c hello.c</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="dv">bye.o:</span><span class="dt"> bye.c bye.h</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>clang -c bye.c</span></code></pre></div>
+<p>Running <code>make</code> will ensure <code>runme</code> is up to
+date; since <code>runme</code>’s dependencies include
+<code>hello.o</code> and <code>bye.o</code>, both of those rules will
+also be executed.</p>
+
+</div>
+<h2 data-number="1.2" id="macros"><span
+class="header-section-number">1.2</span> Macros</h2>
+<p>Makefiles routinely use variables (which they call macros) to
+separate out the list of files from the rules that make them, as well as
+to allow easy swapping out of different compilers, compilation flags,
+etc.</p>
+<p>Variables are defined with <code
+class="sourceCode makefile"><span class="dt">NAME</span> <span class="ch">=</span><span class="st"> meaning</span></code>
+or <code
+class="sourceCode makefile"><span class="dt">NAME</span> <span class="ch">:=</span><span class="st"> meaning</span></code>
+syntax. (The syntaxes with <code>:</code> evaluate <code>meaning</code>
+immediately; the syntax without evaluates it each time it is used.<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>) Traditionally, variable names are
+in all-caps. Variables are used by placing them in parentheses, preceded
+by a dollar sign: <code>$(NAME)</code>.</p>
+<p>Some variables names that are very common to find in Makefiles
+include:</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">example</th>
+<th style="text-align: left;">notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">CC</td>
+<td style="text-align: left;">clang</td>
+<td style="text-align: left;">The C compiler to use</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CFLAGS</td>
+<td style="text-align: left;">-O2 -g</td>
+<td style="text-align: left;">Compile-time flags for the C compiler</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDFLAGS</td>
+<td style="text-align: left;">-static</td>
+<td style="text-align: left;">Link-time flags for the compiler
+(typically placed before list of object files on command line)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LIBS or LDLIBS</td>
+<td style="text-align: left;">-lm</td>
+<td style="text-align: left;">Link-time flags representing libraries for
+the compiler (typically placed after list of object files on command
+line)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CXX</td>
+<td style="text-align: left;">clang++</td>
+<td style="text-align: left;">The C++ compiler to use</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CXXFLAGS</td>
+<td style="text-align: left;">-O2 -g</td>
+<td style="text-align: left;">Compile-time flags for the C++
+compiler</td>
+</tr>
+</tbody>
+</table>
+<p>Even if you do not need linker flags or libraries, it’s still common
+to define a blank <code>LDFLAGS :=</code> or <code>LIBS :=</code> and
+use <code>$(LDFLAGS)</code> or <code>$(LIBS)</code> in all linking
+locations so that if you later realize you need to link to an external
+library (like the math library, <code>-lm</code>), you can easily do
+so.</p>
+<p>In addition to being edited in the Makefile, variables can be
+temporarily overriden on the command line. For example, running
+<code>make target CFLAGS="-Wall -g"</code> will run
+<code>make target</code>, but with <code>CFLAGS</code> set to
+<code>-Wall -g</code> instead of whatever setting is in the
+Makefile.</p>
+<h2 data-number="1.3" id="targets-that-arent-files"><span
+class="header-section-number">1.3</span> Targets that aren’t files</h2>
+<p>Two of these we will find useful:</p>
+<p>You can have a (set of) targets that do not represent files, commonly
+including <code>all</code> and <code>clean</code>. These are specified
+by having the line <code>.PHONY: all clean</code>, and then using
+<code>all</code> and <code>clean</code> like regular targets. You
+<em>should</em> always have your first rule be named <code>all</code>
+and have it do the <q>main</q> task (i.e., building the program or
+library you are providing). You <em>should</em> always have a rule named
+<code>clean</code> that removes all files that are built by
+<code>make</code>.</p>
+<h2 data-number="1.4" id="pattern-rules"><span
+class="header-section-number">1.4</span> Pattern rules</h2>
+<p>You will often want a few <q>pattern rules</q> using a few
+<q>automatic variables</q>. There are a lot of things <a
+href="https://www.gnu.org/software/make/manual/make.html#Pattern-Rules">you
+could learn</a> about these, but a simple version will often
+suffice:</p>
+<ul>
+<li>Use <code>%.ending</code> as a target. <code>%</code> is a wild-card
+and can represent any name.</li>
+<li>Use <code>%.other_ending</code> as a dependency. <code>%</code> has
+the same meaning it did in the target.</li>
+<li>Use <code>$&lt;</code> in the system commands as the name of the
+first dependency.</li>
+<li>Use <code>$@</code> in the system commands as the name of the
+target.</li>
+<li>Use <code>$*</code> in the system commands as what replaced
+<code>%</code> in the target/dependencies. (Using <code>%</code> in the
+system command will <em>not</em> do this.)</li>
+</ul>
+<div class="example long">
+<p>Many makefiles will include a command like</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dv">%.o:</span><span class="dt"> %.c %.h config.h</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -c <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> <span class="ch">$&lt;</span> -o <span class="ch">$@</span></span></code></pre></div>
+<p>In other words,</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Part</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>%.o</code></td>
+<td style="text-align: left;">To make any .o file</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>: %.c</code></td>
+<td style="text-align: left;">from a C file of the same name</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>%.h config.h</code></td>
+<td style="text-align: left;">(with its .h file and the file
+<code>config.h</code> as extra dependencies)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$(CC)</code></td>
+<td style="text-align: left;">use our C compiler</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>$(CFLAGS)</code></td>
+<td style="text-align: left;">with our compile-time flags</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$&lt;</code></td>
+<td style="text-align: left;">to build that .c file</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-o $@</code></td>
+<td style="text-align: left;">and name the result the name of our
+target.</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<h2 data-number="1.5" id="suffix-rules"><span
+class="header-section-number">1.5</span> Suffix rules</h2>
+<p>Pattern rules are as shown above are flexible and relatively
+intuitive, but do not work in all versions of <code>make</code>. (In
+particular, they are an addition of GNU make, which is almost always the
+version of <code>make</code> you will find on a Linux or OS X system,
+and the version of <code>make</code> we will assume in this course.)
+They were added to supplement a less flexible and (in my opinion) less
+intuitive (but much older and more widely supported) mechanism known as
+<em>suffix rules</em>.</p>
+<p>A suffix rule represents the case files with one extension are
+produced from files with another extension. To make a suffix rule that
+produces <code>.ending</code> files from <code>.other_ending</code>
+files, then:</p>
+<ul>
+<li>Use <code>.other_ending.ending</code> should be the <q>target</q> of
+the rule; this will represent (something).other_ending being a
+dependency and (something).ending being a target.</li>
+<li>Use <code>$&lt;</code> in the system commands for the dependency
+file ((something).other_ending)</li>
+<li>Use <code>$@</code> in the system commands for the target file
+((something).ending)</li>
+</ul>
+<p>In order to ensure that a <code>.other_ending.ending</code> rule has
+the wild-card property, one needs to inform <code>make</code> that
+<code>.other_ending</code> and <code>.ending</code> are file extensions
+using the special <code>.SUFFIXES</code> target:</p>
+<pre><code>.SUFFIXES: .ending .other_ending</code></pre>
+<div class="example long">
+<p>A suffix rule for compiling .o files from .c files with the same
+effect as the above pattern rule example may look like:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.c.o:</span><span class="dt"> config.h</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -c <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> <span class="ch">$&lt;</span> -o <span class="ch">$@</span></span></code></pre></div>
+
+</div>
+<div class="aside long">
+<h1 data-number="2" id="a-bit-about-bash"><span
+class="header-section-number">2</span> A bit about
+<code>bash</code></h1>
+<p>Recall that each line of <code>bash</code> begins with a program and
+is followed by any number of arguments. <code>bash</code> also has
+various control constructs and special syntax that can be used where
+programs are expected, like <code>for</code> and <code>x=</code>, which
+we will not cover in this class. It can also redirect input and output
+using <code>|</code>, <code>&gt;</code>, <code>&lt;</code>,
+<code>&gt;&gt;</code>, <code>2&gt;</code>, and a few others.</p>
+<p>Because new-lines are important to <code>bash</code>, but sometimes
+line breaks help reading, you can end a <code>bash</code> line with
+<code>\</code> to say <q>I’m not really done with this line.</q>
+Thus</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> 1 echo 2 <span class="dt">\</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>echo <span class="dt">\</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>3 <span class="dt">\</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>echo 4</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> 5 <span class="dt">\</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    echo 6</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> 7</span></code></pre></div>
+<p>is equivalent to</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> 1 echo 2 echo 3 echo 4</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> 5 echo 6</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> 7</span></code></pre></div>
+<p>You can also combine lines; a <code>;</code> is (almost) the same as
+a new-line to <code>bash</code>.</p>
+
+</div>
+<h2 data-number="2.1" id="identifying-dependencies"><span
+class="header-section-number">2.1</span> Identifying dependencies</h2>
+<p>In the case of .o files depending on their .c files and executables
+depending on their .o files and similar, a programmer can easily
+determine the appropriate dependencies for a makefile rule by reading
+the command the rule would run.</p>
+<p>But dependencies of .o files on .h files are less apparent. If
+<code>foo.c</code> includes <code>bar.h</code>, then the rule for
+producing <code>foo.o</code> should depend on <code>bar.h</code> (and
+<code>foo.c</code>), since changes to <code>bar.h</code> might change
+what goes into <code>foo.o</code>. This would mean that when
+<code>foo.c</code>’s <code>#include</code>s are updated, the makefile
+rule needs to be updated correspondingly.</p>
+<p>Although it is common to manually synchronize makefile rules and the
+<code>#include</code>s in source files, often projects that use
+makefiles automate this task. There are a variety of mechanisms that you
+might see projects use to do this (examples: <a
+href="https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html">1</a>,
+<a href="https://linux.die.net/man/1/makedepend">2</a>). (Alternately,
+avoiding worrying about such issues might be a reason projects will use
+a build system where the programmers do not use <code>make</code> or do
+not use <code>make</code> directly.)</p>
+<h1 data-number="3" id="multi-file-project-design"><span
+class="header-section-number">3</span> Multi-file project design</h1>
+<p>In simple use of Makefiles, a <em>project</em>, which may produce
+multiple executable program and/or libraries, will have a single
+Makefile.</p>
+<p>Generally, this Makefile will have targets and corresponding
+rules:</p>
+<ul>
+<li><p>for each object file, to compile each source file (for example,
+<code>foo.c</code>) into that object file (<code>foo.o</code>) whenever
+it or anything it #includes changes. Commonly, rather than writing an
+individual rule for each .o file, pattern rules will be used for this
+task.</p></li>
+<li><p>for each executable program and/or library, to link all the
+object files that form a parto of it if any of the object files have
+changed</p></li>
+<li><p>for common tasks (like <q>all</q> for building everything and
+<q>clean</q> for removing built files) that just depend on other targets
+or run certain commands, so users can run things like
+<code>make clean</code> to do those tasks</p></li>
+</ul>
+<h1 data-number="4" id="some-additionalalternate-references"><span
+class="header-section-number">4</span> Some additional/alternate
+references</h1>
+<p>On make in particular:</p>
+<ul>
+<li><a
+href="https://diveintosystems.org/book/Appendix2/makefiles.html">Dive
+Into Systems, Section 17.5</a></li>
+<li>The <a href="https://www.gnu.org/software/make/manual/">manual for
+GNU make</a> (the version of <code>make</code> on the department
+machines and most Linux systems).</li>
+<li>The POSIX specification for <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html">make</a>.</li>
+</ul>
+<p>On build systems:</p>
+<ul>
+<li>Some selected other build systems for C/C++ (when make isn’t enough,
+maybe):
+<ul>
+<li><a
+href="https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html">GNU
+autotools</a></li>
+<li><a href="https://cmake.org/">CMake</a></li>
+<li><a href="https://ninja-build.org/">ninja</a></li>
+<li><a href="https://scons.org/">scons</a></li>
+</ul></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>See also <a
+href="https://www.gnu.org/software/make/manual/html_node/Flavors.html">GNU
+make manual, <q>Two Flavors of Variables</q></a>.</p>
+<p>For example,</p>
+<pre><code>BAR = c 
+FOO = $(BAR) b
+BAR = a</code></pre>
+<p>will make <code>$(FOO)</code> evaluate to <code>a b</code> even
+though <code>BAR</code>.</p>
+<p>In contrast:</p>
+<pre><code>BAR = c
+FOO := $(BAR) b
+BAR = a</code></pre>
+<p>will make <code>$(FOO)</code> evaluate to <code>c b</code>.</p>
+<p>In addition to variable references, the right-hand side of
+assignments can contain <q>function</q> calls, for example:</p>
+<pre><code>DATE1 = $(shell date)
+DATE2 := $(shell date)</code></pre>
+<p>will run the <code>date</code> command and use its output as the
+value of <code>$(DATE1)</code> or <code>$(DATE2)</code>. Since
+<code>DATE2</code>’s assignment uses <code>:=</code>, the
+<code>date</code> command will be run just once for it, making the value
+of <code>$(DATE2)</code> constant. In contrast, <code>$(DATE1)</code>
+will rerun the <code>date</code> command each time it is used,
+potentially resulting in different values over time.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

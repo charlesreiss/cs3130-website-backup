@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Thread Pool</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/pool.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#your-task" id="toc-your-task"><span
+class="toc-section-number">1</span> Your Task</a></li>
+<li><a href="#pool.h" id="toc-pool.h"><span
+class="toc-section-number">2</span> <code>pool.h</code></a></li>
+<li><a href="#example-of-pool-library-usage"
+id="toc-example-of-pool-library-usage"><span
+class="toc-section-number">3</span> Example of pool library
+usage</a></li>
+</ul></nav>
+<div class="changelog">
+<p>changelog:</p>
+<ul>
+<li>6 Apr 2026: fix bug in <code>fail_test()</code> call in
+<code>pool-test.c</code></li>
+<li>8 Apr 2026: add note about ThreadSanitizer</li>
+<li>8 Apr 2026: fix test cases which were too picky about task numbering
+in <code>pool-test.c</code></li>
+<li>8 Apr 2026: add pool-example.c</li>
+<li>9 Apr 2026: fix an additional test case which was too picky about
+task numbering in <code>pool-test.c</code></li>
+<li>9 Apr 2026: reorganize section on testing; add some more advice on
+testing</li>
+<li>10 Apr 2026: make pool-test.c wait longer for tests that
+<q>pause</q>; cleanup grammar in with section on testing; note that
+pool-test.c is bad at testing waiting</li>
+<li>11 Apr 2026: add some test cases to pool-test.c to hopefully notice
+broken pool_wait()s more often</li>
+<li>14 Apr 2026: adjust <q>two thread, four tasks, one submitting extra
+task, tasks 0/1, 4/5 using barriers</q> in pool-test.c not to be too
+picky about ordering</li>
+<li>15 Apr 2026: remove redundant <q>and all tasks are waited for</q>
+from description of pool_stop</li>
+<li>17 Apr 2026: fix incorrect #ifdef to #ifndef in header guard</li>
+<li>26 Apr 2026: update pool-test.c to avoid calling pool_stop before
+all tasks are submitted in some cases</li>
+</ul>
+</div>
+<h1 data-number="1" id="your-task"><span
+class="header-section-number">1</span> Your Task</h1>
+<ol type="1">
+<li><p>Implement a <q><a
+href="https://en.wikipedia.org/wiki/Thread_pool">thread pool</a></q>
+library with the following functions:</p>
+<ul>
+<li><p><code>void pool_setup(int threads);</code></p>
+<p>Create exactly <code>threads</code> threads, each of which will later
+run tasks submitted by <code>pool_submit_task</code>.</p>
+<p>You may assume that this is called before any of the below functions
+are called.</p></li>
+<li><p><code>int pool_submit_task(task_fn task, void *argument);</code></p>
+<p>Record a task as submitted so it will later be run by one of the
+threads created by the thread pool, then return.</p>
+<p>Tasks must be started in the order they are submitted.</p>
+<p>When the task is eventually run from one of the threads created by
+<code>pool_setup</code>, call the function specified by the function
+pointer <code>task</code> with the single argument
+<code>argument</code>. Then record the return value for later retrieval
+with <code>pool_get_task_result</code>.</p>
+<p>This function must return an identifier that represents this instance
+of the task. This identifier can be used to retrieve the return value
+(as long as <code>pool_setup</code> is not called again).</p>
+<p>This function must be safe to call from a task.</p></li>
+<li><p><code>void pool_wait();</code></p>
+<p>Wait for all submitted tasks up to this point to complete running, if
+they haven’t already.</p>
+<p>You may assume this will not be called from a task.</p>
+<p>If new tasks are submitted while <code>pool_wait()</code> is running,
+you may either:</p>
+<ul>
+<li>let those tasks run normally (possibly only finishing after
+<code>pool_wait</code> returns); or</li>
+<li>delay those tasks until after <code>pool_wait()</code> returns</li>
+</ul></li>
+<li><p><code>void *pool_get_task_result(int task_id);</code></p>
+<p>Retrieve the return value from the task with the given
+<code>task_id</code>.</p>
+<p>Return <code>NULL</code> if the task as not finished or does not
+exist.</p>
+<p>We do not care what this function does if there has been a new call
+to <code>pool_setup</code> since the task returned.</p></li>
+<li><p><code>void pool_stop();</code></p>
+<p>Cause all threads in the thread pool to finish processing currently
+submitted tasks and then terminate. Wait for all the threads to be
+joined.</p>
+<p>Note that the task return values may still be retrieved after
+<code>pool_stop</code> returns.</p>
+<p>After <code>pool_stop()</code> returns, it should be possible to call
+<code>pool_setup()</code> again (possibly with a different number of
+threads) and then submit and wait functions normally again.</p>
+<p>We do not care how this function behaves if new tasks are submitted
+after it is started but before a subsequent call to
+<code>pool_setup()</code>. We also do not care how this function behaves
+if there is a pending call to <code>pool_wait()</code> in another
+thread.</p></li>
+</ul>
+<p>Your implementation does not need to support more than 200 tasks. You
+may assume no more than 200 tasks will be submitted.</p>
+<p>Whenever a thread needs to wait for an event (such as one of the
+threads started by <code>pool_setup</code> waiting for a new task), it
+may not consume a lot of compute time (<q>busy wait</q>). The most
+likely way you’d do this is by having the thread call a synchronization
+function that will waits until the event has likely happened.</p></li>
+<li><p>Test your implementation.</p>
+<p>To help you with this, we supply:</p>
+<ul>
+<li>this <a href="pool-files/pool-example.c">pool-example.c</a>, a
+relatively small example you can use as a base for writing tests and for
+manual testing and debugging, and</li>
+<li>this <a href="pool-files/pool-test.c">pool-test.c</a> <em>[last
+updated 2026-04-26]</em>, which tries a bunch of patterns for running
+tasks</li>
+</ul>
+<p>I would recommend modifying pool-example.c to have the tasks take
+longer (such as by having them call <code>nanosleep</code>) and then use
+that check that your <code>pool_wait</code> and <code>pool_stop</code>
+actually wait for the tasks to finish. (<code>pool-test.c</code> might
+not reliably detect this type of problem.)</p>
+<p>In addition, I would <strong>strongly recommend</strong> compiling
+and linking with <code>-fsanitize=thread</code> as part of your testing
+to enable ThreadSanitizer, which can help identify race conditions more
+reliably. We will do this as part of our grading.</p>
+<p>Note that, because race conditions depend on timing, tests may not
+consistently trigger those bugs. In addition to using ThreadSanitizer,
+you can try to trigger race conditions more consistently by trying a
+test that might have a race condition many times (for example, in a
+loop).</p>
+<p>Also, note that these examples/tests don’t check that your programs
+do not consume a lot of compute time while waiting for an event (and we
+intend to check that when grading).</p></li>
+<li><p>Submit your implementation using the submission site.</p></li>
+</ol>
+<h1 data-number="2" id="pool.h"><span
+class="header-section-number">2</span> <code>pool.h</code></h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef POOL_H_</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define POOL_H_</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// The function signature for a task.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// A task should be a function like:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">//     void *my_task(void*) { ... }</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="dt">void</span><span class="op">*(*</span>task_fn<span class="op">)(</span><span class="dt">void</span><span class="op">*);</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize the thread pool.</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> pool_setup<span class="op">(</span><span class="dt">int</span> threads<span class="op">);</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">// Submit a new task to the thread pool and return its ID.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> pool_submit_task<span class="op">(</span>task_fn task<span class="op">,</span> <span class="dt">void</span> <span class="op">*</span>argument<span class="op">);</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">// Get the return value from a task.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>pool_get_task_result<span class="op">(</span><span class="dt">int</span> task_id<span class="op">);</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">// Return after all existing tasks have finished.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> pool_wait<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">// Tell the thread pool threads to finish any current task and then exit.</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> pool_stop<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div>
+<h1 data-number="3" id="example-of-pool-library-usage"><span
+class="header-section-number">3</span> Example of pool library
+usage</h1>
+<p>Suppose a user wanted to use the thread pool library to handle
+summing arrays of numbers. They might make a function to do this
+like:</p>
+<pre><code>struct SumInfo {
+    int *array;
+    int array_size;
+};
+
+void *sum_function(void *argument) {
+    SumInfo *sum_info = argument;
+    int sum = 0;
+    for (int i = 0; i &lt; sum_info-&gt;array_size; i += 1) {
+        sum += sum_info-&gt;array[i];
+    }
+    return (void*) sum;
+}</code></pre>
+<p>Then arrange for many sums to be computed by the thread pool:</p>
+<pre><code>pool_setup(num_threads);
+
+struct SumInfo sum_A_info = { .array = arrayA, .array_size = ARRAY_SIZE };
+int task_A = pool_submit_task(sum_function, &amp;sum_A_info);
+struct SumInfo sum_B_info = { .array = arrayB, .array_size = ARRAY_SIZE };
+int task_B = pool_submit_task(sum_function, &amp;sum_B_info);
+...
+
+pool_wait();
+int sum_A = (int) pool_get_task_result(task_A)
+int sum_B = (int) pool_get_task_result(task_B)
+...
+
+pool_stop();</code></pre>
+<p>The thread pool will start exactly <code>num_threads</code> threads,
+regardless of how many arrays there are to sum. Then it will have those
+threads run array-summing operations until there are no operations
+left.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles ReissBrad Campbell.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Schedule</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/schedule.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <!--<div class="oldsitesm">
+This schedule is tentative and subject to change (especially before the semester starts).
+</div>-->
+
+<p>
+<b>This schedule is an estimate. It may be updated based on the actual pacing of the course material.</b>
+</p>
+
+<p>
+Slides linked with text “slides from” references slide deck(s) for the overall topic(s)
+that Reiss has built over the years. You can see a list of those slidedecks <a href="allslides.html">here</a>.
+Often not everything in the slide deck will be covered in one day (or sometimes, at all in the semester).
+</p>
+
+<p id="weekJump" style="display: none"></p>
+<p id="hideOutline" style="display: none"></p>
+
+<table class="schedule" id="schedule" data-start="2026-08-25">
+<tr class="header"><td>Date</td><td>Topic</td><td>Assignment</td></tr><tr class="week_num" id="week-1" data-week-number="1" data-iso-week="2026-W35"><td colspan="3">Week 1</td></tr><tr class="lecture">
+<td class="date">Tue 25 Aug</td>
+<td class="description">
+<div class="titlestuff"><h3>introduction / building intro</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/intro.html">intro</a><sup>(<a href="slides/intro.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/logistics.html">logistics</a><sup>(<a href="slides/logistics.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/intro.html">overview</a></p>
+</span><ul>
+  <li>course outline</li>
+  <li>pointers in C (review?)</li>
+</ul>
+</div>
+</td><td class="assignment"></td></tr><tr class="no_class">
+<td class="date">Wed 26 Aug</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><p>(no lab)</p>
+</div>
+</td><td class="assignment"></td></tr><tr class="lecture">
+<td class="date">Thu 27 Aug</td>
+<td class="description">
+<div class="titlestuff"><h3>building</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/building.html">building</a><sup>(<a href="slides/building.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/compilation.html">compilation</a></p>
+</span><ul>
+  <li>.o, .a, .so files</li>
+  <li>dynamic and static linking</li>
+</ul>
+</div>
+</td><td class="assignment"></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 28 Aug</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"></td></tr><tr class="week_num" id="week-2" data-week-number="2" data-iso-week="2026-W36"><td colspan="3">Week 2</td></tr><tr class="lecture">
+<td class="date">Tue 01 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>make</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/building.html">building</a><sup>(<a href="slides/building.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/accounts.html">accounts</a><sup>(<a href="slides/accounts.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/make.html">makefiles</a>, <a href="readings/accounts.html">accounts</a>, <a href="readings/permissions.html">POSIX permissions</a></p>
+</span><ul>
+  <li>make
+    <ul>
+      <li>rules</li>
+    </ul>
+  </li>
+  <li>system call idea, user IDs</li>
+</ul>
+</div>
+</td><td class="assignment"></td></tr><tr class="lab">
+<td class="date">Wed 02 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: make</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/make.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 03 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>accounts 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/accounts.html">accounts</a><sup>(<a href="slides/accounts.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/accounts.html">accounts</a>, <a href="readings/permissions.html">POSIX permissions</a></p>
+</span><ul>
+  <li>user IDs/account abstraction</li>
+  <li>POSIX permissions, briefly</li>
+  <li>access control lists</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week02 (quiz for week 2) released, due 2026-09-08 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 04 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"></td></tr><tr class="week_num" id="week-3" data-week-number="3" data-iso-week="2026-W37"><td colspan="3">Week 3</td></tr><tr class="lecture">
+<td class="date">Tue 08 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>accounts 2 / exceptions 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/accounts.html">accounts</a><sup>(<a href="slides/accounts.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/kernel.html">kernel</a><sup>(<a href="slides/kernel.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/kernel.html">kernel</a> §1-2.2, 2.3.1.1, 2.4, 3, 4</p>
+</span><p>(add deadline)</p>
+
+<ul>
+  <li>set-user-ID, sudo is not kernel mode</li>
+  <li>kernel mode</li>
+  <li>system calls</li>
+  <li>memory protection (start)</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week02 (quiz for week 2) due 13:45 (released 2026-09-03)<br /></td></tr><tr class="lab">
+<td class="date">Wed 09 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: permissions</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/permissions.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 10 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>exceptions 2 / processes 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/kernel.html">kernel</a><sup>(<a href="slides/kernel.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/unix-api.html">unix-api</a><sup>(<a href="slides/unix-api.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/thread.html">threads</a> §1-4</p>
+</span><ul>
+  <li>memory protection (finish)</li>
+  <li>context switches</li>
+  <li>
+    <p>exceptions and I/O</p>
+  </li>
+  <li>creating new processes (start)
+    <ul>
+      <li>fork</li>
+    </ul>
+  </li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week03 (quiz for week 3) released, due 2026-09-15 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 11 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw"><a href="/~cr4bd/3130/F2026/labhw/warmup.html">warmup</a> due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-4" data-week-number="4" data-iso-week="2026-W38"><td colspan="3">Week 4</td></tr><tr class="lecture">
+<td class="date">Tue 15 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>processes 2</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/unix-api.html">unix-api</a><sup>(<a href="slides/unix-api.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/thread.html">threads</a> §1-4</p>
+</span><ul>
+  <li>creating new processes (finish)
+    <ul>
+      <li>exec*</li>
+    </ul>
+  </li>
+  <li>wait</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week03 (quiz for week 3) due 13:45 (released 2026-09-10)<br /></td></tr><tr class="lab">
+<td class="date">Wed 16 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: fork lab</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/fork-lab.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 17 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>processes 3 / virtual memory 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/unix-api.html">unix-api</a><sup>(<a href="slides/unix-api.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/vm-intro.html">vm-intro</a><sup>(<a href="slides/vm-intro.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/vm.html">VM</a> §1, 2.2, 3.1</p>
+</span><ul>
+  <li>file descriptors</li>
+  <li>
+    <p>redirection, dup2</p>
+  </li>
+  <li>virtual memory concept</li>
+  <li>page table (start)</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week04 (quiz for week 4) released, due 2026-09-22 13:45<br />test 1 released<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 18 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"></td></tr><tr class="week_num" id="week-5" data-week-number="5" data-iso-week="2026-W39"><td colspan="3">Week 5</td></tr><tr class="lecture">
+<td class="date">Mon 21 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"></div>
+</td><td class="assignment"><span class="duehw">test 1 due</span><br /></td></tr><tr class="lecture">
+<td class="date">Tue 22 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>virtual memory 2</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/vm-intro.html">vm-intro</a><sup>(<a href="slides/vm-intro.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/vm-fault.html">vm-fault</a><sup>(<a href="slides/vm-fault.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/vm.html">VM</a> §2.1, 3.2</p>
+</span><ul>
+  <li>page table (finish)</li>
+  <li>page table lookup examples</li>
+  <li>page tables and context switches</li>
+  <li>loading data on demand</li>
+  <li>copy-on-write, other “page table tricks”</li>
+  <li>swapping</li>
+  <li>mmap, linux /proc/$$/maps (start)</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week04 (quiz for week 4) due 13:45 (released 2026-09-17)<br /></td></tr><tr class="lab">
+<td class="date">Wed 23 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: empty loop</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/emptyloop.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 24 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>virtual memory 3</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/vm-fault.html">vm-fault</a><sup>(<a href="slides/vm-fault.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/vm-format.html">vm-format</a><sup>(<a href="slides/vm-format.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/vm.html">VM</a> §2.1, 3.2</p>
+</span><ul>
+  <li>
+    <p>mmap, linux /proc/$$/maps (finish)</p>
+  </li>
+  <li>
+    <p>storing page tables in memory</p>
+  </li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week05 (quiz for week 5) released, due 2026-09-29 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 25 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw"><a href="/~cr4bd/3130/F2026/labhw/timing.html">timing</a> due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-6" data-week-number="6" data-iso-week="2026-W40"><td colspan="3">Week 6</td></tr><tr class="lecture">
+<td class="date">Tue 29 Sep</td>
+<td class="description">
+<div class="titlestuff"><h3>virtual memory 4</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/vm-format.html">vm-format</a><sup>(<a href="slides/vm-format.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/vm.html">VM</a> §2.1, 3.2</p>
+</span><ul>
+  <li>pagetable assignment</li>
+  <li>multi-level page tables</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week05 (quiz for week 5) due 13:45 (released 2026-09-24)<br /></td></tr><tr class="lab">
+<td class="date">Wed 30 Sep</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: virtual memory exploration</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/vm-explore.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 01 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>virtual memory 5 / caches 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/vm-format.html">vm-format</a><sup>(<a href="slides/vm-format.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/caching-intro.html">caching-intro</a><sup>(<a href="slides/caching-intro.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/cache.html">cache</a></p>
+</span><ul>
+  <li>multi-level page table examples</li>
+  <li>
+    <p>virtual memory exercises</p>
+  </li>
+  <li>caching idea, locality</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week06 (quiz for week 6) released, due 2026-10-08 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 02 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw"><a href="/~cr4bd/3130/F2026/labhw/fork.html">fork HW</a> due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-7" data-week-number="7" data-iso-week="2026-W41"><td colspan="3">Week 7</td></tr><tr class="no_class">
+<td class="date">Tue 06 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">(no class)</div>
+</td><td class="assignment"></td></tr><tr class="lab">
+<td class="date">Wed 07 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: sync games</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/sync.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 08 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>caches 2</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/caching-intro.html">caching-intro</a><sup>(<a href="slides/caching-intro.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/caching-dm.html">caching-dm</a><sup>(<a href="slides/caching-dm.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/cache.html">cache</a></p>
+</span><blockquote>
+  <p>When the recording for this lecture was originally uploaded, audio was missing, this should be corrected as of 12 October.</p>
+</blockquote>
+
+<ul>
+  <li>cache parameter exercises</li>
+  <li>direct-mapped caches
+    <ul>
+      <li>valid bits, tags</li>
+    </ul>
+  </li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week07 (quiz for week 7) released, due 2026-10-13 13:45<br />Quiz week06 (quiz for week 6) due 13:45 (released 2026-10-01)<br />test 2 released<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 09 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw"><a href="/~cr4bd/3130/F2026/labhw/pagetable.html">pagetable part 1</a> due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-8" data-week-number="8" data-iso-week="2026-W42"><td colspan="3">Week 8</td></tr><tr class="lecture">
+<td class="date">Mon 12 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"></div>
+</td><td class="assignment"><span class="duehw">test 2 due</span><br /></td></tr><tr class="lecture">
+<td class="date">Tue 13 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>caches 3</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/caching-dm.html">caching-dm</a><sup>(<a href="slides/caching-dm.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/caching-assoc.html">caching-assoc</a><sup>(<a href="slides/caching-assoc.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/caching-code.html">caching-code</a><sup>(<a href="slides/caching-code.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/cache.html">cache</a></p>
+</span><p>(drop deadline)</p>
+
+<ul>
+  <li>direct-mapped cache access pattern</li>
+  <li>set-associative caches</li>
+  <li>replacement policies</li>
+  <li>cache misses and C code (start)</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week07 (quiz for week 7) due 13:45 (released 2026-10-08)<br /></td></tr><tr class="lab">
+<td class="date">Wed 14 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: cache exercises</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/cache-lab.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 15 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>caches 3</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/caching-code.html">caching-code</a><sup>(<a href="slides/caching-code.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/caching-write.html">caching-write</a><sup>(<a href="slides/caching-write.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/cache.html">cache</a></p>
+</span><ul>
+  <li>cache misses and C code</li>
+  <li>cache write policies (start)</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week08 (quiz for week 8) released, due 2026-10-20 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 16 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"></td></tr><tr class="week_num" id="week-9" data-week-number="9" data-iso-week="2026-W43"><td colspan="3">Week 9</td></tr><tr class="lecture">
+<td class="date">Tue 20 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>TLB / threads</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/caching-write.html">caching-write</a><sup>(<a href="slides/caching-write.pdf">pdf</a>)</sup>,&nbsp;,&nbsp;<a href="slides/caching-tlb.html">caching-tlb</a><sup>(<a href="slides/caching-tlb.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/cache.html">cache</a></p>
+</span><p>(withdraw deadline)</p>
+
+<ul>
+  <li>
+    <p>cache write policies (finish)</p>
+  </li>
+  <li>
+    <p>the TLB</p>
+  </li>
+  <li>
+    <p>(if time) cache tradeoffs</p>
+  </li>
+  <li>
+    <p>(if time) start threading</p>
+  </li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week08 (quiz for week 8) due 13:45 (released 2026-10-15)<br /></td></tr><tr class="lab">
+<td class="date">Wed 21 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: code reviews</h3>
+<br />
+        <a href="/~cr4bd/3130/F2026/labhw/code-review.html">lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment"><span class="duehw"><a href="/~cr4bd/3130/F2026/labhw/pagetable.html">pagetable part 2 (pre code review) due BEFORE FIRST LAB &mdash; normal late policy does not apply</a></span><br />Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 22 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>synchronization 1 --- reordering and locks</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/threads.html">threads</a><sup>(<a href="slides/threads.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/sync-reorder.html">sync-reorder</a><sup>(<a href="slides/sync-reorder.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/sync-locks.html">sync-locks</a><sup>(<a href="slides/sync-locks.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/thread.html">thread</a> §1.3-4, <a href="readings/pthreads.html">pthreads</a> §1-2, <a href="readings/consistency.html">consistency</a> §1-2, <a href="readings/sync.html">sync</a> §1-2, 4, <a href="readings/pthreads.html">pthreads</a> §3.1-2</p>
+</span><ul>
+  <li>
+    <p>thread use examples</p>
+  </li>
+  <li>problem of synchronization
+    <ul>
+      <li>reordering by compilers, processors</li>
+    </ul>
+  </li>
+  <li>locks</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week09 (quiz for week 9) released, due 2026-10-27 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 23 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw"><a href="/~cr4bd/3130/F2026/labhw/pagetable.html">pagetable 3 (post code review)</a> due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-10" data-week-number="10" data-iso-week="2026-W44"><td colspan="3">Week 10</td></tr><tr class="lecture">
+<td class="date">Tue 27 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>synchronization 2 --- barriers / deadlock</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/sync-locks.html">sync-locks</a><sup>(<a href="slides/sync-locks.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/sync-barriers.html">sync-barriers</a><sup>(<a href="slides/sync-barriers.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/deadlock.html">deadlock</a><sup>(<a href="slides/deadlock.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/sync.html">sync</a> §8; <a href="readings/deadlock.html">deadlock</a>; <a href="readings/pthreads.html">pthreads</a> §3.3</p>
+</span><ul>
+  <li>locks (finish)</li>
+  <li>barriers</li>
+  <li>deadlock</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week09 (quiz for week 9) due 13:45 (released 2026-10-22)<br /></td></tr><tr class="lab">
+<td class="date">Wed 28 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: openmp</h3>
+<br /><a href="/~cr4bd/3130/F2026/labhw/openmp.html">tentative lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 29 Oct</td>
+<td class="description">
+<div class="titlestuff"><h3>synchronization 3 --- monitors, producer/consumer</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/sync-monitors.html">sync-monitors</a><sup>(<a href="slides/sync-monitors.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/sync.html">sync</a> §5-7, <a href="readings/pthreads.html">pthreads</a> §3.5</p>
+</span><ul>
+  <li>producer/consumer problem</li>
+  <li>monitors
+    <ul>
+      <li>solving producer/consumer problem</li>
+    </ul>
+  </li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week10 (quiz for week 10) released, due 2026-11-05 13:45<br />test 3 released<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 30 Oct</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw">TLB (<a href="/~cr4bd/3130/F2026/labhw/tlb.html">tentative writeup</a>) due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-11" data-week-number="11" data-iso-week="2026-W45"><td colspan="3">Week 11</td></tr><tr class="lecture">
+<td class="date">Mon 02 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"></div>
+</td><td class="assignment"><span class="duehw">test 3 due</span><br /></td></tr><tr class="no_class">
+<td class="date">Tue 03 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">(no class)</div>
+</td><td class="assignment"></td></tr><tr class="lab">
+<td class="date">Wed 04 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: pthreads (dining philosophers)</h3>
+<br /><a href="/~cr4bd/3130/F2026/labhw/dp.html">tentative lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 05 Nov</td>
+<td class="description">
+<div class="titlestuff"><h3>transactions / networking 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/sync-xact.html">sync-xact</a><sup>(<a href="slides/sync-xact.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/sync-rwlocks.html">sync-rwlocks</a><sup>(<a href="slides/sync-rwlocks.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/network.html">network</a><sup>(<a href="slides/network.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/sync.html">sync</a> §9, <a href="readings/protocols.html">protocols</a> §1-2</p>
+</span><ul>
+  <li>reader/writer locks, briefly</li>
+  <li>
+    <p>transactions, briefly</p>
+  </li>
+  <li>networking layers</li>
+  <li>mailbox analogy</li>
+  <li>connections atop mailbox model</li>
+  <li>names and addresses</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week11 (quiz for week 11) released, due 2026-11-10 13:45<br />Quiz week10 (quiz for week 10) due 13:45 (released 2026-10-29)<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 06 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw">life (<a href="/~cr4bd/3130/F2026/labhw/life.html">tentative writeup</a>) due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-12" data-week-number="12" data-iso-week="2026-W46"><td colspan="3">Week 12</td></tr><tr class="lecture">
+<td class="date">Tue 10 Nov</td>
+<td class="description">
+<div class="titlestuff"><h3>networking 2</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/network.html">network</a><sup>(<a href="slides/network.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/protocols.html">protocols</a> §1-6</p>
+</span><ul>
+  <li>example: a frame
+    <ul>
+      <li>layers (link, network, transport)</li>
+    </ul>
+  </li>
+  <li>IP
+    <ul>
+      <li>addresses (v4, v6)</li>
+      <li>routers</li>
+    </ul>
+  </li>
+  <li>port numbers and UDP</li>
+  <li>mapping between addresses and names/other addresses:
+    <ul>
+      <li>DNS</li>
+    </ul>
+  </li>
+  <li>(briefly) HTTP, network address translation</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week11 (quiz for week 11) due 13:45 (released 2026-11-05)<br /></td></tr><tr class="lab">
+<td class="date">Wed 11 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: networking</h3>
+<br /><a href="/~cr4bd/3130/F2026/labhw/networking.html">tentative lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 12 Nov</td>
+<td class="description">
+<div class="titlestuff"><h3>secure channels 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/network.html">network</a><sup>(<a href="slides/network.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/secure.html">secure</a><sup>(<a href="slides/secure.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><ul>
+  <li>cryptography
+    <ul>
+      <li>symmetric encryption</li>
+      <li>asymmetric encryption</li>
+      <li>digital signature</li>
+    </ul>
+  </li>
+  <li>replay attacks</li>
+  <li>public key infrastructure</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week12 (quiz for week 12) released, due 2026-11-17 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 13 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw">pool (<a href="/~cr4bd/3130/F2026/labhw/pool.html">tentative writeup</a>) due by 11:59pm</span><br /></td></tr><tr class="week_num" id="week-13" data-week-number="13" data-iso-week="2026-W47"><td colspan="3">Week 13</td></tr><tr class="lecture">
+<td class="date">Tue 17 Nov</td>
+<td class="description">
+<div class="titlestuff"><h3>pipelining 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/secure.html">secure</a><sup>(<a href="slides/secure.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/pipeline.html">pipeline</a><sup>(<a href="slides/pipeline.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/processors.html">processors</a> §1-3</p>
+</span><ul>
+  <li>
+    <p>TLS outline</p>
+  </li>
+  <li>review: single-cycle CPU</li>
+  <li>pipelining idea</li>
+  <li>pipelining for the CPU</li>
+  <li>pipelining tradeoffs</li>
+  <li>hazards (start)</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week12 (quiz for week 12) due 13:45 (released 2026-11-12)<br /></td></tr><tr class="lab">
+<td class="date">Wed 18 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: secure channels lab</h3>
+<br /><a href="/~cr4bd/3130/F2026/labhw/secure-channel.html">tentative lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 19 Nov</td>
+<td class="description">
+<div class="titlestuff"><h3>pipelining 2</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/pipeline.html">pipeline</a><sup>(<a href="slides/pipeline.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/ooo.html">ooo</a><sup>(<a href="slides/ooo.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/procesors.html">processors</a> §2-3</p>
+</span><ul>
+  <li>hazards and hazard handling
+    <ul>
+      <li>stalling</li>
+      <li>branch prediction, briefly</li>
+      <li>forwarding</li>
+    </ul>
+  </li>
+  <li>
+    <p>some pipeline exercises</p>
+  </li>
+  <li>idea of multiple issue + out-of-order</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week13 (quiz for week 13) released, due 2026-11-24 13:45<br />test 4 released<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 20 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"></td></tr><tr class="week_num" id="week-14" data-week-number="14" data-iso-week="2026-W48"><td colspan="3">Week 14</td></tr><tr class="lecture">
+<td class="date">Mon 23 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"></div>
+</td><td class="assignment"><span class="duehw">test 4 due</span><br /></td></tr><tr class="lecture">
+<td class="date">Tue 24 Nov</td>
+<td class="description">
+<div class="titlestuff"><h3>out-of-order 1</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/ooo.html">ooo</a><sup>(<a href="slides/ooo.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><em class="readingLabel">Reading: </em> <span class="readingText"><p><a href="readings/procesors.html">processors</a> §2-3</p>
+</span><ul>
+  <li>register renaming</li>
+  <li>instruction queues, dispatch</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week13 (quiz for week 13) due 13:45 (released 2026-11-19)<br /></td></tr><tr class="no_class">
+<td class="date">Wed 25 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">(no class)</div>
+</td><td class="assignment"></td></tr><tr class="no_class">
+<td class="date">Thu 26 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">(no class)</div>
+</td><td class="assignment"></td></tr><tr class="no_class">
+<td class="date">Fri 27 Nov</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">(no class)</div>
+</td><td class="assignment"></td></tr><tr class="week_num" id="week-15" data-week-number="15" data-iso-week="2026-W49"><td colspan="3">Week 15</td></tr><tr class="lecture">
+<td class="date">Tue 01 Dec</td>
+<td class="description">
+<div class="titlestuff"><h3>out-of-order 2</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/ooo.html">ooo</a><sup>(<a href="slides/ooo.pdf">pdf</a>)</sup>,&nbsp;<a href="slides/bpred.html">bpred</a><sup>(<a href="slides/bpred.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><ul>
+  <li>execution units</li>
+  <li>branch prediction ideas</li>
+</ul>
+</div>
+</td><td class="assignment"></td></tr><tr class="lab">
+<td class="date">Wed 02 Dec</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"><h3>Lab: side channel</h3>
+<br /><a href="/~cr4bd/3130/F2026/labhw/side-channel.html">tentative lab writeup</a></div>
+<div class="description"></div>
+</td><td class="assignment">Lab assigned<br /></td></tr><tr class="lecture">
+<td class="date">Thu 03 Dec</td>
+<td class="description">
+<div class="titlestuff"><h3>side channels</h3>&nbsp;[&nbsp;<div class="slides">slides from:&nbsp;<a href="slides/spectre.html">spectre</a><sup>(<a href="slides/spectre.pdf">pdf</a>)</sup></div>&nbsp;]</div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><ul>
+  <li>side channels generally</li>
+  <li>side channels in the cache</li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week15 (quiz for week 15) released, due 2026-12-08 13:45<br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 04 Dec</td>
+<td class="description">
+<div class="titlestuff"></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"><span class="duehw">OOO (<a href="/~cr4bd/3130/F2026/labhw/ooo-exercise.html">tentative writeup</a>) due by 11:59pm</span><br />test 5 released<br /></td></tr><tr class="week_num" id="week-16" data-week-number="16" data-iso-week="2026-W50"><td colspan="3">Week 16</td></tr><tr class="lecture">
+<td class="date">Tue 08 Dec</td>
+<td class="description">
+<div class="titlestuff"><h3>meltdown/spectre</h3></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description"><ul>
+  <li>meltdown:
+    <ul>
+      <li>speculation past a priv/protection fault</li>
+    </ul>
+  </li>
+  <li>spectre
+    <ul>
+      <li>speculation past a bounds chcek</li>
+      <li>using cache side-channels</li>
+      <li>spectre mitigations, briefly</li>
+    </ul>
+  </li>
+</ul>
+</div>
+</td><td class="assignment">Quiz week15 (quiz for week 15) due 13:45 (released 2026-12-03)<br /><span class="duehw">test 5 due</span><br /></td></tr><tr class="non_lecture_day">
+<td class="date">Fri 18 Dec</td>
+<td class="description">
+<div class="titlestuff"><h3>final exam slot</h3></div>
+<!-- TODO: lecture/etc. links -->
+<div class="due_assignments"></div>
+<div class="description">&mdash;</div>
+</td><td class="assignment"></td></tr></table>
+
+<script>
+week_1 = new Date(document.querySelector("#schedule").dataset.start);
+week_1.setDate(week_1.getDate() - week_1.getDay());
+now = Date.now();
+offset = (now - week_1) / (1000 * 60 * 60 * 24 * 7);
+offset_week = Math.floor(offset);
+current_week = offset_week + 1;
+result = ""
+if (document.querySelector("#week-" + current_week)) {
+    result = "Jump to <a href='#week-" + current_week + "'>the current week</a> (week " + current_week + ").";
+}
+if (result != "") {
+    document.querySelector("#weekJump").innerHTML = result;
+    document.querySelector("#weekJump").style.display = "block";
+}
+
+function showOutlines() {
+    document.querySelectorAll('.description').forEach(x => x.classList.remove('hide'));
+}
+function hideOutlines() {
+    document.querySelectorAll('.description').forEach(x => x.classList.add('hide'));
+}
+
+document.querySelector("#hideOutline").innerHTML =
+    '<input type="button" value="show" onclick="showOutlines()"> \
+    or <input type="button" value="hide" onclick="hideOutlines()"> outlines/readings';
+
+document.querySelector("#hideOutline").style.display = "block";
+</script>
+
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

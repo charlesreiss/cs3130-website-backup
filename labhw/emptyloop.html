@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Emptyloop Lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/emptyloop.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#measure_times_plain" id="toc-measure_times_plain"><span
+class="toc-section-number">1</span>
+<code>measure_times_plain</code></a></li>
+<li><a href="#measure_times_threshold"
+id="toc-measure_times_threshold"><span
+class="toc-section-number">2</span>
+<code>measure_times_threshold</code></a></li>
+<li><a href="#plotting-script" id="toc-plotting-script"><span
+class="toc-section-number">3</span> Plotting script</a></li>
+<li><a href="#interrupts-difference.py"
+id="toc-interrupts-difference.py"><span
+class="toc-section-number">4</span>
+<code>interrupts-difference.py</code></a></li>
+<li><a href="#encouraging-context-switches"
+id="toc-encouraging-context-switches"><span
+class="toc-section-number">5</span> encouraging context
+switches</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>12 Sep 2025: move context switch <q>forcing</q> instructions out of
+main exercise part</li>
+<li>16 Sep 2025: update module load command to something that works with
+current portal modules</li>
+<li>17 Sep 2025: mention using <q>module load gcc clang</q> to get
+access to clang on portal before running <code>make</code></li>
+<li>17 Sep 2025: add note about trying to remove <code>venv</code>
+directories in case they’re half setup</li>
+<li>23 Sep 2026: fix cut-off sentence in measure_times_plain
+description</li>
+</ul>
+</div>
+<div class="exercise long">
+<p>Work, perhaps with a partner:</p>
+<ol type="1">
+<li><p>Download and extract the <a href="files/emptyloop.tgz">skeleton
+code</a> <em>[last updated 1 Sep 2025]</em> (either on portal or <a
+href="https://www.cs.virginia.edu/wiki/doku.php?id=nx_lab">NX</a> or on
+another Linux system. The Windows Subsystem for Linux will probably not
+work).</p></li>
+<li><p>Look at the function <code>measure_times_plain</code> in
+<code>empty-time.c</code> and/or read its description below.</p></li>
+<li><p>Use <code>make</code> to build the <code>empty-time</code> and
+<code>long-loop</code> programs. (On portal, you may need to use
+<code>module load gcc clang</code> first or edit the Makefile to use gcc
+instead of clang or similar.)</p></li>
+<li><p>Obtain measurements from <code>empty-time</code> for at least 1
+million iterations. You can do this with a command like
+<code>./empty-time plain 1000000 output</code>:</p>
+<p>In this command:</p>
+<ul>
+<li><code>plain</code> selects the <code>measure_time_plain</code>
+function in <code>empty-time.c</code>; the other option is
+<q>threshold</q></li>
+<li><code>10000000</code> options selects to obtain 1000000
+measurements</li>
+<li><code>output</code> selects the base name of the output files</li>
+</ul>
+<p>This will produce three output files:</p>
+<ul>
+<li><code>output-times.csv</code> — records the amount of time between
+iterations of an otherwise <q>empty</q> loop</li>
+<li><code>output-before-int</code>, <code>output-after-int</code> —
+records the contents of /proc/interrupts, which contains counters of
+asynchronous exceptions, separated by cause and which core handled them.
+The contents are sampled before and after (respectively) executing the
+timing loop</li>
+</ul></li>
+<li><p>Examine the output files:</p>
+<ul>
+<li><p>Plot the times you recorded (and save the plots for later). I
+strongly recommend plotting using a log-scale for the duration axis.</p>
+<p>You can use the <code>plot.py</code> script to do this, as described
+below.</p></li>
+<li><p>Look at what asynchronous exceptions occurred based on the
+<code>before-int</code> and <code>after-int</code> files. You can use
+the <code>interrupts-difference.py</code> program to aid in comparing
+these (since doing so by hand would be tedious.)</p></li>
+</ul></li>
+<li><p>You’ll notice that, in contrast to what a very simple model of a
+processor would suggest, that the time varies significantly.</p>
+<p>There are probably a few main causes:</p>
+<ul>
+<li>exceptions interrupting the execution of the program;</li>
+<li>variations in what data is cached (already loaded into fast memory)
+versus not;</li>
+<li>variations in speculative execution’s accuracy (the processor
+guessing what instructions to run before it is sure); and</li>
+<li>variations in processor clock speed (usually done by the hardware to
+control power usage and/or heat dissipation)</li>
+</ul></li>
+<li><p>Try to estimate a threshold time which will separate time
+measurements which are high from an exception from the other
+measurements.</p>
+<p>We can then use this threshold to avoid measuring these shorter
+measurements and get a sample of more longer durations.
+<code>empty-time.c</code> has a <code>measure_time_threshold</code>
+function (described below) we’ll use for this purpose.</p></li>
+<li><p>Then verify and, if needed, refine your threshold:</p>
+<ul>
+<li><p>Choose a core number to run on (one of the indices listed by
+<code>lscpu --extended=CPU</code>).</p></li>
+<li><p>Obtain measurements only greater than the threshold and on that
+core using a command like</p>
+<p>THRESHOLD=AAA taskset -c BBB ./empty-time threshold 10000
+new-output</p>
+<p>where <code>AAA</code> is your threshold, <code>BBB</code> is your
+selected core number.</p>
+<p>In this command:</p>
+<ul>
+<li><code>THRESHOLD=AAA</code> sets an <q>environment variable</q>
+called <code>THRESHOLD</code>, which <code>empty-loop.c</code> reads
+with the <code>getenv</code> function</li>
+<li><code>taskset -c BBB ...</code> runs <code>...</code> only on the
+cores specified by BBB.</li>
+<li>10000 is the number of measurements to obtain (you can adjust this
+number if you wish)</li>
+<li><code>new-output</code> selects the name of the output files</li>
+</ul></li>
+<li><p>Plot the resulting times (and save the plots for later). Try to
+determine if it’s likely that your program was context-switched away
+from for an extended period of time.</p></li>
+<li><p>Use <code>interrupts-difference.py</code> to see how closely the
+actual number of asynchronous exceptions corresponds to the actual count
+on that core.</p>
+<p>Note that if your program was context switched away from, then we
+would not expect to see asynchronous exceptions from the time when it
+was not running.</p></li>
+</ul>
+<p>Write a brief explanation of how you choose your threshold and
+whether your attempts to verify it give you confidence in it.</p></li>
+<li><p>If you have time, estimate how long your measurement program is
+context switched away from. If your measurement program is not context
+switched away from, see the advice on <q>encouraging context
+switches</q> below.</p></li>
+<li><p>Show a TA:</p>
+<ul>
+<li><p>Your plots.</p></li>
+<li><p>Your explanation for item 8.</p></li>
+</ul>
+<p><em>OR</em> place an explanation for item 8 in a file
+<code>README.txt</code> and submit your plots and explanation to the
+submission site.</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="measure_times_plain"><span
+class="header-section-number">1</span>
+<code>measure_times_plain</code></h1>
+<pre><code>static void measure_times_plain(int count, long *starts, long *durations) {
+    struct timespec first, current, previous;
+    clock_gettime(WHICH_CLOCK, &amp;first);
+    clock_gettime(WHICH_CLOCK, &amp;previous);
+    for (int i = 0; i &lt; count; i += 1) {
+        clock_gettime(WHICH_CLOCK, &amp;current);
+        starts[i] = nsec_difference(&amp;first, &amp;previous);
+        durations[i] = nsec_difference(&amp;previous, &amp;current);
+        previous = current;
+    }
+}</code></pre>
+<p>This function reads a clock in a loop <code>count</code> times, and
+records the results to the <code>starts</code> and
+<code>durations</code> array. The only thing that happens between
+obtaining samples is storing the time and related bookkeeping.</p>
+<p>If this loop were the only thing running, we would expect to see the
+<code>durations</code> are roughly constant. You should notice that
+there is some substantial variation instead because other things are
+running.</p>
+<h1 data-number="2" id="measure_times_threshold"><span
+class="header-section-number">2</span>
+<code>measure_times_threshold</code></h1>
+<p>This function adds the following to
+<code>measure_times_plain</code></p>
+<ol type="1">
+<li><p>Code to read from the environment variable <code>THRESHOLD</code>
+into the local variable <code>threshold</code>:</p>
+<pre><code>const char *threshold_string = getenv(&quot;THRESHOLD&quot;);
+if (!threshold_string) {
+    fprintf(stderr, &quot;THRESHOLD environment variable not set (example: THRESHOLD=100 ./empty-time ...)\n&quot;);
+    exit(EXIT_FAILURE);
+}
+long threshold = atoi(threshold_string);</code></pre></li>
+<li><p>Code to check the the threshold before recording a value (and
+corresponding adjustments to the loop):</p>
+<pre><code>long difference = nsec_difference(&amp;previous, &amp;current);
+if (difference &gt; threshold) {
+    starts[i] = nsec_difference(&amp;first, &amp;previous);
+    durations[i] = nsec_difference(&amp;previous, &amp;current);
+    i += 1;
+}</code></pre></li>
+</ol>
+<h1 data-number="3" id="plotting-script"><span
+class="header-section-number">3</span> Plotting script</h1>
+<p>We supply a plotting script in <code>plot.py</code>, which requires
+the Python libraries <code>numpy</code> and <code>matplotlib</code>.</p>
+<p>To make these work on portal:</p>
+<ul>
+<li><p>First run (you’ll need to repeat this for each shell or set this
+to run automatically):</p>
+<pre><code> module load gcc python</code></pre></li>
+<li><p>Then, if <em>you haven’t already</em> run</p>
+<pre><code> bash venv.sh</code></pre>
+<p>which will create a venv directory containing a <q><a
+href="https://docs.python.org/3/library/venv.html">virtual
+environment</a></q> and install numpy and matplotlib in that virtual
+environment.</p>
+<p>If you get an error about <code>ensurepip</code> not existing, one
+possibility is that you have a partially setup <code>venv</code>
+directory; try removing the <code>venv</code> directory and running the
+command again.</p></li>
+<li><p>Then (you’ll need to repeat this for each shell), run:</p>
+<pre><code> source venv/bin/activate</code></pre>
+<p>(This should cause your shell prompt to be prefixed with
+<code>(venv)</code>.)</p></li>
+</ul>
+<p>After you’ve done the above setup you can use</p>
+<pre><code>python plot.py time output-times.csv output-times.png</code></pre>
+<p>to plot data from <code>output-times.csv</code> and write the result
+to the image file <code>output-times.png</code>.</p>
+<h1 data-number="4" id="interrupts-difference.py"><span
+class="header-section-number">4</span>
+<code>interrupts-difference.py</code></h1>
+<p>The <code>interrupts-difference.py</code> script will compute the
+difference between two /proc/interrupts snapshot.</p>
+<pre><code>python interrupts-difference.py output-before-int output-after-int</code></pre>
+<p>will show the number of interrupts, split up by the type idenified.
+Interrupts will be attributes to specific cores, labeled
+<code>CPU0</code>, <code>CPU1</code> and so on. If an interrupt type or
+CPU is not in the output, then the difference was zero.</p>
+<p>If you only want the count of interrupts for a specific core, you can
+use a command like</p>
+<pre><code>python3 interrupts-difference.py --core=3 output-before-int output-after-int</code></pre>
+<p>to show only the differences for core number 3. (Core numbers start
+at 0.)</p>
+<h1 data-number="5" id="encouraging-context-switches"><span
+class="header-section-number">5</span> encouraging context switches</h1>
+<ul>
+<li><p>If you don’t think you have measurements including a context
+switch, you can run the long-loop program on a core using a command
+like</p>
+<pre><code> taskset -c AAA ./long-loop &amp;</code></pre>
+<p>and then do a measurement on the same core (before the long-loop
+program terminates in about a minute). Assuming enough samples, this
+should cause you to observe a context switch between the
+<code>empty-time</code> and <code>long-loop</code>, even if no other
+programs are active.</p></li>
+</ul>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

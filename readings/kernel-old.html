@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Old kernel reading section on processes and threads</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/kernel-old.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#processes" id="toc-processes"><span
+class="toc-section-number">1</span> Processes</a>
+<ul>
+<li><a href="#threads" id="toc-threads"><span
+class="toc-section-number">1.1</span> Threads</a></li>
+<li><a href="#virtual-address-spaces"
+id="toc-virtual-address-spaces"><span
+class="toc-section-number">1.2</span> Virtual address spaces</a></li>
+<li><a href="#context-switches" id="toc-context-switches"><span
+class="toc-section-number">1.3</span> Context Switches</a></li>
+</ul></li>
+</ul></nav>
+<h1 data-number="1" id="processes"><span
+class="header-section-number">1</span> Processes</h1>
+<p>A <strong>process</strong> is a software-only operating system
+construct that roughly parallels the end-user idea of a running program.
+The hardware knows the difference between user and kernel mode, but not
+the difference between a web browser and a text editor.</p>
+<p>The process abstract provides a kind of <q>virtual machine</q>, with
+its own equivalent of processor cores and of memory. To implement these,
+the operating system maintains a variety of data structures inside
+kernel-only memory to help track different processes. Portions of those
+structures relating to one process at a time<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> are
+loaded into hardware-accessible registers and memory so that the
+hardware mechanisms will cause running code to interact with the
+appropriate process’s memory and other state.</p>
+<h2 data-number="1.1" id="threads"><span
+class="header-section-number">1.1</span> Threads</h2>
+<p>We call the process’s equivalent of a processor core a
+<em>thread</em>. Each thread has its own program registers, program
+counter, condition codes, and perhaps other similar state.</p>
+<p>Since each thread has its own program registers and program counters,
+each thread can use registers and change the program counter without
+worrying about interferring with other programs.</p>
+<p>The operating system can control which thread is running by loading
+the correct thread’s values into the processor’s<a href="#fn2"
+class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>
+registers, condition codes, etc.</p>
+<p>For the first part of the semester, we will only deal with processes
+that have a single thread. Later in the semester, we will discuss
+programming with multiple threads in more detail.</p>
+<h2 data-number="1.2" id="virtual-address-spaces"><span
+class="header-section-number">1.2</span> Virtual address spaces</h2>
+<p>We call the process’s equivalent of memory a <em>virtual address
+space</em>.</p>
+<p>Since each process has its own virtual address space, it can use
+memory without worrying about interfering with other programs
+accidentally.</p>
+<p>We discuss how this virtual address space is implemented in the <a
+href="vm.html">reading on virtual memory</a>. Briefly, the most common
+mechanism uses <em>address translation</em>, where based on settings in
+special registers, the hardware will convert a program’s addresses to
+real addresses in the hardware. The operating system controls which
+address space is active by changing these special registers.</p>
+<h2 data-number="1.3" id="context-switches"><span
+class="header-section-number">1.3</span> Context Switches</h2>
+<p>Changing which thread and/or process’s state is currently loaded on a
+processor core is called a <strong>context switch</strong>. All major
+user operating systems (but not all embedded-system operating systems)
+use a hardware timer to create an exception (a <q>timer interrupt</q>)
+every few dozen milliseconds to enable automated context switching and
+facilitate the illusion that more processes are running at a time than
+there are processors in the computer. Operating systems will also
+perform context switches at other times, such as when a program needs to
+wait for input before it can continue executing.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>or one per processor depending on the multiprocessor
+design<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>if there are multiple processors, any one of the
+processors<a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

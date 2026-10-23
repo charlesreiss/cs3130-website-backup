@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Reiss&#39;s Slidedecks</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/allslides.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>14 Nov 2024: fix broken link to pipeline slides</li>
+<li>11 Mar 2026: link to HTML versions of several slides (now that
+switching slide systems); subdivide synchornization slides</li>
+<li>21 Sep 2026: split up virtual memory slides</li>
+<li>13 Oct 2026: split up caching slides</li>
+</ul>
+</div>
+<p>Reiss’s slides for each day are typically drawn from these slidedecks
+organized by topic:</p>
+<ul>
+<li><p><a href="slides/intro.pdf">intro</a></p></li>
+<li><p><a href="slides/logistics.pdf">logistics</a> (course logistics,
+might not be updated for current semester)</p></li>
+<li><p><a href="slides/building.pdf">building</a> <sup><a
+href="slides/building.pdf">pdf</a></sup></p></li>
+<li><p><a href="slides/accounts.html">accounts</a><sup><a
+href="slides/accounts.pdf">pdf</a></sup></p></li>
+<li><p><a href="slides/kernel.html">kernel</a><sup><a
+href="slides/kernel.pdf">pdf</a></sup> (including exceptions)</p></li>
+<li><p><a href="slides/signals.pdf">signals</a> (Unix signals, now
+typically not covered)</p></li>
+<li><p><a href="slides/unix-api.pdf">unix-api</a> (fork, dup2,
+etc)</p></li>
+<li><p>virtual memory –</p>
+<ul>
+<li><a href="slides/vm-intro.html">vm-intro</a><sup><a
+href="slides/vm-intro.pdf">pdf</a></sup> (introduction; what are page
+tables)</li>
+<li><a href="slides/vm-fault.html">vm-fault</a><sup><a
+href="slides/vm-fault.pdf">pdf</a></sup> (tricks with page fault
+handling; OS memory map versus page tables)</li>
+<li><a href="slides/vm-format.html">vm-format</a><sup><a
+href="slides/vm-format.pdf">pdf</a></sup> (storing page tables in
+memory; multi-level page tables)</li>
+</ul></li>
+<li><p>caching —</p>
+<ul>
+<li><a href="slides/caching-intro.html">caching-intro</a><sup><a
+href="slides/caching-intro.pdf">pdf</a></sup></li>
+<li><a href="slides/caching-dm.html">caching-dm</a><sup><a
+href="slides/caching-dm.pdf">pdf</a></sup> (direct-mapped caches)</li>
+<li><a href="slides/caching-assoc.html">caching-assoc</a><sup><a
+href="slides/caching-assoc.pdf">pdf</a></sup> (set-associative
+caches)</li>
+<li><a href="slides/caching-code.html">caching-code</a><sup><a
+href="slides/caching-code.pdf">pdf</a></sup> (correlating code to cache
+behavior)</li>
+<li><a href="slides/caching-write.html">caching-write</a><sup><a
+href="slides/caching-write.pdf">pdf</a></sup> (caches and writes)</li>
+<li><a href="slides/caching-tradeoff.html">caching-tradeoff</a><sup><a
+href="slides/caching-tradeoff.pdf">pdf</a></sup> (cache tradeoffs)</li>
+<li><a href="slides/caching-blocking.html">caching-blocking</a><sup><a
+href="slides/caching-blocking.pdf">pdf</a></sup> (cache blocking;
+typically not covered)</li>
+</ul></li>
+<li><p><a href="slides/threads.html">threads</a><sup><a
+href="slides/threads.pdf">pdf</a></sup></p></li>
+<li><p>synchronization –</p>
+<ul>
+<li><a href="slides/sync-reorder.html">sync-reorder</a><sup><a
+href="slides/sync-reorder.pdf">pdf</a></sup> (race conditions;
+interleaving; compiler/processor reordering)
+<ul>
+<li><a href="slides/sync-cc.html">sync-cc</a><sup><a
+href="slides/sync-cc.pdf">pdf</a></sup> (cache coherency; typically not
+covered)</li>
+</ul></li>
+<li><a href="slides/sync-locks.html">sync-locks</a><sup><a
+href="slides/sync-locks.pdf">pdf</a></sup> (mutex-type locks)
+<ul>
+<li><a href="slides/sync-lock-impl.html">sync-lock-impl</a><sup><a
+href="sync-lock-impl.pdf">pdf</a></sup> (implementation; typically not
+covered)</li>
+</ul></li>
+<li><a href="slides/sync-barriers.html">sync-barriers</a><sup><a
+href="slides/sync-barriers.pdf">pdf</a></sup></li>
+<li><a href="slides/sync-monitors.html">sync-monitors</a><sup><a
+href="slides/sync-monitors.pdf">pdf</a></sup></li>
+<li><a href="slides/sync-false-share.html">sync-false-share</a><sup><a
+href="slides/sync-false-share.pdf">pdf</a></sup></li>
+<li><a href="slides/sync-rwlocks.html">sync-rwlocks</a><sup><a
+href="slides/sync-rwlocks.pdf">pdf</a></sup> (reader-writer locks)</li>
+<li><a href="slides/sync-semaphores.html">sync-semaphores</a><sup><a
+href="slides/sync-semaphores.pdf">pdf</a></sup> (typically not
+covered)</li>
+<li><a href="slides/sync-xact.html">sync-xact</a><sup><a
+href="slides/sync-xact.pdf">pdf</a></sup> (transactions, very
+briefly)</li>
+</ul></li>
+<li><p><a href="slides/deadlock.html">deadlock</a><sup><a
+href="slides/deadlock.pdf">pdf</a></sup></p></li>
+<li><p><a href="slides/network.html">network</a><sup><a
+href="slides/network.pdf">pdf</a></sup></p></li>
+<li><p><a href="slides/secure.html">secure</a><sup><a
+href="slides/secure.pdf">pdf</a> (secure channels,
+cryptography)</p></li>
+<li><p><a href="slides/pipeline.html">pipeline</a><sup><a
+href="slides/pipeline.pdf">pdf</a></sup> (pipelined processors)</p></li>
+<li><p><a href="slides/ooo.html">ooo</a><sup><a
+href="slides/ooo.pdf">pdf</a></sup> (out-of-order processors)</p></li>
+<li><p><a href="slides/spectre.html">spectre</a><sup><a
+href="slides/spectre.pdf">pdf</a></sup> (side-channels, Meltdown,
+Spectre)</p></li>
+<li><p><a href="slides/bpred.html">bpred</a><sup><a
+href="slides/bpred.pdf">pdf</a></sup> (branch prediction)</p></li>
+</ul>
+<p>Note that these slidedecks frequently contain extra slides that will
+not be used in most semesters.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

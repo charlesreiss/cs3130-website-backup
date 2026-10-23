@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Compilation, Linking, Libraries</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/compilation.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#review-clanggcc-modes"
+id="toc-review-clanggcc-modes"><span class="toc-section-number">1</span>
+(review?) <code>clang</code>/<code>gcc</code> modes</a></li>
+<li><a href="#selected-other-clanggcc-options"
+id="toc-selected-other-clanggcc-options"><span
+class="toc-section-number">2</span> selected other
+<code>clang</code>/<code>gcc</code> options</a></li>
+<li><a href="#producing-and-using-libraries"
+id="toc-producing-and-using-libraries"><span
+class="toc-section-number">3</span> producing and using libraries</a>
+<ul>
+<li><a href="#producing-and-using-static-libraries-on-unix-like-systems"
+id="toc-producing-and-using-static-libraries-on-unix-like-systems"><span
+class="toc-section-number">3.1</span> producing and using static
+libraries (on Unix-like systems)</a></li>
+<li><a href="#producing-and-using-dynamic-libraries-on-linux"
+id="toc-producing-and-using-dynamic-libraries-on-linux"><span
+class="toc-section-number">3.2</span> producing and using dynamic
+libraries (on Linux)</a></li>
+</ul></li>
+<li><a href="#glossary" id="toc-glossary"><span
+class="toc-section-number">4</span> Glossary</a></li>
+<li><a href="#additional-resources" id="toc-additional-resources"><span
+class="toc-section-number">5</span> Additional resources</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>17 Jan 2024: merge text previously in <q>glossary</q> under
+makefiles into here; mention explicitly that standard library is linked
+by default</li>
+<li>20 Jan 2025: note re: clang availabiity</li>
+<li>21 Jan 2025: adjust note re: clang availability</li>
+<li>27 Jan 2026: reference Dive Into Systems a alternate reference</li>
+</ul>
+</div>
+<h1 data-number="1" id="review-clanggcc-modes"><span
+class="header-section-number">1</span> (review?)
+<code>clang</code>/<code>gcc</code> modes</h1>
+<blockquote>
+<p>Note: to enable using clang on portal, you can run
+<code>module load gcccore/13.2.0 clang</code></p>
+</blockquote>
+<p>The <code>clang</code> program (or the <code>gcc</code> or
+<code>cc</code> programs, which work essentially the same way) can
+perform assembly, linking, and compilation, depending on how it is
+invoked:</p>
+<ul>
+<li>compile only: <code>clang -S foo.c</code> — compile the source file
+<code>foo.c</code> into the assembly file <code>foo.s</code>. Note that
+this also uses any files <code>foo.c</code> #includes.</li>
+<li>assemble only: <code>clang -c foo.s</code> — assemble
+<code>foo.s</code> into the object file <code>foo.o</code></li>
+<li>link only (executable): <code>clang foo.o bar.o quux.o</code> — link
+the object files <code>foo.o</code>, <code>bar.o</code>, and
+<code>quux.o</code> into an executable <code>a.out</code><a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. By
+default this also links in the <em>standard library</em> (which contains
+functions like <code>printf</code> and <code>malloc</code>) to the
+executable.</li>
+<li>link only (shared library):
+<code>clang -shared foo.o bar.o quux.o</code> — link the object files
+<code>foo.o</code>, <code>bar.o</code>, and <code>quux.o</code> into a
+shared library <code>a.out</code></li>
+</ul>
+<p>Or you can perform multiple at once:</p>
+<ul>
+<li>compile+assemble: <code>clang -c foo.c</code> — compile and assemble
+<code>foo.c</code>, to produce the object file <code>foo.o</code>.</li>
+<li>compile+assemble+link: <code>clang foo.c bar.c</code> — compile and
+assemble foo.c, and compile and assemble bar.c, and link them together
+to generate <code>a.out</code>.</li>
+</ul>
+<p>You can specify a different output file for any of these commands
+with <code>-o FILENAME</code>, for example:</p>
+<ul>
+<li><code>clang -o exec foo.o bar.o quux.o</code> -or-
+<code>clang foo.o bar.o quux.o -o exec</code> — link <code>foo.o</code>,
+<code>bar.o</code>, and <code>quux.o</code> into the executable
+<code>exec</code> (instead of <code>a.out</code>)</li>
+</ul>
+<h1 data-number="2" id="selected-other-clanggcc-options"><span
+class="header-section-number">2</span> selected other
+<code>clang</code>/<code>gcc</code> options</h1>
+<ul>
+<li><code>-Wall</code>: enable <q>all</q> warnings</li>
+<li><code>-g</code>: generate information for debuggers</li>
+<li><code>-Og</code>, <code>-O1</code>, <code>-O2</code>,
+<code>-O3</code>, <code>-Os</code>, <code>-O</code>: enable various
+amounts/types of compiler optimizations. <code>-Og</code> optimizes for
+debugging; <code>-Os</code> optimizes for size; otherwise, 1 or 2 or 3
+set various levels of <q>aggressiveness</q> with which to apply
+optimizations</li>
+<li><code>-std=c11</code>, <code>-std=c99</code>, <code>-ansi</code>, …:
+ask the compiler/standard library to follow a particular version of the
+C standard</li>
+<li><code>-fsanitize=address</code>, <code>-fsanitize=undefined</code>,
+<code>-fsanitize=thread</code>, <code>-fsanitize=leak</code>: enable
+various <q>sanitizers</q> that check for certain types of errors/bugs as
+the resulting executables run (must be supplied both when compiling and
+linking)</li>
+</ul>
+<h1 data-number="3" id="producing-and-using-libraries"><span
+class="header-section-number">3</span> producing and using
+libraries</h1>
+<p>A library is a collection of related implementations. For C or C++, a
+libary is generally provided as a <em>library file</em> and (one or
+more) <em>header files</em>.</p>
+<p>There are two types of library files:</p>
+<ul>
+<li><p>dynamic libraries, which are loaded from the library file while
+an executable is running. These most commonly use the extension
+<code>.so</code> (Linux), <code>.dylib</code> (OS X), or
+<code>.dll</code> (Windows).</p></li>
+<li><p>static libraries, which are embedded into an executable when it
+is linked. These most commonly use the extension <code>.a</code> (Linux,
+OS X), <code>.lib</code> (Windows).</p></li>
+</ul>
+<h2 data-number="3.1"
+id="producing-and-using-static-libraries-on-unix-like-systems"><span
+class="header-section-number">3.1</span> producing and using static
+libraries (on Unix-like systems)</h2>
+<p>Static libraries on most Unix-like systems are archives of object
+files produced with the <code>ar</code> command. After generating object
+files,</p>
+<pre><code>ar -rcs libfoo.a quux.o bar.o</code></pre>
+<p>will create a library <code>libfoo.a</code>.<a href="#fn2"
+class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>Then, if the resulting <code>libfoo.a</code> is placed in one of the
+standard system directories<a href="#fn3" class="footnote-ref"
+id="fnref3" role="doc-noteref"><sup>3</sup></a> a command like</p>
+<pre><code>clang -o exec main.o -lfoo</code></pre>
+<p>will create an executable linking <code>main.o</code> and the library
+together. You should usually put the <code>-lXXX</code> flags last on
+the command line: the linker processes the files listed in order and,
+when adding a static library, by default only includes parts that appear
+to be needed by files it has already processed.</p>
+<p>If <code>libfoo.a</code> is not placed in one the standard system
+directory, then add <code>-L</code>:</p>
+<pre><code>clang -o exec main.o -LdirectoryContainingLibFoo -lfoo</code></pre>
+<h2 data-number="3.2"
+id="producing-and-using-dynamic-libraries-on-linux"><span
+class="header-section-number">3.2</span> producing and using dynamic
+libraries (on Linux)</h2>
+<p>On Linux, files that will be used in a dynamic library need to be
+compiled specially so they can be loaded anywhere in memory. This can be
+done by using the <code>-fPIC</code> option when compilng.</p>
+<p>Then, you can generate a library by linking with <code>-shared</code>
+as in:</p>
+<pre><code>clang -shared -o libfoo.so bar.o quux.o</code></pre>
+<p>Then, like static libraries, if the resulting <code>libfoo.so</code>
+is placed in one of the standard system directories<a href="#fn4"
+class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> a
+command like</p>
+<pre><code>clang -o exec main.o -lfoo</code></pre>
+<p>will create an executable <code>exec</code> that loads
+<code>libfoo.so</code> at runtime.</p>
+<p>If <code>libfoo.so</code> is not placed in one these directories,
+then you will need to:</p>
+<ul>
+<li><p>tell the compiler how to find the library when generating the
+executable by adding <code>-Ldirectory</code> to specify the directory
+where <code>libfoo.so</code> is:</p>
+<pre><code>clang -o exec main.o -LdirectoryWithLibFoo -lfoo</code></pre></li>
+<li><p>tell the executable how to find the library when it runs by
+either:</p>
+<ul>
+<li><p>specifying an <q>rpath</q> (runtime path) when generating the
+executable specifying an additional directory to search:</p>
+<pre><code> clang -o exec main.o ... -Wl,-rpath,directoryWithLibFoo</code></pre>
+<p>(<code>-Wl,X</code> says to pass an option to the linker program,
+which is typically <code>ld</code> on Linux.)</p>
+<p>This is specifies separately from the <code>-L</code> option so you
+can have libraries in different locations when executables are generated
+versus when executables are run.</p></li>
+<li><p>setting the <code>LD_LIBRARY_PATH</code> environment variable to
+contain the directory containing the library when the executable is run.
+So instead of running the shell command (<code>$</code> represents a
+shell prompt):</p>
+<pre><code> $ ./exec ...</code></pre>
+<p>you could do</p>
+<pre><code> $ LD_LIBRARY_PATH=directoryWithLibFoo ./exec ...</code></pre>
+<p>or</p>
+<pre><code> $ export LD_LIBRARY_PATH=directoryWithLibFoo
+ ...
+ $ ./exec ...</code></pre>
+<p>You can also use syntax like
+<code>LD_LIBRARY_PATH=directory1:directory2:directory3</code> to specify
+multiple directories.</p></li>
+</ul></li>
+</ul>
+<h1 data-number="4" id="glossary"><span
+class="header-section-number">4</span> Glossary</h1>
+<dl>
+<dt>Header File</dt>
+<dd>
+<p>A file (<code>.h</code> for C; <code>.h</code>, <code>.hpp</code>,
+<code>.H</code> or <code>.hh</code> for C++) that provides</p>
+<ul>
+<li>the signatures of functions, but not their definitions</li>
+<li>the names and types of global variables, but not where in memory
+they go</li>
+<li><code>typedef</code>s and <code>#define</code>s</li>
+</ul>
+</dd>
+<dt>Object File</dt>
+<dd>
+A file (<code>.o</code> on most systems, <code>.obj</code> on Windows)
+that contains assembled binary code in the target ISA, with metadata to
+allow the linker to place it in various locations in memory depending on
+what other files it is linked with.
+</dd>
+<dt>Standard Library</dt>
+<dd>
+<p>A <em>library</em> to which every program is linked by default.
+Virtually every language has a <em>standard library</em>, which does
+much to define the character of the language.</p>
+<p>The C language’s <em>standard library</em> is typically called
+<code>libc</code> and is defined by the C standard (see <a
+href="https://en.wikipedia.org/wiki/C_standard_library"
+class="uri">https://en.wikipedia.org/wiki/C_standard_library</a>); there
+are several implementations of it, but <code>glibc</code> is probably
+the most pervasive on Linux.</p>
+</dd>
+<dt>Static Library</dt>
+<dd>
+A file (<code>.a</code> on most Unix-like systems, <code>.lib</code> on
+Windows) that contains one more more <em>object files</em> together with
+metadata needed to connect them into a running code system by the
+<em>linker</em>. This compile-time linkage means that each executable
+has its own copy of the library stored internally to the file, without
+external dependencies.
+</dd>
+<dt>Source File</dt>
+<dd>
+<p>A file (<code>.c</code> for C, <code>.cpp</code>, <code>.C</code>, or
+<code>.cc</code> for C++) that provides</p>
+<ul>
+<li>the implementation of functions</li>
+<li>the declaration and implementation of provided helper functions</li>
+<li>the memory in which to store global variables</li>
+</ul>
+</dd>
+</dl>
+<h1 data-number="5" id="additional-resources"><span
+class="header-section-number">5</span> Additional resources</h1>
+<p>On libraries in C and compilation steps generally:</p>
+<ul>
+<li><a
+href="https://diveintosystems.org/book/C2-C_depth/advanced_libraries.html">Dive
+Into Systems section 2.9.5</a></li>
+</ul>
+<p>On Clang and GCC options:</p>
+<ul>
+<li><a
+href="https://clang.llvm.org/docs/UsersManual.html#command-line-options">Clang
+manual section on options</a></li>
+<li><a href="https://gcc.gnu.org/onlinedocs/gcc/Invoking-GCC.html">GCC
+manual section on options</a></li>
+</ul>
+<p>On the details of linking and libraries:</p>
+<ul>
+<li>Ulrich Drepper, <q><a
+href="https://akkadia.org/drepper/dsohowto.pdf">How To Write Shared
+Libraries</a></q> (2011) (also provides an explanation of how dynamic
+linking works on Linux)</li>
+<li><a href="https://www.toolchains.net/">toolchains.net</a> — index of
+references on compiler toolchains, including many references about what
+linkers do</li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This is the default name on Unix-like systems; on native
+Windows, it may be a.exe.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>The <code>c</code> option says to create a new archive
+silently if one does not exist; the <code>r</code> option to add to or
+update the archive; and the <code>s</code> option to create an index of
+the object files for the linker to use. Sometimes you might see the
+index creation done by a separate <code>ranlib</code> command.<a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><code>clang -print-search-dirs</code> lists these<a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><code>clang -print-search-dirs</code> lists the
+directories that are searched when the executable is geneated. For
+loading libraries when an executable runs, the system searches
+<code>/lib</code>, <code>/usr/lib</code>, and directories specified by
+the configuration file <code>/etc/ld.so.conf</code>.<a href="#fnref4"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

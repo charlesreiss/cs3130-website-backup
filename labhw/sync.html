@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Synchonization Experience</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/sync.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#getting-with-a-group" id="toc-getting-with-a-group"><span
+class="toc-section-number">1</span> Getting with a group</a></li>
+<li><a href="#the-game" id="toc-the-game"><span
+class="toc-section-number">2</span> The Game</a></li>
+<li><a href="#the-variants" id="toc-the-variants"><span
+class="toc-section-number">3</span> The Variants</a></li>
+<li><a href="#passing-off" id="toc-passing-off"><span
+class="toc-section-number">4</span> Passing Off</a></li>
+</ul></nav>
+<p>The purpose of this lab is to provide you with some experiencing
+seeing how various synchronization primitives play out in practice. It
+will take the form of playing four versions of a simple competitive
+online game.</p>
+<blockquote>
+<p>This lab must be completed <strong>in person</strong> in lab unless
+you’ve made other arrangements with the instructors.</p>
+</blockquote>
+<h1 data-number="1" id="getting-with-a-group"><span
+class="header-section-number">1</span> Getting with a group</h1>
+<p>In the lab, create groups of 3–5 people each. TAs should help you
+form appropriate groups.</p>
+<p>You will then go through the four game variants together.</p>
+<h1 data-number="2" id="the-game"><span
+class="header-section-number">2</span> The Game</h1>
+<p>You’ll be presented with</p>
+<ul>
+<li>a dollar amount you are trying to reach. Each player has a different
+target amount, all within $20 of one another.</li>
+<li>a dollar amount that is <q>on the table</q></li>
+<li>a set of buttons for adding or removing money in increments of $1,
+$5, $10, and $20</li>
+</ul>
+<p>Your goal is to reach your target dollar amount before anyone else
+you are playing with does so.</p>
+<h1 data-number="3" id="the-variants"><span
+class="header-section-number">3</span> The Variants</h1>
+<ol type="1">
+<li><p>Variant 1 (<a
+href="https://kytos02.cs.virginia.edu/cs3130-spring2026/cashgame/cashgame1.php">link</a>)
+has atomic money moves and no other synchronization. It is possible
+(even likely) that other players’ plays will occur between you looking
+at the table and your play being acted on.</p></li>
+<li><p>Variant 2 (<a
+href="https://kytos02.cs.virginia.edu/cs3130-spring2026/cashgame/cashgame2.php">link</a>)
+uses locks to prevent plays if someone else has made a play between your
+looking and acting.</p></li>
+<li><p>Variant 3 (<a
+href="https://kytos02.cs.virginia.edu/cs3130-spring2026/cashgame/cashgame3.php">link</a>)
+places arriving players in a queue and only lets them play in order. It
+is otherwise like Variant 1.</p></li>
+<li><p>Variant 4 (<a
+href="https://kytos02.cs.virginia.edu/cs3130-spring2026/cashgame/cashgame4.php">link</a>)
+uses voting to make plays; only if a majority of players agree to an
+action does it occur.</p></li>
+</ol>
+<p>Each variant allows arbitrary game names. Your group should</p>
+<ol type="1">
+<li>for each variant
+<ol type="a">
+<li>repeat until you agree on how the variant feels in play
+<ol type="i">
+<li>pick a name</li>
+<li>all enter that game (make sure no one plays before all are in the
+game)</li>
+<li>play until someone wins (we encourage conversation during play)</li>
+</ol></li>
+</ol></li>
+<li>agree on how to describe how the different synchronization models
+changed how the game feels; you’ll need to share this with a TA for
+check-off.</li>
+<li>call a TA to come and share what you found</li>
+</ol>
+<h1 data-number="4" id="passing-off"><span
+class="header-section-number">4</span> Passing Off</h1>
+<p>Explain to a TA how the different games felt different. They will be
+looking for evidence that you understood how the synchronization model
+impacted the game.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

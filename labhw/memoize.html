@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Memoization lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/memoize.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#memoization-vs-caching"
+id="toc-memoization-vs-caching"><span
+class="toc-section-number">1</span> Memoization vs Caching</a></li>
+<li><a href="#your-task" id="toc-your-task"><span
+class="toc-section-number">2</span> Your task</a></li>
+<li><a href="#on-using-an-stl-map" id="toc-on-using-an-stl-map"><span
+class="toc-section-number">3</span> On using an STL map</a></li>
+<li><a href="#on-estimating-big-o" id="toc-on-estimating-big-o"><span
+class="toc-section-number">4</span> On estimating big-O</a></li>
+<li><a href="#on-timing-code" id="toc-on-timing-code"><span
+class="toc-section-number">5</span> On timing code</a></li>
+</ul></nav>
+<p>Hardware caches are constrained by the need to be created in
+hardware. Software has more options available. In this lab, you’ll
+experiment with a few different approaches to <q>caching</q> in
+software.</p>
+<h1 data-number="1" id="memoization-vs-caching"><span
+class="header-section-number">1</span> Memoization vs Caching</h1>
+<p>The core concept of caching is keeping in a high-speed data structure
+the results of past work in hopes that you’ll use that data again soon.
+In software, this takes two forms:</p>
+<ul>
+<li>Memoizing stores <em>all</em> past work. It can change the
+asymptotic complexity of some algorithms.</li>
+<li>Caching stores <em>recent</em> past work. It can change the
+practical speed of some algorithms.</li>
+</ul>
+<p>Both tend to use an associative array type (i.e., a map, dict, table,
+etc) as the underlying data structure. The simplest memoization approach
+is</p>
+<pre><code>RetType plainAlgo(ArgType arg) { ... }
+
+map&lt;ArgType, RetType&gt; memos;
+RetType memoizedAlgo(ArgType arg) {
+    if (memos.contains(arg)) return memos[arg];
+    else return memos[arg] = plainAlgo(arg);
+}</code></pre>
+<p>Caching requires a more involved data structure which acts like both
+a linked list and an associative array. The linked list stores which
+items have been used recently, and the associative array stores the
+relationship between keys and values. Neither C nor C++ comes with a
+suitable data structure, so we’ll memoize instead in this lab.</p>
+<h1 data-number="2" id="your-task"><span
+class="header-section-number">2</span> Your task</h1>
+<p>Start with this code:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="dt">unsigned</span> <span class="dt">long</span> <span class="dt">long</span> ul<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>ul fib<span class="op">(</span><span class="dt">int</span> i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>i <span class="op">&lt;</span> <span class="dv">2</span><span class="op">)</span> <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> fib<span class="op">(</span>i<span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">+</span> fib<span class="op">(</span>i<span class="op">-</span><span class="dv">2</span><span class="op">);</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> phi<span class="op">(</span><span class="dt">int</span> i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> fib<span class="op">(</span>i<span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="dt">double</span><span class="op">)</span>fib<span class="op">(</span>i<span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is the classic recursive Fibbonacci sequence, a very inefficient
+way to compute it; and a function that uses it to compute the golden
+ratio <span class="math inline">\phi</span>.</p>
+<div class="exercise long">
+<ol type="1">
+<li><p>Write a main function and time the asymptotic complexity of
+<code>fib</code> and <code>phi</code>. Estimate the complexity class of
+each.</p>
+<p>How much does the run time change when you compile with
+<code>clang++ -O3</code> instead of <code>clang++ -O0</code>?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>Memoize <code>phi</code> (but not <code>fib</code>) and time it
+again.</p>
+<p>How has that changed the runtime? Has the complexity class changed?
+Does it matter how many times you run <code>phi</code>? If you try a lot
+of arguments, does it matter if you start with the smallest or the
+largest?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>Memoize <code>fib</code> and time it.</p>
+<p>How has that changed the runtime? Has the complexity class changed?
+Does it matter how many times you run <code>phi</code>? If you try a lot
+of arguments, does it matter if you start with the smallest or the
+largest?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>Implement an iterative version of <code>fib</code> that mimics
+the pseudocode</p>
+<pre><code> a,b = 1,1
+ repeat i times:
+     a,b = b,a+b
+ return a</code></pre>
+<p>Time this and estimate its complexity. Is it faster or slower than
+the memoized <code>fib</code>? Under what conditions?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>Memoize the iterative <code>fib</code>. Time this and estimate
+its complexity. Is it faster or slower than each of the other
+<code>fib</code>s? Under what conditions?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>You can stop here, but there’s more to explore if you are
+interested…</p>
+<ol type="a">
+<li><p>Classic Fibonacci is <span class="math inline">f(n) = f(n-1) +
+f(n-2)</span>, but you can extend this to other <span
+class="math inline">f_k(n) = f_k(n-k) + f_k(n-k-1)</span> cases. The
+ratio of adjacent elements of <span class="math inline">f_1</span>
+approximate <a href="https://en.wikipedia.org/wiki/Golden_ratio">the
+golden ratio</a>; the ratio of adjacent elements of <span
+class="math inline">f_2</span> approximate <a
+href="https://en.wikipedia.org/wiki/Plastic_number">the plastic
+number</a>; <span class="math inline">f_3</span> and beyond also
+approximate numbers with interesting properties, though they are not
+named.</p>
+<p>Implement, time, memoize, and re-time this more general family of
+Fibonacci-like functions and constant computations. What’s the measured
+complexity in terms of <span class="math inline">n</span>? In terms of
+<span class="math inline">k</span>? Is that true for both the
+with-memoizing and without cases?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>A cache (instead of a memo) for recursive Fibonacci would roughly
+end up caching small values only. Try what this runs like by only
+memoizing <span class="math inline">i &lt; 50</span>. How does this
+change the function’s runtime?</p>
+<textarea style="width:100%"></textarea></li>
+<li><p>Computing runtimes is all well and good, but what about
+visualizing them? One of the easiest ways to visualize a line is to
+output a simple <a
+href="https://en.wikipedia.org/wiki/Scalable_Vector_Graphics">SVG</a>
+file. This means the following:</p>
+<ol type="i">
+<li>Open a file for writing</li>
+<li>Write
+<code>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;</code>
+to it</li>
+<li>write
+<code>&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="</code>xmin<code></code>ymin<code></code>width<code></code>height<code>"&gt;</code>
+to it. You’ll need to know the extent of the x and y coordinates you
+want to draw to compute the xmin, ymin, width, and height
+appropriately.</li>
+<li>For each line you want to graph,
+<ul>
+<li>write <code>&lt;path stroke-width="1" fill="none" d="M</code></li>
+<li>write each x,y coordinate separated with a comma and followed by a
+space</li>
+<li>write <code>"/&gt;</code></li>
+</ul></li>
+<li>write <code>&lt;/svg&gt;</code></li>
+</ol>
+<p>SVG files can be viewed by most web browsers.</p>
+<p>Try making a graph of runtimes for one or more of your functions.
+Note that you may need to scale the x and y axes to be roughly the same
+width and height for the graphs to be useful.</p></li>
+</ol></li>
+</ol>
+
+</div>
+<p>The sections after this provide guidance on how to do some of the
+steps above.</p>
+<h1 data-number="3" id="on-using-an-stl-map"><span
+class="header-section-number">3</span> On using an STL map</h1>
+<p>The C++ standard template library (STL) was introduced in your <a
+href="../../COA1/F2019/lab11-stl.html">last COA1 lab</a>. It uses the
+general rule of one data structure per header file; two that might be
+useful in this lab are <a
+href="https://en.cppreference.com/w/cpp/container/map"><code
+class="sourceCode cpp"><span class="bu">std::</span>map<span class="op">&lt;</span>K<span class="op">,</span>V<span class="op">&gt;</span></code>
+from <code
+class="sourceCode cpp"><span class="pp">#include </span><span class="im">&lt;map&gt;</span></code></a>,
+a red-black tree; and <a
+href="https://en.cppreference.com/w/cpp/container/unordered_map"><code
+class="sourceCode cpp"><span class="bu">std::</span>unordered_map<span class="op">&lt;</span>K<span class="op">,</span>V<span class="op">&gt;</span></code>
+from <code
+class="sourceCode cpp"><span class="pp">#include </span><span class="im">&lt;unordered_map&gt;</span></code></a>,
+a hash table.</p>
+<p>Maps (either kind) has a slightly obtuse way of checking for
+membership: you first <code>.find()</code> a key, which returns an
+iterator to a key-value pair; then you compare it to the
+<code>.end()</code> of the map; if it is not the <code>.end()</code>
+then you found an entry and can get the value as the
+<code>-&gt;second</code> element of the iterator.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map_type_you_picked<span class="op">&lt;</span>K<span class="op">,</span>V<span class="op">&gt;</span> m<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>m<span class="op">[</span>key1<span class="op">]</span> <span class="op">=</span> value1<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">// ...</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> finder <span class="op">=</span> m<span class="op">.</span>find<span class="op">(</span>key<span class="op">);</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>finder <span class="op">!=</span> m<span class="op">.</span>end<span class="op">())</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    V value <span class="op">=</span> finder<span class="op">-&gt;</span>second<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// key not in the map</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>While Java has a datatype that can make efficient caches (the <a
+href="https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/util/LinkedHashMap.html">LinkedHashMap</a>),
+C++ does not, so we’ll only use memoizing in this lab.</p>
+<h1 data-number="4" id="on-estimating-big-o"><span
+class="header-section-number">4</span> On estimating big-O</h1>
+<p>The following gives tips on how to turn empirical runtimes into rough
+big-O formulas. It uses <span class="math inline">n</span> to represent
+input size and <span class="math inline">t</span> to represent measured
+runtime.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Asymptotic</th>
+<th>This will be constant…</th>
+<th>…and will approximate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">t\sim
+r\log(n)</span></td>
+<td><span class="math inline">2^{t} \div n</span></td>
+<td><span class="math inline">2^r</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">t \sim r
+n</span></td>
+<td><span class="math inline">t \div n</span></td>
+<td><span class="math inline">r</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">t \sim
+n^r</span></td>
+<td><span class="math inline">\log(t) \div \log(n)</span></td>
+<td><span class="math inline">r</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">t \sim
+r^n</span></td>
+<td><span class="math inline">\log(t) \div n</span></td>
+<td><span class="math inline">\log(r)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Note that fancier functions like <span class="math inline">n^k
+\log(n)</span> are harder to identify with simple formulae like those
+above, and that the above only work for <q>large enough</q> <span
+class="math inline">n</span> – as a rule of thumb, if an expression
+above is constant for <span class="math inline">n</span>s that result in
+<span class="math inline">t = 0.1</span> second and <span
+class="math inline">t = 2</span> seconds, you probably have the right
+formula.</p>
+<p>The general approach to estimating timing empirically is to make a
+loop that iterates over larger and large <span
+class="math inline">n</span>, timing the code to get <span
+class="math inline">t</span> and then computing and printing out a
+should-be-constant expression above; if that seems to be converging, you
+have an estimated complexity class.</p>
+<h1 data-number="5" id="on-timing-code"><span
+class="header-section-number">5</span> On timing code</h1>
+<p>Timing code is more complicated than it at first sounds for the
+following reasons:</p>
+<ul>
+<li>You have more than one processor core, each with its own clock.
+Long-running tasks may begin on one and end on another.</li>
+<li>CPU clocks can be dynamically scaled; for example, one of my
+computers runs at 4.1 GHz when it has a lot of work, but slows to 700
+MHz when most processes are idle.</li>
+<li>Hardware clocks drift a bit over time, so they periodically correct
+themselves by coordinating with time servers. That means that clocks
+might sometimes jump forward or backward by some significant fraction of
+seconds.</li>
+<li>The task of looking at the clock itself takes some time</li>
+<li>A given process may sometimes be suspended while the CPU handles
+other processes, making it unclear if the time we want is <q>wall-clock
+time</q> or <q>processor time</q>.</li>
+<li>If the OS spends time on a system call or interrupt while your
+process is running, should that be counted or not?</li>
+<li>If the process uses multiple threads, do you try to measure the
+start-to-end time or the sum of the time used by each thread or the
+average time used by each thread?</li>
+<li>Etc.</li>
+</ul>
+<p>The end result of this is that there are many different clocks and
+that picking the right one is not always straighforward. For this lab
+and other timings we’ll do in this class, we’ll use the following:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;time.h&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">/// returns the number of nanoseconds that have elapsed since 1970-01-01 00:00:00</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> <span class="dt">long</span> nsecs<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> timespec t<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    clock_gettime<span class="op">(</span>CLOCK_REALTIME<span class="op">,</span> <span class="op">&amp;</span>t<span class="op">);</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t<span class="op">.</span>tv_sec<span class="op">*</span><span class="dv">1000000000</span> <span class="op">+</span> t<span class="op">.</span>tv_nsec<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>To time a piece of code run <code>nsecs</code> before and after the
+code and then subtract. Note that because this measures <q>wall-clock
+time</q> there is a reasonable chance that you’ll get a strange result
+from time to time when there is a context switch (i.e., the OS or
+another process uses the processor for a bit) or time correction.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

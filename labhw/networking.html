@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Networking lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/networking.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#our-driver" id="toc-our-driver"><span
+class="toc-section-number">1</span> Our Driver</a></li>
+<li><a href="#protocol" id="toc-protocol"><span
+class="toc-section-number">2</span> Protocol</a></li>
+<li><a href="#tips" id="toc-tips"><span
+class="toc-section-number">3</span> Tips</a>
+<ul>
+<li><a href="#how-the-protocol-works"
+id="toc-how-the-protocol-works"><span
+class="toc-section-number">3.1</span> How the protocol works</a></li>
+<li><a href="#using-settimeout" id="toc-using-settimeout"><span
+class="toc-section-number">3.2</span> Using
+<code>setTimeout</code></a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>31 Oct 2024: add clarificaiton of what it means for packets to
+arrive out of order</li>
+<li>7 April 2025: update netlab.tar so one cannot run out timeouts due
+to internal use of setTimeout() when we receive your messages; correct
+wget command for this semester</li>
+<li>6 Nov 2025: update wget URL; remove mention of sockets in CSO1</li>
+</ul>
+</div>
+<p>In this lab you’ll learn how to add reliability on top of unreliable
+<q>mailbox</q> type model of a network.</p>
+<p>You’ll have enough to do in this lab, we’ll not worry about doing it
+over an actual network. We’ve provided a simple network simulator for
+you.</p>
+<div class="exercise long">
+<p>Possibly working with a partner —</p>
+<ol type="1">
+<li><p>Download <a href="../files/netlab.tar">netlab.tar</a> <em>[last
+updated 7 April 2025]</em> on a linux system (e.g., with <code
+class="sourceCode bash"><span class="fu">wget</span> https://www.cs.virginia.edu/~cr4bd/3130/F2025/files/netlab.tar</code>).</p></li>
+<li><p>Extract it and enter the directory (e.g., with <code
+class="sourceCode bash"><span class="fu">tar</span> xvf netlab.tar<span class="kw">;</span> <span class="bu">cd</span> netlab</code>).</p></li>
+<li><p>Test it with</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./netlab</span> 0</span></code></pre></div>
+<p>You should see a welcome message appear, ending with a
+<code>!</code>.</p></li>
+<li><p>Edit <code>netlab.c</code> so that you also see messages for
+<code>./netlab 1</code>, <code>./netlab 2</code>, etc. See below for a
+description of the messages the (simulated) server you are communicating
+with expects, including when you need to send acknowledgment or resend
+requests if you don’t receive a response.</p></li>
+<li><p>Show a TA your code or submit it to the submission site.</p>
+<ul>
+<li>To get full credit for checkoff, you should finish
+<code>./netlab 1</code> and show significant progress on
+<code>./netlab 2</code>. (We’d like you to complete
+<code>./netlab 2</code> if you’re able to in the lab time, but we intend
+to give credit if you make a significant attempt but don’t manage.)</li>
+<li><code>./netlab 3</code> is quite a bit harder and is recommended if
+you have time, but not required for checkoff/submission</li>
+<li>If you are submitting instead of checking off, we require
+<code>./netlab 1</code> and <code>./netlab 2</code> to be complete</li>
+</ul></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="our-driver"><span
+class="header-section-number">1</span> Our Driver</h1>
+<p>We provide a network simulation driver program. It has the following
+pieces:</p>
+<ul>
+<li><p>Function <code>void send(size_t len, void* data)</code>. You’ll
+invoke this to simulate sending unreliable packets over a
+network.</p></li>
+<li><p>Function skeleton
+<code>void recvd(size_t len, void* data)</code>. This function is called
+by our simulation code (in waitForAllTimeoutsAndMessagesAndExit) when
+packets are received. You’ll fill in details to describe what you would
+do on a packet receipt.</p></li>
+<li><p>Function
+<code>int setTimeout(void (*callback)(void*), unsigned long ms, void *arg)</code>.
+You may invoke this to ask to have <code>callback</code> invoked after
+<code>ms</code> milliseconds (<code>ms * 0.001</code> seconds), passing
+<code>arg</code> as the argument.</p>
+<p>On success, returns a positive identifier that may be used in
+<code>clearTimeout</code>. On failure, returns a special error code:</p>
+<ul>
+<li><code>0</code> if <code>callback</code> is <code>NULL</code></li>
+<li><code>-1</code> if <code>ms</code> is too far in the future (more
+than a minute)</li>
+<li><code>-2</code> if you have too many pending callbacks scheduled
+(based on an implementation-defined limit guaranteed to be at least
+16)</li>
+</ul>
+<p>The callback is executed once per <code>setTimeout</code> call,
+assuming it is not cleared with <code>clearTimeout</code> first.</p>
+<p>The actual invoking of <code>callback</code> will be done by the
+<code>waitForAllTimeoutsAndMessagesThenExit</code> function.</p></li>
+<li><p>Function <code>void clearTimeout(int timeoutID)</code>. If
+<code>timeoutID</code> was returned by <code>setTimeout</code> and the
+callback has not yet been invoked, unschedules that callback. Otherwise,
+does nothing.</p></li>
+<li><p>Function
+<code>void waitForAllTimeoutsAndMessagesThenExit(void)</code>. If there
+are no pending timeouts or messages, exits <em>the entire program</em>
+immediately. Otherwise, blocks until there are no scheduled timeouts or
+messages left, running a loop that calls the timeout callbacks and/or
+<code>recvd</code> as it waits. After there are no more timeouts, exits
+the entire program.</p>
+<p>May <strong>not</strong> be called from a callback.</p></li>
+</ul>
+<h1 data-number="2" id="protocol"><span
+class="header-section-number">2</span> Protocol</h1>
+<p>Every message must have its first byte be a checksum. We’ll use a
+very simple checksum for this lab: the xor of all other bytes.</p>
+<div class="example long">
+<p>To send the array of bytes <code>[0, 1, 2, 5]</code> you actually
+send a five-byte message: <code>[0^1^2^5, 0, 1, 2, 5]</code>.</p>
+
+</div>
+<p>You should send the server a 4-byte message (plus a checksum) to
+initiate conversation. The first three bytes should be the ASCII
+characters for <code>GET</code>; the fourth should be an ASCII digit
+<code>0</code> through <code>9</code>. The ASCII digit selects which
+message to retrieve (higher numbered messages are more difficult to
+handle), and is filled in from the command line argument in our supplied
+code. The server will then start sending you messages in discrete
+packets.</p>
+<p>The first three bytes of each packet the server sends will be a
+checksum, a (1-based) sequence number, and the total sequence count.
+Both sequence number and sequence count will be encoded directly as a
+byte, not using ASCII.</p>
+<div class="example long">
+<p>If the server plans to send two packets, one containing
+<code>[3, 1]</code> and the other <code>[4, 1, 5]</code>, they will
+actually arrive as <code>[1^2^3^1, 1, 2, 3, 1]</code> and
+<code>[2^2^4^1^5, 2, 2, 4, 1, 5]</code>.</p>
+
+</div>
+<p>After receiving a message, you should reply with a four-byte message
+(plus a checksum) to acknowledge it and request the next message. The
+first three bytes should be the ASCII characters for <code>ACK</code>;
+the fourth should be the sequence number you received. If the next
+message is not delivered, you should reply with the <code>ACK</code> of
+the last message you got in order (or re-send the <code>GET</code> if
+the very first message is not delivered) to request the next message be
+resent. However, messages may be delayed in transit and may arrive out
+of order. (You will not receive a packet you haven’t requested yet,
+e.g. you won’t get packet 4+ after ACKing packet 2.  But you could get
+items 1 or 2 again after ACKing packet 2) You should wait at least a few
+seconds before deciding a message will not arrive and re-sending its
+request.</p>
+<p>Each <code>GET</code> will give a different message, and with a
+different level of errors you need to handle.</p>
+<ol start="0" type="1">
+<li>sends the full message without errors</li>
+<li>sends the full message without errors, one a packet at a time,
+requiring you to <code>ACK</code> properly</li>
+<li>sends messages unreliably; some messages never arrive and need to be
+re-requested</li>
+<li>sends messages unreliably; some messages arrive in a corrupted state
+and need to be re-requested</li>
+</ol>
+<p>You may assume that if a message has not arrived after a full second,
+it will not arrive.</p>
+<h1 data-number="3" id="tips"><span
+class="header-section-number">3</span> Tips</h1>
+<ul>
+<li>Work with a partner.</li>
+</ul>
+<h2 data-number="3.1" id="how-the-protocol-works"><span
+class="header-section-number">3.1</span> How the protocol works</h2>
+<ul>
+<li><p>Messages with bad checksums are ignored by the server.</p></li>
+<li><p>You only have two kinds of messages you’ll ever send. It’s
+probably worth writing helper functions to send them (or just one helper
+to send both based on an argument).</p></li>
+<li><p><code>ACK</code>0 does not work; use <code>GET</code> instead
+(with the correct message number).</p></li>
+</ul>
+<h2 data-number="3.2" id="using-settimeout"><span
+class="header-section-number">3.2</span> Using
+<code>setTimeout</code></h2>
+<ul>
+<li><p>You can use <code>setTimeout</code> to make
+<code>waitForAllTimeouts</code> run something in the future. For
+example, the following prints 3, then 1, then 4, ending two seconds
+after it started.</p>
+<pre><code>  void pnum(void *num) {
+      printf(&quot;%d\n&quot;, (int)num);
+  }
+  int main() {
+      int one = setTimeout(pnum, 1000, (void *)1uL);
+      int two = setTimeout(pnum, 500, (void *)2uL);
+      int three = setTimeout(pnum, 100, (void *)3uL);
+      int four = setTimeout(pnum, 2000, (void *)4uL);
+      clearTimeout(two);
+      waitForAllTimeoutsAndMessagesThenExit();
+  }</code></pre>
+<p>Note that <code>2</code> is not printed out because of the call to
+<code>clearTimeout</code>.</p>
+<p>The <code>waitForAllTimeoutsAndMessagesThenExit</code> function looks
+at the list of non-cleared timeouts, waits until each of those timeouts
+expire, and calls the callback function (<code>pnum</code> in this case)
+with the specified arguments (1, 3, and 4) in the case.</p></li>
+<li><p>Our API does not support any <q><code>sleep</code></q>-like
+function that waits for a certain amount of time, but you can achieve
+the same effects. For example, pseudocode like:</p>
+<pre><code>  void Example() {
+      Foo();
+      Sleep(1000); /* function that does not exist in our API */
+      Bar();
+  }</code></pre>
+<p>(where <code>Sleep(1000)</code> would wait 1000 milliseconds) can be
+transformed to use our API as follows:</p>
+<pre><code>  void ExamplePartTwo(void *arg);
+  void Example() {
+      Foo();
+      setTimeout(ExamplePartTwo, 1000, NULL);
+  }
+  void ExamplePartTwo(void *arg) {
+      Bar();
+  }</code></pre>
+<p>(assuming that waitForAllTimeoutAndMessagesThenExit runs so it can
+call ExamplePartTwo. If Example itself was called by waitForAllTimeouts
+using <code>recvd</code> or callback, then returning from recvd or that
+callback will continue running waitForAllTimeouts. Otherwise (such as if
+Example was called from <code>main()</code>), the code that calls
+Example would need to later call
+<code>waitForAllTimeoutsAndMessagesThenExit</code>.)</p></li>
+<li><p>A more challenging case for programming without any
+<code>sleep</code>-like function is when there would be local variables.
+For example, the previous transform doesn’t quite work on:</p>
+<pre><code>  void Example() {
+      int x = Foo();
+      int y = Foo();
+      Sleep(1000); /* function that does not exist in our API */
+      Bar(x, y);
+  }</code></pre>
+<p>because we need to do something wiht <code>x</code> and
+<code>y</code>. This is what we can use the <code>arg</code> parameter
+in <code>setTimeout</code> for:</p>
+<pre><code>  struct XYHolder {
+      int x, y;
+  }
+  void ExamplePartTwo(void *arg); 
+  void Example() {
+      struct XYHolder *xy;
+      xy = malloc(sizeof(struct XYHolder));
+      xy-&gt;x = Foo();
+      xy-&gt;y = Foo();
+      setTimeout(ExamplePartTwo, 1000, xy);
+  }
+
+  void ExamplePartTwo(void *arg) {
+      struct XYHolder *xy;
+      xy = arg;
+      Bar(xy-&gt;x, xy-&gt;y);
+      free(xy);
+  }</code></pre>
+<p>In this case, we allocate space on the heap to store <code>x</code>
+and <code>y</code>, and pass a pointer to that space via
+<code>setTimeout</code>.</p></li>
+<li><p>The argument of your callbacks must be typed as a
+<code>void *</code>, but (via casting) can be any type of 8 or fewer
+bytes. Feel free to use <code>NULL</code> if you don’t need an
+argument.</p></li>
+<li><p>My solution used a few global variables for the information I
+wanted in every callback. It was 58 lines of reasonably-formatted C
+code.</p></li>
+</ul>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

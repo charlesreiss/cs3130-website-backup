@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Processors</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/processors.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#organizing-a-processor"
+id="toc-organizing-a-processor"><span
+class="toc-section-number">1</span> Organizing a processor</a></li>
+<li><a href="#pipelining" id="toc-pipelining"><span
+class="toc-section-number">2</span> Pipelining</a>
+<ul>
+<li><a href="#dependencies" id="toc-dependencies"><span
+class="toc-section-number">2.1</span> Dependencies</a>
+<ul>
+<li><a href="#stalling" id="toc-stalling"><span
+class="toc-section-number">2.1.1</span> Stalling</a></li>
+<li><a href="#forwarding" id="toc-forwarding"><span
+class="toc-section-number">2.1.2</span> Forwarding</a></li>
+<li><a href="#speculative-execution"
+id="toc-speculative-execution"><span
+class="toc-section-number">2.1.3</span> Speculative execution</a></li>
+</ul></li>
+<li><a href="#optimal-pipeline-depth"
+id="toc-optimal-pipeline-depth"><span
+class="toc-section-number">2.2</span> Optimal Pipeline Depth</a></li>
+</ul></li>
+<li><a href="#out-of-order-processors"
+id="toc-out-of-order-processors"><span
+class="toc-section-number">3</span> Out-of-order processors</a>
+<ul>
+<li><a href="#functional-units-and-issue-queues"
+id="toc-functional-units-and-issue-queues"><span
+class="toc-section-number">3.1</span> Functional units and issue
+queues</a></li>
+<li><a href="#register-renaming" id="toc-register-renaming"><span
+class="toc-section-number">3.2</span> Register renaming</a></li>
+<li><a href="#reorder-buffer" id="toc-reorder-buffer"><span
+class="toc-section-number">3.3</span> Reorder buffer</a>
+<ul>
+<li><a href="#handling-misspeculation"
+id="toc-handling-misspeculation"><span
+class="toc-section-number">3.3.1</span> Handling misspeculation</a></li>
+</ul></li>
+<li><a href="#out-of-order-processor-as-a-pipeline"
+id="toc-out-of-order-processor-as-a-pipeline"><span
+class="toc-section-number">3.4</span> Out-of-order processor as a
+pipeline</a></li>
+<li><a href="#common-data-bus" id="toc-common-data-bus"><span
+class="toc-section-number">3.5</span> Common data bus</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>10 Apr 2023: add section on OOO pipelines, and handling
+misspeculation</li>
+<li>21 Apr 2025: correct register renaming example where wrong tag was
+updated</li>
+</ul>
+</div>
+<blockquote>
+<p>This writeup is not designed to stand alone and is unlikely to make
+sense without the associated lectures.</p>
+</blockquote>
+<h1 data-number="1" id="organizing-a-processor"><span
+class="header-section-number">1</span> Organizing a processor</h1>
+<p>A processor has a lot of parts and pieces. It can help keep them
+orderly if we break them into named components, similar to naming
+functions in C. There are various names used, but one common model is to
+consider five steps:</p>
+<ol type="1">
+<li>Fetch, reads an instruction from memory</li>
+<li>Decode, retrieves values from registers</li>
+<li>Execute, uses the ALU</li>
+<li>Memory, reads from or writes to one address of memory</li>
+<li>Writeback, puts results into register</li>
+</ol>
+<p><img src="files/fivestage.svg" style="width:100%"/></p>
+<p>For example, the instruction <code>pushq %r8</code> would</p>
+<ol type="1">
+<li>Fetch that instruction from memory</li>
+<li>Detect that it is a <code>push</code> and read the values of
+<code>%r8</code> and <code>%rsp</code> from the register file</li>
+<li>Compute the new value of <code>%rsp</code> by sending
+<code>%rsp</code>’s value and <code>$-8</code> into the ALU</li>
+<li>Send the value of <code>%r8</code> to memory to be written at the
+address <code>%rsp - $8</code></li>
+<li>Send the new <code>%rsp</code> back to the register file</li>
+</ol>
+<p>This organization does not change what transistors and wires we
+actually put on the chip, but it does help us think about what purpose
+they each serve.</p>
+<h1 data-number="2" id="pipelining"><span
+class="header-section-number">2</span> Pipelining</h1>
+<p>Real processors <em>pipeline</em> instructions: that is, they split
+up the work of a single instruction into several components and divide
+them up into multiple steps. And not just as an organizational aid; they
+add register banks between the steps.</p>
+<p><img src="files/pipeline.svg" style="width:100%"/></p>
+<p>These between-stages registers are called <q>pipeline registers</q>;
+they handle moving instructions one stage at a time. Because registers
+require a clock signal to change values, this means that a single
+instruction moves from stage to stage across several clock cycles.</p>
+<div class="example long">
+<p>Consider the following code</p>
+<pre><code>evaluate:
+    xorl    %eax, %eax
+    cmpq    $1, %rdi
+    je      evaluate_end
+    movl    $1, %ecx
+evaluate_loop:
+    incq    %rax
+    movq    %rdi, %rdx
+    sarq    %rdx
+    testb   $1, %dil
+    leaq    1(%rdi,%rdi,2), %rdi
+    cmovneq %rdx, %rdi
+    cmpq    %rcx, %rdi
+    jne     evaluate_loop
+evaluate_end:
+    retq</code></pre>
+<p>Three cycles after calling this function, the state of the processor
+would look like</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td colspan="5">
+<img src="files/pipeline.svg" style="width:100%"/>
+</td>
+</tr>
+<tr>
+<td width="20%" style="text-align:center">
+je
+</td>
+<td width="20%" style="text-align:center">
+cmpq
+</td>
+<td width="20%" style="text-align:center">
+xorl
+</td>
+<td width="20%" style="text-align:center">
+callq
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table>
+<p>The last stage would presumably still be working on the code that
+called this function.</p>
+
+</div>
+<h2 data-number="2.1" id="dependencies"><span
+class="header-section-number">2.1</span> Dependencies</h2>
+<p>A later instruction can depend on an earlier instruction in two
+ways:</p>
+<ol type="1">
+<li><p>A <em>data dependency</em> occurs when information needed to
+correctly execute the later instruction is computed by the earlier
+instruction.</p>
+<ul>
+<li>The instruction pair <code>addq %rax, %rcx; addq %rcx, %rdx</code>
+has a data dependency: the first computes the <code>%rcx</code> value
+needed by the second.</li>
+<li>The instruction pair <code>addq %rax, %rcx; cmovle %r8, %r9</code>
+has a data dependency: whether <code>cmovle</code> changes
+<code>%r9</code> or not depends on the condition codes set by
+<code>addq</code>.</li>
+</ul></li>
+<li><p>A <em>control dependency</em> occurs when the earlier instruction
+determined whether a later instruction should even be executed.</p>
+<ul>
+<li>The instruction pair <code>jle foo; addq %rcx, %rdx</code> has a
+control dependency: the second might not be run depending on the result
+of the first.</li>
+<li>The instruction <code>retq</code> has a control dependency with
+whatever instruction runs next: which one it is depends on what value
+<code>retq</code> pops off the stack.</li>
+</ul></li>
+</ol>
+<p>The existence of both kinds of dependencies can be determined by
+inspecting the assembly in a algorithmically-trivial way simply by
+comparing arguments and icodes.</p>
+<p>Dependencies can cause problems in a pipeline, causing naïve
+implementations to compute the wrong result because the earlier
+instruction will not have completed when the later instruction begins to
+execute. Three basic tactics can be used to resolve these issues.</p>
+<h3 data-number="2.1.1" id="stalling"><span
+class="header-section-number">2.1.1</span> Stalling</h3>
+<p>The simplest solution to a dependency is to simply wait for the
+results to appear.</p>
+<div class="example long">
+<p>Let’s look at the last example again.</p>
+<pre><code>evaluate:
+    xorl    %eax, %eax
+    cmpq    $1, %rdi
+    je      evaluate_end
+    movl    $1, %ecx
+    /*...*/
+evaluate_end:
+    retq</code></pre>
+<p>Let’s trace it through, starting with the
+<code>callq evaluate</code>, stalling anytime we need to. Note that in
+practice we wouldn’t stall this much, using <a
+href="#forwarding">forwarding</a> to avoid most of these stalls.</p>
+<p><img src="files/pipeline.svg" style="width:100%"/></p>
+<ol type="1">
+<li><p>First, we <code>callq</code>.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Since <code>callq</code> has its destination right in its
+instruction as an immediate, Fetch was able to pick the next
+instruction: <code>xorl</code>, the first instruction of the new
+function. <code>callq</code> still has work to do, though, pushing a
+return address, so it’s still in the pipeline.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>No dependency between <code>xorl</code> and <code>callq</code>,
+so we let them move on and fetch the next instruction:</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>No dependency between <code>cmpq</code>, <code>xorl</code>,
+<code>callq</code>, so we let them move on and fetch the next
+instruction:</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p><code>je</code> has a data dependency on <code>cmpq</code>: it
+needs the condition codes. So we stall <code>je</code>, leaving it where
+it is. We let the others move on. To handle the gap, the stalled
+<code>je</code> inserts a <code>nop</code> instruction after itself.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p><code>je</code> is still waiting on <code>cmpq</code>;
+<code>cmpq</code> did compute the flags already, but they are not in the
+flags register yet nor will be until <code>cmpq</code>’s writeback
+finishes.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p><code>je</code> now has its data dependency resolved, but what we
+don’t know what to load in after it, so we need to stall fetch.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>The <code>je</code> has finally finished! We now know that we
+<em>don’t</em> jump (the <code>cmpq</code> was comparing <code>$1</code>
+and <code>%rdi</code>, an argument we’re assuming was not
+<code>1</code>), so we fetch the next instruction:
+<code>movl $1,%ecx</code>.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>movl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+</tr>
+</tbody>
+</table></li>
+</ol>
+<p>…</p>
+
+</div>
+<p>While stalling removes the throughput benefits of pipelining, it is
+also easy to implement and is always correct.</p>
+<h3 data-number="2.1.2" id="forwarding"><span
+class="header-section-number">2.1.2</span> Forwarding</h3>
+<p>Sometimes we can shorten the length of a stall by looking for
+information in places other than its final destination. For example, if
+the ALU computes a value that will be placed in <code>%rcx</code> when
+it gets to the writeback stage, two cycles prior sees <code>%rcx</code>
+sitting in the pipeline register between the execute and memory stages.
+It takes a bit more design complexity, but we can set up the pipeline to
+look for that kind of <q>computed but not yet stored</q> information in
+the pipeline registers and use it directly.</p>
+<div class="example long">
+<p>Let’s look at the last example again.</p>
+<pre><code>evaluate:
+    xorl    %eax, %eax
+    cmpq    $1, %rdi
+    je      evaluate_end
+    movl    $1, %ecx
+    /*...*/
+evaluate_end:
+    retq</code></pre>
+<p>Let’s trace it through, starting with the
+<code>callq evaluate</code>, stalling as little as possible and
+forwarding where possible.</p>
+<p><img src="files/pipeline.svg" style="width:100%"/></p>
+<ol type="1">
+<li><p>First we <code>callq</code>.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>No dependency yet</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>No dependency yet</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>No dependency yet</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p><code>je</code> has a data dependency on <code>cmpq</code>, but
+doesn’t need the data yet. Let’s assume <code>je</code> compares
+condition codes to its immediate <code>e</code> flag in the execute
+stage, so let’s let it ride until it gets there.</p>
+<p>However, we don’t know what to put in behind it yet, so we’ll stall
+there.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p><code>je</code> gets to execute this stage; does it have what it
+needs to do its job? It does: <code>cmpq</code> has already computed the
+flags, and they are sitting in a pipeline register; we simply pull from
+there instead of from the register file and continue executing.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Since <code>je</code> just executed, we know which instuction to
+load next. We forward that information from the pipeline register after
+the execute stage to load in the <code>movl</code> instruction.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>movl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+</ol>
+<p>…</p>
+
+</div>
+<p>Setting up forwarding can be more work from a chip designer’s
+perspective, but it is basically just a lot of extra wires and muxes.
+Once those are correctly placed, we can dramatically reduce stalls at no
+cost to correctness.</p>
+<h3 data-number="2.1.3" id="speculative-execution"><span
+class="header-section-number">2.1.3</span> Speculative execution</h3>
+<p>Even with forwarding, we still have some stalls. A command like
+<code>ret</code>, which depends on a register (<code>%rsp</code>)
+<em>and</em> the ALU (to increment <code>%rsp</code> by 8) <em>and</em>
+data memory (to read the return address off the stack) can effectively
+empty out the entire pipeline. Wouldn’t it be nice to have some work for
+all those stalled stages to do?</p>
+<p>Solution: speculative execution. We <em>guess</em> what the result
+will be and start work based on that guess. If it turns out our guess
+was wrong, we remove the unfinished work at no loss compared to not
+having done it; if it turns out we were right, though, we save cycles of
+compute time.</p>
+<div class="example long">
+<p>Let’s look at the last example again.</p>
+<pre><code>evaluate:
+    xorl    %eax, %eax
+    cmpq    $1, %rdi
+    je      evaluate_end
+    movl    $1, %ecx
+    /*...*/
+evaluate_end:
+    retq</code></pre>
+<p>Let’s trace it through, starting with the
+<code>callq evaluate</code>, speculatively executing when we would
+otherwise stall.</p>
+<p><img src="files/pipeline.svg" style="width:100%"/></p>
+<ol type="1">
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>We don’t <em>know</em> what instruction follows <code>je</code>,
+but we know it is <em>either</em> <code>movl</code> (if the jump is not
+taken) or <code>retq</code> (if the jump is taken).</p>
+<p>Let’s guess it is taken:</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>retq<br/>(speculative)</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Still don’t know if we guessed right. What comes after
+<code>retq</code>? We don’t know and don’t know how to guess. ☹</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p><em>stalled</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>retq<br/>(speculative)</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>We just learned we speculated wrong! No problem: we replace the
+speculated instructions with <code>nop</code> and keep going.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>movl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p><em>nop</em></p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+</ol>
+<p>…</p>
+
+</div>
+<div class="example long">
+<p>Let’s try the other speculation:</p>
+<pre><code>evaluate:
+    xorl    %eax, %eax
+    cmpq    $1, %rdi
+    je      evaluate_end
+    movl    $1, %ecx
+evaluate_loop:
+    incq    %rax
+    movq    %rdi, %rdx
+    /*...*/
+evaluate_end:
+    retq</code></pre>
+<p><img src="files/pipeline.svg" style="width:100%"/></p>
+<ol type="1">
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+<td width="20%" style="text-align:center">
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>We don’t <em>know</em> what instruction follows <code>je</code>,
+but we know it is <em>either</em> <code>movl</code> (if the jump is not
+taken) or <code>retq</code> (if the jump is taken).</p>
+<p>Let’s guess it is <em>not</em> taken:</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>movl<br/>(speculative)</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>callq</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Still don’t know if we guessed right.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>incq<br/>(speculative)</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>movl<br/>(speculative)</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>We just learned we speculated right! Great: it’s no longer
+speculative and we’re two instructions ahead of the game.</p>
+<table border="0" width="100%">
+<tbody>
+<tr>
+<td width="20%" style="text-align:center">
+<p>movq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>incq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>movl</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>je</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>cmpq</p>
+</td>
+<td width="20%" style="text-align:center">
+<p>xorl</p>
+</td>
+</tr>
+</tbody>
+</table></li>
+</ol>
+<p>…</p>
+
+</div>
+<p>This leads to an entire subfield of speculation and prediction. Will
+a conditional jump be taken? Where will a return jump to? These
+questions have spawned multiple research teams designing various branch
+and branch-target predictors, which have become quite good. By storing
+an array of the 32 most recent branches and applying some heuristics on
+that array, it is common to get &gt; 90% accuracy on our guesses.</p>
+<h2 data-number="2.2" id="optimal-pipeline-depth"><span
+class="header-section-number">2.2</span> Optimal Pipeline Depth</h2>
+<p>How many stages should you put in your pipeline? For a time, the
+answer appeared to be <q>as many as possible,</q> and in the 90s we got
+some 30+ stage pipelines in production. Having a very deep pipeline
+means you have very little work to do in each stage, meaning you can run
+your clock faster and get higher throughput. However, it also means that
+you have more dependencies to consider, and when you do mispredict a
+speculation, you lose more cycles of mispredicted work.</p>
+<p>While there’s no single formula for the perfect pipeline, CPU designs
+appear to have converged on the 10–15 stage range as a good compromise
+between the higher best-case throughput and higher misprediction penalty
+of a deeper pipeline.</p>
+<h1 data-number="3" id="out-of-order-processors"><span
+class="header-section-number">3</span> Out-of-order processors</h1>
+<p>There are a number of interrelated ideas in out-of-order execution
+and multiple implementations of each part. The goal of this section is
+to explain enough that you can see how the pieces might be built, not to
+explain the design decisions needed to pick the best build.</p>
+<h2 data-number="3.1" id="functional-units-and-issue-queues"><span
+class="header-section-number">3.1</span> Functional units and issue
+queues</h2>
+<p>Suppose our computer has an adder circuit, used by multiple
+instructions (e.g., to compute addresses and to perform
+<code>addq</code>, <code>subq</code>, and <code>cmpq</code>
+instructions, etc.) We’re going to call this adder a <strong>functional
+unit</strong>, give it an explicit set of operands (i.e., <span
+class="math inline">x = y + z</span> instead of <span
+class="math inline">x += y</span>), and give it its own little
+<strong>issue queue</strong> (or <strong>reservation station</strong>)
+of additions waiting to happen.</p>
+<p>The queue is going to be a fixed set of registers. These will specify
+what values to work on and where to put the result. However, since we
+might have dependencies, there will be a special <strong>ready
+bit</strong> for each operand; an instruction will be ready only if all
+of its operands’ ready bits are 1. Setting ready bits is discussed in
+the <a href="#common-data-bus">Common data bus</a> section.</p>
+<p>Each cycle, the adder will look at the slots in its queue and execute
+the oldest instruction that is ready to be executed, broadcasting the
+results onto the <a href="#common-data-bus">common data bus</a>. If
+there is no such instruction, it will do nothing.</p>
+<p>When the issue stage wants to put an instruction into the adder’s
+issue queue, it will first make sure there’s an open slot; if not, the
+issue stage will stall until the adder has room for the next
+instruction.</p>
+<p>There’s nothing special about an adder here; we’ll also have other
+functional units, like a multiplier, a memory reader, a memory writer,
+etc.</p>
+<p>We might have multiple functional units that do the same work,
+relying on the issue stage to send tasks to one that will get to it
+quickly. We also might have a functional unit that can handle multiple
+tasks in a single cycle, either by having its own half-cycle clock or by
+having multiple parallel copies of its logic gates, relying on it to
+handle grabbing several items from the queue at a time. We also might
+have a functional unit that takes a long time to finish a task, leaving
+it in the issue queue for many cycles while it churns away before
+finally broadcasting a result and removing it from the queue.</p>
+<h2 data-number="3.2" id="register-renaming"><span
+class="header-section-number">3.2</span> Register renaming</h2>
+<p>Our functional units will be much simpler if we have a simplified
+version of data dependencies. We don’t want to ever have a case where
+several pending instructions are trying to write to the same register
+and we get the results our of order. So we’ll do a special renaming
+process, changing program registers like <code>%rax</code> into secret
+hardware registers we actually use. (In the text below, we’ll call these
+<q>program registers</q> and <q>hardware registers</q>, but other common
+terms are <q>architectural registers</q> (for program registers, because
+they are specified by the instruction set architecture) and <q>physical
+registers</q>.)</p>
+<p>The main hardware data structure we’ll need for this is a
+<strong>remap file</strong>; this is an array of entries, one per
+program register, each entry of which contains two fields: a
+<strong>tag</strong> which is a hardware register number and a
+<strong>ready bit</strong> which tells us if some pending instruction
+will overwrite this (<code>0</code>, not ready) or not (<code>1</code>,
+ready).</p>
+<div class="example long">
+<p>The x86-64 registers RAX through R15 are internally register numbers
+0 through 15, so we’ll need a 16-entry remap file. If we have 64
+hardware registers and no pending instructions, this file might look
+like</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">index</th>
+<th style="text-align: center;">ready</th>
+<th style="text-align: center;">tag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">0 = RAX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">1 = RCX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">2 = RDX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">9</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">3 = RBX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⋮</td>
+<td style="text-align: center;">⋮</td>
+<td style="text-align: center;">⋮</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">14 = R14</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">38</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">15 = R15</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">2</td>
+</tr>
+</tbody>
+</table>
+<p>This means that, e.g., the program register value for
+<code>%rcx</code> is currently stored in hardware register number
+11.</p>
+
+</div>
+<p>Every time we issue an instruction, we’ll change its source operands
+into the tags from the file, then allocate a new unused tag for its
+destination operand and update the remap file to have that new tag and
+to be marked as not ready.</p>
+<div class="example long">
+<p>Continuing the example from above, assume that hardware registers 18
+and 19 are unused right now (not in the rename file)</p>
+<p>We’d change the instruction <code>addq %rax, %rcx</code> into
+<code>h18 = h0* + h11*</code>, where <code>h18</code> means <q>hardware
+register 18</q> and <code>*</code> means <q>is ready,</q> and update the
+remap file.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">index</th>
+<th style="text-align: center;">ready</th>
+<th style="text-align: center;">tag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">0 = RAX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">1 = RCX</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">2 = RDX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">9</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">3 = RBX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⋮</td>
+<td style="text-align: center;">⋮</td>
+<td style="text-align: center;">⋮</td>
+</tr>
+</tbody>
+</table>
+<p>If the instruction after that was <code>addq %rcx, %rdx</code>, it
+would become <code>h19 = h18 + h9*</code></p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">index</th>
+<th style="text-align: center;">ready</th>
+<th style="text-align: center;">tag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">0 = RAX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">1 = RCX</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">2 = RDX</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">19</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">3 = RBX</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⋮</td>
+<td style="text-align: center;">⋮</td>
+<td style="text-align: center;">⋮</td>
+</tr>
+</tbody>
+</table>
+<p>and so on.</p>
+
+</div>
+<p>This process ensures that each hardware register has at most one
+pending instruction that is writing to it while still maintaining the
+dependency graph of the original instructions.</p>
+<h2 data-number="3.3" id="reorder-buffer"><span
+class="header-section-number">3.3</span> Reorder buffer</h2>
+<p>Because we might encounter an exception or discard work due to a
+misprediction at any time, we want to make sure that we never see any
+externally-visible results of an instruction before an earlier
+instruction has completed. To solve this, we’ll have a special queue of
+incomplete instructions called a <strong>reorder buffer</strong>.</p>
+<p>When an instruction is issued, it is also enqueued into the reorder
+buffer.</p>
+<p>When an instruction completes, we</p>
+<ul>
+<li>put its result into its hardware register and mark it as ready in
+the remap file</li>
+<li>mark it as done in the reorder buffer</li>
+</ul>
+<p>Once an instruction is the oldest undone instruction in the reorder
+buffer, we’ll finalize the instruction often called <em>committing</em>
+or <em>retiring</em> it:</p>
+<ul>
+<li>move its results over into the externally-visible state (set flags,
+update the register file, perform memory writes, etc.)
+<ul>
+<li>for register file updates, rather than having a separate register
+file for the <q>externally-visible</q> value of registers, a processor
+might track the tags of the <q>externally-visible</q> register
+values</li>
+</ul></li>
+<li>finally remove it from the reorder buffer</li>
+</ul>
+<h3 data-number="3.3.1" id="handling-misspeculation"><span
+class="header-section-number">3.3.1</span> Handling misspeculation</h3>
+<p>In an out-of-order processor, often we will have computed the results
+of speculatively executed instructions that we later find out need to be
+discarded. This could be because of a branch misprediction, or because
+an earlier instruction triggered an exception (like a page fault).</p>
+<p>The reorder buffer can help handle this: by discarding all later
+updates in the reorder buffer, the externally-visible state that remains
+will allow the processor resume execution where the misspeculation
+occurred.</p>
+<h2 data-number="3.4" id="out-of-order-processor-as-a-pipeline"><span
+class="header-section-number">3.4</span> Out-of-order processor as a
+pipeline</h2>
+<p>An out-of-order processor will still usually make extensive use of a
+pipelined design, but it’s pipeline will be divided into three
+parts:</p>
+<ul>
+<li><p>an in-order part, where one or more pipeline stages will:</p>
+<ul>
+<li>fetching instructions, decoding instructions, performing register
+renaming, and <q>dispatch</q> instructions to an instruction queue</li>
+</ul></li>
+<li><p>an out-of-order part, where instructions will be extracted from
+the instruction queue, then run through one or more pipeline stages
+including register value reading and forwarding, the actual instruction
+computations (or data cache operations), and writing back the results
+(to a register file and/or reorder buffer)</p>
+<p>(As mentioned above, not all execution units will use a pipelined
+design.)</p></li>
+<li><p>an final in-order part where the work of committing instructions
+will be performed</p></li>
+</ul>
+<p>Unlike a <q>traditional</q> pipelined processor, the in-order parts
+of the pipeline are typically designed to handle several instructions in
+each cycle, so the processor can complete several instructions per cycle
+on average.</p>
+<h2 data-number="3.5" id="common-data-bus"><span
+class="header-section-number">3.5</span> Common data bus</h2>
+<p>When an instruction completes, we might need to do any or all of the
+following:</p>
+<ul>
+<li>update the hardware register with the result</li>
+<li>update the remap file to show the register is ready</li>
+<li>update all pending instructions that used the destination as a
+source with the newly-available result, marking those operands as
+ready</li>
+<li>update the reorder buffer to show the instruction is done, possibly
+also setting externally-visible state</li>
+</ul>
+<p>This is potentially a lot of work, and rather than trying to have one
+system do it all, often we have an internal <a href="bus.html">bus</a>
+that we broadcast results on. These messages are simple: <q>hardware
+register 23 is now 0x123456</q>; each functional unit, the remap file,
+and the reorder buffer listen to the bus and adjust things as
+needed.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech, with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

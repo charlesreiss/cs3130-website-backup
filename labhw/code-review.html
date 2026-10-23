@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Code Reviews</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/code-review.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#tips-for-reviewers" id="toc-tips-for-reviewers"><span
+class="toc-section-number">1</span> Tips for reviewers</a></li>
+<li><a href="#tips-for-reviewees" id="toc-tips-for-reviewees"><span
+class="toc-section-number">2</span> Tips for reviewees</a></li>
+</ul></nav>
+<p>A code review is a chance to get feedback from others on the design
+and implementation of code. In this lab, you’ll perform peer code
+reviews of other students <a href="pagetable.html">pagetable 2</a>
+submissions.</p>
+<p>This lab <strong>must be completed in person in lab</strong> unless
+you have made other arrangements with the instructors.</p>
+<div class="exercise long">
+<ol type="1">
+<li>Submit your current <a href="pagetable.html">pagetable 2</a>
+material before lab on the submission site. We may compare your
+before-and-after code and expect to see citations for any changes
+inspired by the code review.</li>
+<li>Get into a group of three (or four, if needed) students. None of the
+students should have collaborated on this assignment before this
+lab.</li>
+<li>Arrange and write down an order to review each members code and a
+schedule (⅓ of remaining lab time each, with 5 minutes breaks in
+between) at which you’ll switch from one student’s code to another.</li>
+<li>Understand both reviewer and reviewee roles.</li>
+<li>For each student,
+<ol type="a">
+<li>That student pulls up their files in a way easy for the reviewers to
+see</li>
+<li>Reviewers make suggestions while the code author takes notes</li>
+<li>The code author chooses the review’s focus, but make sure to address
+<ul>
+<li>variable and function names</li>
+<li>code organization, including functional decomposition and whether
+there is redundant code</li>
+<li>organization of the Makefile</li>
+</ul></li>
+<li>If time remains after the above are handled, go line-by-line,
+discussing if there could be an error on that line (e.g., an unchecked
+return type, integer overflow, etc).</li>
+</ol></li>
+<li>Check-off the lab with a TA. Everyone should be able to explain what
+feedback that received from others.</li>
+</ol>
+
+</div>
+<h1 data-number="1" id="tips-for-reviewers"><span
+class="header-section-number">1</span> Tips for reviewers</h1>
+<ul>
+<li><p>You are idea generators trying to help the code author think of
+things they haven’t thought of yet.</p></li>
+<li><p>Creativity and variety of replies is desirable. Try to suggest
+several different ideas for each topic discussed.</p></li>
+<li><p>Even the best-intended review can feel like a personal assault to
+authors not used to being reviewed; help minimize this by taking care to
+be polite.</p></li>
+<li><p>Avoid phrases that suggest you are superior to the author, like
+<q>you should …</q> or <q>I would have …</q>; instead speak as a
+brainstormer, like <q>what about …</q> or <q>maybe consider
+…</q>.</p></li>
+<li><p>Understand before suggesting. Don’t assume the way you coded is
+the only right way; understand what their function does first, then
+brainstorm ways they might consider improving that function.</p></li>
+</ul>
+<h1 data-number="2" id="tips-for-reviewees"><span
+class="header-section-number">2</span> Tips for reviewees</h1>
+<ul>
+<li><p>Set your font size and contrast to be clearly viewed by all
+reviewers at once (Ctrl+Plus is likely to do this, but it varied by
+editor/terminal).</p></li>
+<li><p>You are the recipient of many ideas, some good and some less so,
+for future consideration.</p></li>
+<li><p>Reviewers work for you: they give you ideas, you accept them, but
+it’s up to you what to do. Don’t waste time criticizing bad ideas or
+defending your work during the review: you can simply not implement them
+later.</p></li>
+<li><p>Even the most confident reviewer can feel uncomfortable when
+called on to comment on code they do not know well; help minimize that
+by answering questions and accepting suggestions graciously</p></li>
+<li><p>Take notes; trying to evaluate the ideas and remember the good
+ones in the moment is more more cognitive load than most can handle, and
+even if you can do that it can look dismissive or like a show-off to the
+reviewers.</p></li>
+</ul>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Fork and run</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/fork.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a
+href="#void-writeoutputconst-char-command-char-out_path-char-err_path"
+id="toc-void-writeoutputconst-char-command-char-out_path-char-err_path"><span
+class="toc-section-number">1</span>
+<code>void writeoutput(const char *command, char *out_path, char *err_path)</code></a></li>
+<li><a
+href="#void-parallelwriteoutputint-count-const-char-argv_base-const-char-out_file"
+id="toc-void-parallelwriteoutputint-count-const-char-argv_base-const-char-out_file"><span
+class="toc-section-number">2</span>
+<code>void parallelwriteoutput(int count, const char **argv_base, const char *out_file)</code></a></li>
+<li><a href="#hints" id="toc-hints"><span
+class="toc-section-number">3</span> Hints</a>
+<ul>
+<li><a href="#catching-memory-errors-reliably"
+id="toc-catching-memory-errors-reliably"><span
+class="toc-section-number">3.1</span> Catching memory errors
+reliably</a></li>
+<li><a href="#fork-lab-code" id="toc-fork-lab-code"><span
+class="toc-section-number">3.2</span> fork lab code</a></li>
+<li><a href="#testing-that-you-waitpid"
+id="toc-testing-that-you-waitpid"><span
+class="toc-section-number">3.3</span> Testing that you
+<code>waitpid</code></a></li>
+<li><a href="#some-corner-cases-to-test"
+id="toc-some-corner-cases-to-test"><span
+class="toc-section-number">3.4</span> Some corner cases to test</a></li>
+</ul></li>
+</ul></nav>
+<div class="changleog">
+<p>Changelog:</p>
+<ul>
+<li>25 Sep 2025: make headings below consistent with instructions at the
+top about return types of these functions; fix formatting error in
+parallelwriteoutput description; remove remark about stripping newlines
+in parallelwriteoutput description: remove getdelim references that were
+about a version of this assignment that required reading from file
+descirptors</li>
+<li>27 Sep 2025: remove mention of \0 and things implying that
+writeoutput’s return value would be a string</li>
+<li>28 Sep 2025: explicit specify that outputs means stdouts for
+parallelwriteoutput</li>
+</ul>
+</div>
+<div class="exercise long">
+<ol type="1">
+<li><p>Write and submit a single file <code>fork_run.c</code> that
+defines the following two functions, specified below:</p>
+<ul>
+<li><code>void writeoutput(const char *command, const char *out_path, const char *err_path)</code></li>
+<li><code>void parallelwriteoutput(int count, const char **argv_base, const char *out_path)</code></li>
+</ul>
+<p>You should not submit any other files (i.e., no <code>.h</code>
+files, <code>Makefile</code>, etc). You may include helper functions in
+the file, but it should not contain <code>main</code>.</p></li>
+</ol>
+
+</div>
+<h1 data-number="1"
+id="void-writeoutputconst-char-command-char-out_path-char-err_path"><span
+class="header-section-number">1</span>
+<code>void writeoutput(const char *command, char *out_path, char *err_path)</code></h1>
+<p>This should behave something like <code>system</code>, except that
+instead of letting the child print to stdout, it should write what the
+child prints to stdout to the file <code>out_path</code> and to stderr
+to the file <code>err_path</code>.</p>
+<p>You must do this by forking, execing, and dup2’ing yourself. You may
+not use any standard library function that does some of those operations
+for you, including but not limited to <code>popen</code>.</p>
+<p>We will supply an example implementation of <code>my_system</code>
+from the prior fork lab as a potential starting point sometime after the
+late deadline for that lab on Canvas under the <q>Files</q> tab.</p>
+<div class="example long">
+<p>The following main function</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;Hi!</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    writeoutput<span class="op">(</span><span class="st">&quot;echo 1 2 3; sleep 2; echo 5 5&quot;</span><span class="op">,</span> <span class="st">&quot;out.txt&quot;</span><span class="op">,</span> <span class="st">&quot;err.txt&quot;</span><span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;Bye!</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Should print</p>
+<pre><code>Hi!</code></pre>
+<p>then wait for 2 seconds before printing</p>
+<pre><code>Bye!</code></pre>
+<p>And should leave</p>
+<pre><code>1 2 3
+5 5</code></pre>
+<p>In out.txt.</p>
+<p>(And an empty file in err.txt.)</p>
+
+</div>
+<p>You may assume that the command exists and executes normally; no need
+to add any error-handling logic.</p>
+<h1 data-number="2"
+id="void-parallelwriteoutputint-count-const-char-argv_base-const-char-out_file"><span
+class="header-section-number">2</span>
+<code>void parallelwriteoutput(int count, const char **argv_base, const char *out_file)</code></h1>
+<p>Run <code>count</code> child processes <em>simulatenously</em>,
+arranging for them to write all their outputs (stdouts) to
+<code>out_file</code>, returning only after all the child processes have
+finished. Each of the child processes should run a command specified by
+the NULL-pointer-terminated array <code>argv_base</code> as follows:</p>
+<ul>
+<li>the executable run shall be <code>argv_base[0]</code></li>
+<li>the arguments (<code>argv</code> value) for the program run shall be
+the elements of <code>argv_base</code> followed by the 0-based index of
+the child process converted to a string</li>
+</ul>
+<p>(Running a command this way easiest if you do <em>not</em> run a
+shell (like <code>/bin/sh</code>), so your call to an exec function will
+likely be different than it was for <code>writeoutput</code>.)</p>
+<p>The output collected may interleave the outputs of the child
+processes (and an implementation that does this is simpler than one that
+does not).</p>
+<p>You may assume the executable <code>argv_base[0]</code> exists and
+executes normally and that we supply the full path of the
+executable.</p>
+<p>Before returning, <code>parallelwriteoutput</code> must
+<code>waitpid</code> for <em>each</em> child process.</p>
+<div class="example long">
+<p>For example, a <code>main()</code> like:</p>
+<pre><code>int main() {
+    const char *argv_base[] = {
+        &quot;/bin/echo&quot;, &quot;running&quot;, NULL
+    };
+    parallelwriteoutput(2, argv_base, &quot;out.txt&quot;);
+}</code></pre>
+<p>would start two child processes. One of them would run something
+equivalent to:</p>
+<pre><code>const char *argv[] = {&quot;/bin/echo&quot;, &quot;running&quot;, &quot;0&quot;, NULL};
+execv(&quot;/bin/echo&quot;, argv);</code></pre>
+<p>And another would run something equivalent to:</p>
+<pre><code>const char *argv[] = {&quot;/bin/echo&quot;, &quot;running&quot;, &quot;1&quot;, NULL};
+execv(&quot;/bin/echo&quot;, argv);</code></pre>
+<p>Then, it would wait for both child processes to finish and collect
+their combined output into a single file output.txt. On a system with a
+<code>/bin/echo</code> program like exists in portal, the out.txt would
+probably be either:</p>
+<pre><code>running 0
+running 1</code></pre>
+<p>or:</p>
+<pre><code>running 1
+running 0</code></pre>
+<p>(but on some systems, maybe other interleaved outputs would be
+possible like:</p>
+<pre><code>running running 1
+0</code></pre>
+<p>)</p>
+
+</div>
+<div class="example long">
+<p>You can test more directly that your parallelwriteoutput passes the
+correct arguments by writing a program that checks the arguments it
+gets. For example, the following python program:</p>
+<pre><code>#!/usr/bin/python3
+import sys
+print(&quot;args =&quot;,sys.argv)</code></pre>
+<p>prints out its arguments. (You could also write and compile a similar
+C program.<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>) If you save this a file called
+<q>args.py</q> and make that file executable, then a main() like:</p>
+<pre><code>int main() {
+    const char *argv_base[] = { &quot;./args.py&quot;, &quot;first&quot;, &quot;second&quot;, &quot;third&quot;, NULL };
+    parallelwriteoutput(3, argv_base, &quot;out.txt&quot;);
+}</code></pre>
+<p>Should result in an out.txt like:</p>
+<pre><code>args = [&#39;./args.py&#39;, &#39;first&#39;, &#39;second&#39;, &#39;third&#39;, &#39;0&#39;]
+args = [&#39;./args.py&#39;, &#39;first&#39;, &#39;second&#39;, &#39;third&#39;, &#39;1&#39;]
+args = [&#39;./args.py&#39;, &#39;first&#39;, &#39;second&#39;, &#39;third&#39;, &#39;2&#39;]</code></pre>
+<p>but possibly with the lines in a different order and/or
+interleaved.</p>
+
+</div>
+<h1 data-number="3" id="hints"><span
+class="header-section-number">3</span> Hints</h1>
+<h2 data-number="3.1" id="catching-memory-errors-reliably"><span
+class="header-section-number">3.1</span> Catching memory errors
+reliably</h2>
+<ol type="1">
+<li><p>Memory errors such as using uninitialized memory unintentionally
+are a common problem on this assignment. To help avoid these problems, I
+recommend testing by compiling and linking using the flags:</p>
+<pre><code>-fsanitize=address -ftrivial-auto-var-init=pattern -Og -g</code></pre>
+<ul>
+<li><p><code>-fsanitize=address</code> will enable <a
+href="https://github.com/google/sanitizers/wiki/AddressSanitizer">AddressSanitizer</a>,
+which checks for accessing out-of-bounds mmeory;</p></li>
+<li><p><code>-ftrivial-auto-var-init=pattern</code> will initialize
+local variables with a pattern that should more consistently trigger
+errors (rather than often <q>working</q> by accident due to leftover
+values on the stack). If you are using GCC, note that that this requires
+GCC version at least 12 (available on portal/NX via <code>gcc-12</code>
+or via <code>module load gcc</code>). (It’s been supported in Clang for
+much longer.)</p></li>
+<li><p><code>-Og</code> enables compiler optimizations that should work
+well with debugging</p></li>
+<li><p><code>-g</code> enables debugging information. (In addition to
+being useful when using the debugger, this should allow AddressSanitizer
+to give better information about errors it finds).</p></li>
+</ul></li>
+</ol>
+<h2 data-number="3.2" id="fork-lab-code"><span
+class="header-section-number">3.2</span> fork lab code</h2>
+<p>You may find it useful to consult your code for the fork lab. If you
+did not complete it, an example solution will be available on Canvas,
+under the files tab.</p>
+<h2 data-number="3.3" id="testing-that-you-waitpid"><span
+class="header-section-number">3.3</span> Testing that you
+<code>waitpid</code></h2>
+<p>If your <code>writeoutput</code> and <code>parallelwriteoutput</code>
+call <code>waitpid</code> properly, then after they return running</p>
+<pre><code>waitpid(-1, NULL, 0)</code></pre>
+<p>should return <code>-1</code> and set <code>errno</code> to ECHILD
+(indicating that there are no child processes to wait for).</p>
+<h2 data-number="3.4" id="some-corner-cases-to-test"><span
+class="header-section-number">3.4</span> Some corner cases to test</h2>
+<p>I would recommend testing:</p>
+<ul>
+<li><code>parallelwriteoutput</code> with 0 arguments after the program
+name or with a bunch of arguments after the program name</li>
+<li><code>parallelwriteoutput</code> with programs that wait a few
+seconds — verify that it waits until the program finishes and runs them
+all at once. (For example, if each of 10 programs it runs wait 5
+seconds, it should take around 5 seconds, not 50.)</li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Like:</p>
+<pre><code>#include &lt;stdio.h&gt;
+int main(int argc, char **argv) {
+    printf(&quot;args = [&quot;);
+    for (int i = 0; i &lt; argc; i += 1)
+        printf(&quot;&#39;%s&#39;%s&quot;, argv[i], i == argc - 1 ? &quot;&quot; : &quot;, &quot;);
+    printf(&quot;]\n&quot;);
+}</code></pre>
+<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther TychnoviechCharles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

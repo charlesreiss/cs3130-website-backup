@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Networking Protocols</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/protocols.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#packets-with-headers" id="toc-packets-with-headers"><span
+class="toc-section-number">1</span> Packets with headers</a>
+<ul>
+<li><a href="#paper" id="toc-paper"><span
+class="toc-section-number">1.1</span> Paper</a></li>
+<li><a href="#digital" id="toc-digital"><span
+class="toc-section-number">1.2</span> Digital</a></li>
+<li><a href="#layers" id="toc-layers"><span
+class="toc-section-number">1.3</span> Layers</a></li>
+</ul></li>
+<li><a href="#tcpip-and-friends" id="toc-tcpip-and-friends"><span
+class="toc-section-number">2</span> TCP/IP and friends</a>
+<ul>
+<li><a href="#ip" id="toc-ip"><span
+class="toc-section-number">2.1</span> IP</a></li>
+<li><a href="#udp" id="toc-udp"><span
+class="toc-section-number">2.2</span> UDP</a></li>
+<li><a href="#tcp" id="toc-tcp"><span
+class="toc-section-number">2.3</span> TCP</a></li>
+</ul></li>
+<li><a href="#urls" id="toc-urls"><span
+class="toc-section-number">3</span> URLs</a>
+<ul>
+<li><a href="#the-value-of-a-mapping"
+id="toc-the-value-of-a-mapping"><span
+class="toc-section-number">3.1</span> The value of a mapping</a></li>
+<li><a href="#from-files-to-dns" id="toc-from-files-to-dns"><span
+class="toc-section-number">3.2</span> From files to DNS</a></li>
+<li><a href="#dns" id="toc-dns"><span
+class="toc-section-number">3.3</span> DNS</a></li>
+</ul></li>
+<li><a href="#dhcp" id="toc-dhcp"><span
+class="toc-section-number">4</span> DHCP</a></li>
+<li><a href="#network-address-translation"
+id="toc-network-address-translation"><span
+class="toc-section-number">5</span> Network address translation</a></li>
+<li><a href="#selected-special-ip-addresses"
+id="toc-selected-special-ip-addresses"><span
+class="toc-section-number">6</span> Selected special IP
+addresses</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>24 Oct 2023: mention that best-effort delivery can include
+reordering messages or messages being corrupted; mention that TCP uses
+sequence numbers and port numbers and checksms</li>
+</ul>
+</div>
+<p>This document is designed to be a brief overview of several common
+network communication protocols, suitable for a day or two overview of a
+set of topics that we also teach entire courses about. As such it
+glosses over or completely ignores many important topics.</p>
+<h1 data-number="1" id="packets-with-headers"><span
+class="header-section-number">1</span> Packets with headers</h1>
+<p>In general, any piece of communication to be handled by
+intermediaries needs two pieces of information: the contents of the
+communication and the routing information needed to reach the intended
+destination.</p>
+<h2 data-number="1.1" id="paper"><span
+class="header-section-number">1.1</span> Paper</h2>
+<p>For paper communication, these would be the letter and the envelope,
+each made of paper and each with information written on them, but one
+(the letter) containing the contents and the other (the envelope)
+containing the routing information. We know which one is which by how
+they are arranged: the envelope is outside the letter.</p>
+<p>If we wanted to send an entire book we could invest in a different
+sending protocol such as a box instead of an envelope, but we could also
+take a few pages at a time and put each in an envelope. As long as the
+pages are numbered, the recipient could reassemble the book no matter
+what order the envelopes arrived in. If we had a book with unnumbered
+pages, we could add the ordering to the envelope instead to still permit
+reassembling the book.</p>
+<h2 data-number="1.2" id="digital"><span
+class="header-section-number">1.2</span> Digital</h2>
+<p>Common network communications use many of the same ideas as paper
+post.</p>
+<dl>
+<dt>Data</dt>
+<dd>
+The contents you want to send is the message or data.
+</dd>
+<dt>Packet / Segment / Frame</dt>
+<dd>
+<p>Many protocols split the message into packets of some maximum (or in
+a few cases, fixed) size, sending each separately with some sort of
+reassembly packet order numbers.</p>
+<p>The name for the chopped-up data depends on the <a
+href="#layers">layer</a>.</p>
+</dd>
+<dt>Header / Footer</dt>
+<dd>
+To get information where it needs to go, a header with routing
+information needs to be provided first. It is followed by the packet of
+data to be transmitted. Some protocols add a footer as well to mark the
+end of the packet.
+</dd>
+</dl>
+<h2 data-number="1.3" id="layers"><span
+class="header-section-number">1.3</span> Layers</h2>
+<p>Paper post is typically transmitted part of the way by a letter
+inside an envelope inside a crate inside a truck, another part by a
+letter inside an envelope inside a mail pouch, etc. Each of these outer
+containers has routing information, like the envelope does: the carrier
+route of the pouch, the post office destination of the crate, etc.</p>
+<p>Digital communication also puts containers inside containers and the
+set of containers used are called <q>layers.</q> There are different
+numbers of layers possible, but <a
+href="https://en.wikipedia.org/wiki/OSI_model#Description_of_OSI_layers">the
+OSI model</a> is often seen as the default set, even though <a
+href="https://en.wikipedia.org/wiki/Internet_protocol_suite#Key_architectural_principles">the
+Internet Protocol Suite</a> is better known. Note that OSI numbers its
+layers, where containers have smaller numbers than their contents.</p>
+<div class="example long">
+<p>Consider using a <code>SOCK_STREAM</code> <code>socket</code>, as you
+did in <a href="/luther/COA1/F2019/lab09-sockets.html">COA1</a>. When
+you <code>write</code> a message, the result is</p>
+<ul>
+<li>The message you sent over the socket, wrapped in</li>
+<li>a TCP header with the port number to get it to the right program,
+wrapped in</li>
+<li>an IP header with the IP address to get it to the right computer,
+wrapped in</li>
+<li>an IEEE 802.11 header and footer to get it over the Wireless LAN to
+the Internet</li>
+</ul>
+<p>That last layer will be stripped off after traversing the WLAN to be
+replaced by a different outer <q>envelope</q> to guide it over the next
+link on the way to its destination.</p>
+
+</div>
+<p>Note that because of the header/footer design, every layer can slice
+the data provided by the other layers freely. Thus, a message could be
+split into 4 TCP segments; those each split into 2 IP packets to make 8
+total packets. Multiple messages can also be placed into a single
+envelope, though that is less common in practice.</p>
+<h1 data-number="2" id="tcpip-and-friends"><span
+class="header-section-number">2</span> TCP/IP and friends</h1>
+<p>While there are many, many protocols out there, three are pervasive
+enough to be worth ensuring every CS major has at least some
+understanding of them: TCP, IP, and UDP. These sit in the middle of the
+network layer stack: they transmit higher-level protocols like HTTP,
+SMTP, SSH, etc.; and they are transmitted by lower-level protocols like
+Wi-Fi, ethernet, etc.</p>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 40%" />
+<col style="width: 13%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Protocols</th>
+<th>Use</th>
+<th>Message Name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Application</td>
+<td>HTTP, SSH, SMTP, <a
+href="https://en.wikipedia.org/wiki/Category:Application_layer_protocols">etc.</a></td>
+<td>programmer-visible messages</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Transport</td>
+<td><strong>TCP</strong>, <strong>UDP</strong></td>
+<td>reach correct program</td>
+<td>datagram (UDP), segment (TCP)</td>
+</tr>
+<tr class="odd">
+<td>Internet</td>
+<td><strong>IP</strong>, which has two versions: IPv4 and IPv6</td>
+<td>reach correct computer</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Link</td>
+<td>MAC, Wi-Fi, <a
+href="https://en.wikipedia.org/wiki/Category:Link_protocols">etc.</a></td>
+<td>frame</td>
+<td>traveling over wires and the air</td>
+</tr>
+</tbody>
+</table>
+<h2 data-number="2.1" id="ip"><span
+class="header-section-number">2.1</span> IP</h2>
+<p>IP, or Internet Protocol, has two versions in use (IPv4 and IPv6).
+There are some important technical updates in version 6, and several
+other nuanced ideas this write-up ignores.</p>
+<p>IP (both versions) works on the following principles:</p>
+<ul>
+<li><p>Every computer has a unique numeric <q>IP Address.</q></p>
+<p>IPv4 typically writes its 32-bit addresses as 4 8-bit decimal values
+with periods in between them, as in <code>255.127.63.31</code> for
+<code>0xFF7F3F1F</code>.</p>
+<p>IPv6 typically writes its 128-bit addresses as 8 16-bit hexadecimal
+values separated with colons in square brackets, with a run of all-zero
+values omitted, as in <code>[c0a:2::2020]</code> for
+<code>0x0c0a0002000000000000000000002020</code>. Sometimes the square
+brackets are omitted, as in <code>coa:2::2020</code>.</p>
+<p>The fact that there are more than 2<sup>32</sup> computers is part of
+the motivation to switch from IPv4 to IPv6.</p>
+<p>Typically, all the machines on a local network will have IP addresses
+from the same range. Machines repsonsible for forwarding messages from
+one network to another, called <em>routers</em>, can take of advantage
+of this to track what messages go to which links.</p></li>
+<li><p>IP headers contain the IP address of both the originating and
+end-destination computer.</p></li>
+<li><p>Messages are delivered via <q>best-effort delivery.</q> Each
+computer involved in delivering a packet sends the packet to the
+computer that it has a link to and that it believes is most likely to
+get the message where it is going, but there is no guarantee that:</p>
+<ul>
+<li>the packet will arrive at all,</li>
+<li>that the sender will know if it arrived,</li>
+<li>what order the message will be received in relative to other
+messages, and</li>
+<li>that the message data won’t be corrupted in transit</li>
+</ul></li>
+</ul>
+<h2 data-number="2.2" id="udp"><span
+class="header-section-number">2.2</span> UDP</h2>
+<p>UDP, or User Datagram Protocol, is a lightweight transport protocol.
+It adds 16-bit source and destination port numbers that the OS of the
+involved computers can use to ensure it gets to the correct program and
+a checksum to detect errors that might arise during transmission.</p>
+<p>UDP adds no other features on top of the underlying IP: messages are
+not guaranteed to arrive at all, nor in any particular order; cannot be
+dynamically split into different sizes; etc. As such, it adds little if
+any delay on top of IP and is used for speed-sensitive messages like
+clock synchronization and streaming media. Software that uses UDP
+generally has to be designed on the assumption that some packets that
+are sent will never arrive.</p>
+<h2 data-number="2.3" id="tcp"><span
+class="header-section-number">2.3</span> TCP</h2>
+<p>TCP, or Transmission Control Protocol, is a reliable, ordered,
+connection-oriented transport protocol. It creates this over IP by a
+somewhat complicated state machine; a core idea in this is that each
+received message must be acknowledged by the recipient and will be
+re-sent by the sender otherwise.</p>
+<p>To deal with splitting the possibly very large stream of data into a
+connection into smaller messages and preserving order, each message has
+a <em>sequence number</em>, letting the receiver’s OS ensure that
+messages are given to the receiving program in order even if they are
+not received from the network in order.</p>
+<p>Like UDP, TCP includes 16-bit port numbers to let the OSes of the
+involved computers identify which program and connection packets are
+associated with. ALso like UDP, it uses checksums to detect when
+messages are corrupted.</p>
+<figure>
+<img
+src="https://upload.wikimedia.org/wikipedia/commons/f/f6/Tcp_state_diagram_fixed_new.svg"
+alt="Simplified TCP state diagram for how to establish and terminate a connection (from Wikimedia)" />
+<figcaption aria-hidden="true">Simplified TCP state diagram for how to
+establish and terminate a connection (from <a
+href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol#/media/File:Tcp_state_diagram_fixed_new.svg">Wikimedia</a>)</figcaption>
+</figure>
+<div class="example long">
+<p>Suppose two computers <span class="math inline">P</span> and <span
+class="math inline">Q</span> have established a TCP connection with one
+another. <span class="math inline">P</span> might send <span
+class="math inline">Q</span> the message <q>This is a triumph!</q> as
+follows, using (contents, sequence number) to represent a TCP
+segment:</p>
+<table style="width:93%;">
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 18%" />
+<col style="width: 38%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;"><span class="math inline">P</span></th>
+<th style="text-align: center;">IP</th>
+<th style="text-align: center;"><span class="math inline">Q</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">sends (<q>This</q>, 1)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">→</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">receives (<q>This</q>, 1)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">sends (ACK, 2)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">←</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">receives (ACK, 2)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">sends (” is a “, 2)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(dropped)</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">sends (<q>triumph!</q>, 3)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">→</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">receives (<q>triumph!</q>, 3)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">expected message number 2, not
+received</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">resends (ACK, 2)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">←</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">receives (ACK, 2), which means segment 2
+never arrived…</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">resends (” is a “, 2)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">→</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">resends (<q>triumph!</q>, 3) as it came
+after segment 2</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">→</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">receives (<q>triumph!</q>, 3)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">receives (” is a “, 2)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">sends (ACK, 4)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"></td>
+<td style="text-align: center;">←</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">receives (ACK, 4)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">sends (FIN) to begin closing
+connection</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<p>In general, either side may re-send a message if they have not
+received the expected response, and neither needs to wait for the
+other’s message to send the next. This way, if messages seem to be
+arriving well, more messages may be sent in groups; if acknowledgments
+are not arriving, transmission may be slowed down to wait for ACKs
+before the next sending.</p>
+
+</div>
+<p>TCP is significantly slower than UDP, requiring overhead to establish
+and shut down a connection, but provides reliable delivery over
+unreliable IP. The TCP over IP combination is so prevalent that
+<q>TCP/IP</q> is sometimes used as a term for the entire Internet
+protocol suite.</p>
+<h1 data-number="3" id="urls"><span
+class="header-section-number">3</span> URLs</h1>
+<p>We are accustomed to navigating the web with Universal Resource
+Locators (URLs). A URL is a special type of Uniform Resource Indicator
+(URI)<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> and has <a
+href="https://en.wikipedia.org/wiki/Uniform_Resource_Identifier#Generic_syntax">many
+components</a>, but three will suffice for this introduction.</p>
+<ul>
+<li><p>A <em>scheme</em> like HTTP or HTTPS; this identifies the
+protocol used at the application layer.</p></li>
+<li><p>A <em>hostname</em>, which (conceptually) identifies a particular
+computer.</p></li>
+<li><p>A <em>path</em>, which is given to the computer to identify a
+specific resource.</p></li>
+</ul>
+<p>Note that the hostname here performs a similar function as an IP
+address, but for different audiences. IP addresses are organized to help
+computers locate one another. Hostnames are organized to help humans
+locate computers.</p>
+<div class="example long">
+<p>In the URL <a href="https://www.cs.virginia.edu/COA2"
+class="uri">https://www.cs.virginia.edu/COA2</a>,</p>
+<ul>
+<li>The <em>scheme</em> is <code>https</code></li>
+<li>The <em>hostname</em> is <code>www.cs.virginia.edu</code></li>
+<li>the <em>path</em> is <code>/COA2</code></li>
+</ul>
+
+</div>
+<h2 data-number="3.1" id="the-value-of-a-mapping"><span
+class="header-section-number">3.1</span> The value of a mapping</h2>
+<p>When you visit a URL, your browser first needs to convert the
+hostname in the URL to the IP address of a computer so that it can use
+TCP/IP to route your request to the appropriate server. It does this by
+consulting a special mapping data structure, which is maintained online
+and can be updated by the party owning the hostname. That means it first
+queries the Internet for the IP address of the hostname before querying
+it again with the website request itself.</p>
+<p>Having such a distributed mapping between what users type and what
+computers do allows many conveniences, such as the ability to change
+servers without the need to have everyone learn the new server’s IP
+addresses. However, it also comes at a price: someone has to decide who
+gets to change the IP address of <code>www.cs.virginia.edu</code>, which
+means someone has to know who owns each address and prevent others from
+taking it. This work requires resources and human judgment calls,
+meaning it requires money, meaning it costs money to register a
+hostname.</p>
+<h2 data-number="3.2" id="from-files-to-dns"><span
+class="header-section-number">3.2</span> From files to DNS</h2>
+<p>In the earliest days of the ARPANET, the mapping between hostnames
+and IP addresses was a single file, <code>HOSTS.TXT</code>. Each line
+contained a hostname and an IP address<a href="#fn2"
+class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.
+This was initially stored on one computer, and users learned its
+contents by calling up an operator via telephone and asking the operator
+for the IP address of a given host. Later these telephone calls were
+moved to a digital protocol, <code>WHOIS</code>, but it remained
+initially on one computer owned by one company, SRI.</p>
+<p>As this directory grew in importance, SRI needed to decide who could
+have which hostnames. <a
+href="https://en.wikipedia.org/wiki/Elizabeth_J._Feinler">Elizabeth
+Feinler</a> and her team managed <code>WHOIS</code> and created the idea
+of <q>domain names</q> to help organize requests. A domain name is a
+hierarchical sequence of strings separated with periods, with the last
+string (called the <q>top-level domain</q>) being the most important.
+SRI decided that top-level domains would be allocated based on the type
+of business, with <code>.com</code> for commercial entities,
+<code>.edu</code> for educational, <code>.gov</code> for government,
+etc.</p>
+<div class="example long">
+<p>In the hostname <code>www.cs.virginia.edu</code>,</p>
+<ul>
+<li><code>edu</code> is the top-level domain</li>
+<li><code>virginia.edu</code> is a subdomain of <code>edu</code></li>
+<li><code>cs.virginia.edu</code> is a subdomain of
+<code>virginia.edu</code></li>
+<li><code>www.cs.virginia.edu</code> is a subdomain of
+<code>www.virginia.edu</code></li>
+<li><code>edu</code>, <code>virginia</code>, <code>cs</code>, and
+<code>www</code> are called <em>labels</em></li>
+</ul>
+
+</div>
+<p>As the Internet grew and a single file on a single server became
+unwieldy, various proposals were created for how to distribute the load.
+After many iterations, this has grown into the current Domain Name
+System (DNS).</p>
+<h2 data-number="3.3" id="dns"><span
+class="header-section-number">3.3</span> DNS</h2>
+<p>DNS is a fairly complicated set of concepts, but the iconic and most
+important core is the address resolution mechanism.</p>
+<p>DNS address resolution uses two basic ideas:</p>
+<ol type="1">
+<li><p>Requests start at a top-level DNS server, which replies with the
+DNS server of the top-level domain; that DNS server is then asked about
+the next part of the domain, and so on until the full domain is
+handled.</p></li>
+<li><p>Replies are cached (stored locally) so that each query may be
+sent just once.</p></li>
+</ol>
+<div class="example long">
+<p>Generally when I ask my browser to visit
+<code>www.cs.virginia.edu</code>, it just contacts
+<code>128.143.67.11</code> without any DNS queries because it has it in
+its cache.</p>
+<p>But if there was no cache, the request would do something like the
+following:</p>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 20%" />
+<col style="width: 49%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Request</th>
+<th style="text-align: left;">To</th>
+<th style="text-align: left;">Reply</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>.</code></td>
+<td style="text-align: left;">my ISP’s DNS server</td>
+<td style="text-align: left;">a list of 13 known top-level-domain DNS
+servers; we randomly select <code>202.12.27.33</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>edu.</code></td>
+<td style="text-align: left;"><code>202.12.27.33</code></td>
+<td style="text-align: left;">a list of 13 .edu-domain DNS servers; we
+randomly select <code>192.54.112.30</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>virginia.edu.</code></td>
+<td style="text-align: left;"><code>192.54.112.30</code></td>
+<td style="text-align: left;">a list of 4 .virginia.edu-domain DNS
+servers; we randomly select <code>128.143.22.119</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>cs.virginia.edu.</code></td>
+<td style="text-align: left;"><code>128.143.22.119</code></td>
+<td style="text-align: left;">a list of 2 cs.virginia.edu-domain DNS
+servers; we randomly select <code>128.143.136.15</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>www.cs.virginia.edu.</code></td>
+<td style="text-align: left;"><code>128.143.136.15</code></td>
+<td style="text-align: left;">The IP address
+<code>128.143.67.11</code></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<p>There are many additional components to the DNS protocol, including
+digital signatures to validate that they are not spoofed, messages for
+registering new DNS entries and changing old ones, <a
+href="https://en.wikipedia.org/wiki/List_of_DNS_record_types">etc.</a></p>
+<p>As DNS has grown in complexity, DNS servers have grown into ever
+more-complicated database engines. However, the core DNS lookup process
+has not changed since the first DNS specifications<a href="#fn3"
+class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>
+were released in 1983.</p>
+<h1 data-number="4" id="dhcp"><span
+class="header-section-number">4</span> DHCP</h1>
+<p>Some IP addresses are specified statically, procured from the set of
+all possible IP addresses by a single computer and used only by that
+computer. Others are assigned dynamically as needed, picking an IP
+address when a computer is placed on the Internet and removing it when
+it disconnects. The most common way of obtaining an IPv4 address is
+governed by the Dynamic Host Control Protocol, or DHCP.</p>
+<p>The most common model for DHCP is as follows:</p>
+<ol type="1">
+<li><p>The computer sends</p>
+<ol type="a">
+<li>its location on the connection (a MAC address)</li>
+<li>in a UDP packet from port 68 to port 67</li>
+<li>over IP from address 0.0.0.0 (<q>no one</q>) to address
+255.255.255.255 (<q>everyone</q>)</li>
+<li>on the newly-connected connection, to everyone on that channel</li>
+</ol>
+<p>Most computers seeing this message ignore it.</p></li>
+<li><p>The server owning the connection sends</p>
+<ol type="a">
+<li>an offered IP address</li>
+<li>in a UDP packet from port 67 to port 68</li>
+<li>over IP from the server’s IP address to 255.255.255.255</li>
+<li>on the channel, directly to the computer<a href="#fn4"
+class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a></li>
+</ol></li>
+<li><p>The computer sends</p>
+<ol type="a">
+<li><q>thanks, I’ll take that IP address</q></li>
+<li>in a UDP packet from port 68 to port 67</li>
+<li>over IP from 0.0.0.0 to the server’s IP address</li>
+<li>on the channel, directly to the server</li>
+</ol></li>
+<li><p>The server sends</p>
+<ol type="a">
+<li><q>great, it’s yours</q></li>
+<li>in a UDP packet from port 67 to port 68</li>
+<li>over IP from the server’s IP address to 255.255.255.255</li>
+<li>on the channel, directly to the computer</li>
+</ol></li>
+</ol>
+<p>For IPv6, similar protocols exist. Since IPv6 has much larger
+addresses, often the server on the local network will only choose the
+first part of the IPv6 address and each host will select the rest of the
+address (in some way that ensures that there are no duplicate
+addresses).</p>
+<h1 data-number="5" id="network-address-translation"><span
+class="header-section-number">5</span> Network address translation</h1>
+<p>Because IPv4 addresses are scarce, often organizations and households
+and even some ISPs (Internet Service Providers) will have IP addresses
+on their internal networks that are not valid elsewhere. Several ranges
+of IP addresses<a href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a> are reserved for this purpose.
+Probably the most well known are addresses starting with <q>192.168.</q>
+or with <q>10.</q>.</p>
+<p>When machines with these private addresses access the public
+Internet, these private addresses need to be translated to a
+publicly-accessible address. This process is called <a
+href="https://en.wikipedia.org/wiki/Network_address_translation">network
+address translation</a> and results in several machines sharing a single
+public address. This type of configuration is, by far, the most common
+for home networks when using IPv4.</p>
+<h1 data-number="6" id="selected-special-ip-addresses"><span
+class="header-section-number">6</span> Selected special IP
+addresses</h1>
+<p>Some IP addresses have special uses, here is a partial list:</p>
+<ul>
+<li><p>Anything starting with <code>127.</code> (IPv4) and the IPv6
+address <code>::1</code> always represent the current machine. (They
+won’t use the network.)</p></li>
+<li><p>Anything starting with <code>169.254.</code> (IPv4) or
+<code>fe80:</code> (IPv6) is a <a
+href="https://en.wikipedia.org/wiki/Link-local_address"><em>link-local</em>
+address</a>, which is only valid on a local network and assigned
+automatically.</p></li>
+<li><p>Anything starting with <code>192.168.</code> or <code>10.</code>
+or <code>172.16.</code> are reserved from private networks, typically
+used with network address translation (described above).</p></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>URIs do not necessairily provide information about how
+to retrieve a resource over the network, but URLs do.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>More than this, really; it also had several line types
+(<code>NET</code>, <code>HOST</code>, and <code>GATEWAY</code>) and some
+information about the type of computer it described<a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p> <a href="https://tools.ietf.org/html/rfc882">RFC
+882</a> and <a href="https://tools.ietf.org/html/rfc883">RFC 883</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p> How direct this is depends on the channel technology.
+Often it is actually sent to everyone on the channel, but with a MAC
+address that means <q>everyone but the target computer should ignore
+this message.</q><a href="#fnref4" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>See <a href="https://www.rfc-editor.org/rfc/rfc1918">RFC
+1918</a> (ranges for general use) and <a
+href="https://www.rfc-editor.org/rfc/rfc6598">RFC 6598</a> (range for
+<q>carrier-grade NAT</q>)<a href="#fnref5" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech, with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Signals Lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/signals.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#starter" id="toc-starter"><span
+class="toc-section-number">1</span> Starter code</a></li>
+<li><a href="#pid" id="toc-pid"><span
+class="toc-section-number">2</span> PID</a></li>
+<li><a href="#signals" id="toc-signals"><span
+class="toc-section-number">3</span> Signals</a></li>
+<li><a href="#shared-memory" id="toc-shared-memory"><span
+class="toc-section-number">4</span> Shared memory</a></li>
+<li><a href="#repeating-and-waiting"
+id="toc-repeating-and-waiting"><span class="toc-section-number">5</span>
+Repeating and waiting</a>
+<ul>
+<li><a href="#keyboard-outbox" id="toc-keyboard-outbox"><span
+class="toc-section-number">5.1</span> keyboard ↦ outbox</a></li>
+<li><a href="#inbox-screen" id="toc-inbox-screen"><span
+class="toc-section-number">5.2</span> inbox ↦ screen</a></li>
+</ul></li>
+<li><a href="#debugging-notes" id="toc-debugging-notes"><span
+class="toc-section-number">6</span> Debugging notes</a></li>
+<li><a href="#some-explanations-about-the-supplied-code"
+id="toc-some-explanations-about-the-supplied-code"><span
+class="toc-section-number">7</span> Some explanations about the supplied
+code</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>4 Feb 2025: unlink both inboxes from cleanup_inboxes instead of just
+my_inbox for more symmetry with setup_inboxes (though this shouldn’t be
+needed as long as both processes run cleanup_inboxes)</li>
+</ul>
+</div>
+<p>In this lab you’ll write yet another chat application.</p>
+<p>It will only work on a <strong>single machine</strong>, not over a
+network file system or the Internet, but it will also require
+significantly fewer system resources than our other chats.</p>
+<blockquote>
+<p>If you are using ssh, this means you need to <strong>ssh into the
+same back-end server twice</strong>. To do this, first SSH into
+portal.cs.virginia.edu and run <code>uname -n</code> to find out what
+server you are on (portal## for some two-digit number ##). Then, have
+your second SSH go to portal, then SSH from portal into that
+portal##.cs.virginia.edu. (If you’re using SSH from the command line of
+a Unix-like machine, you can also do
+<code>ssh -J portal.cs.virginia.edu portal##.cs.virginia.edu</code> to
+automate this process.)</p>
+</blockquote>
+<p>Each instance of the chat program will have a shared memory region in
+which it receives messages. When sending a message, one instance of the
+chat program will modify the other’s shared memory region, then send a
+signal to notify the other program that a new message is available. The
+receiver will print out the message from its signal handler. Meanwhile,
+the sender will wait until the receiver acknowledges receiving the
+message by resetting the shared memory region before prompting for the
+next message to send.</p>
+<div class="exercise long">
+<p>To complete the signals-based chat program described above, do the
+following. We recommend doing them in order. Each is described in more
+detail below.</p>
+<p>Note the above instructions regarding testing on portal.</p>
+<p>I would recommend working in pairs on this lab, but note that both
+instances of the chat program need to run as the same user. (You can’t
+send signals to another user’s programs.)</p>
+<ol type="1">
+<li><p>Start with the <a href="#starter">template program</a> below that
+prints out its PID and reads in another PID into a global variable.</p>
+<p>As described below, the template program sets up access to two shared
+memory regions:</p>
+<ul>
+<li><q>my_inbox</q> which is this process’s <q>inbox</q> for chat
+messages;</li>
+<li><q>other_inbox</q> which is the other process’s <q>inbox</q> for
+chat messages.</li>
+</ul>
+<p>Your code will write to <code>other_inbox</code> and read from
+<code>my_inbox</code>.</p></li>
+<li><p>Create a signal handler for the SIGINT, SIGTERM, and SIGUSR1
+signals</p>
+<ul>
+<li>SIGTERM should invoke <code>cleanup_inboxes</code> and then
+exit</li>
+<li>SIGINT should invoke <code>cleanup_inboxes</code> and then send
+SIGTERM to the other user and then exit</li>
+<li>SIGUSR1 should display the contents of the inbox (eventually in
+shared memory; make a pointer to a placeholder character array for now)
+and then set its first character to be <code>'\0'</code></li>
+<li>(Although normally one should take care to only use <a
+href="../readings/kernel.html#signal-safety">signal-safe</a> functions
+in your signal handlers, for this lab, we do not care if you follow this
+rule.)</li>
+</ul></li>
+</ol>
+<p>You can follow the instructions below under <q>Shared memory</q> to
+create this. (Note that these instructions require linking with
+<code>-lrt</code>.)</p>
+<ol start="3" type="1">
+<li><p>Repeat until the end of file:</p>
+<ul>
+<li>Read a typed line into the outbox (without overflow)</li>
+<li>Wait until the outbox is emptied</li>
+</ul></li>
+<li><p>After the user stops typing (i.e., EOF), send SIGTERM to the
+other process</p></li>
+<li><p>Make the cleanup function destroy both the inbox and outbox</p>
+<p>The cleanup function should execute no matter how the program exits:
+via end-of-input, SIGINT, or SIGTERM.</p></li>
+<li><p>Upload your solution to the submission site or show a TA your
+program for checkoff.</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="starter"><span
+class="header-section-number">1</span> Starter code</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define _XOPEN_SOURCE </span><span class="dv">700</span><span class="pp"> </span><span class="co">// request all POSIX features, even with -std=c11</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;fcntl.h&gt;</span><span class="pp">        </span><span class="co">// for O_CREAT, O_RDWR</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits.h&gt;</span><span class="pp">       </span><span class="co">// for NAME_MAX</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span><span class="pp">       </span><span class="co">// for EXIT_SUCCESS, NULL, abort</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span><span class="pp">        </span><span class="co">// for getline, perror</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;sys/mman.h&gt;</span><span class="pp">     </span><span class="co">// for mmap, shm_open</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;time.h&gt;</span><span class="pp">         </span><span class="co">// for nanosleep </span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span><span class="pp">       </span><span class="co">// for getpid</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>pid_t other_pid <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="pp">#define BOX_SIZE </span><span class="dv">4096</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>my_inbox<span class="op">;</span>     <span class="co">// inbox of current process, set by setup_inboxes()</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>other_inbox<span class="op">;</span>  <span class="co">// inbox of PID other_pid, set by setup_inboxes()</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">// bookkeeping for cleanup_inboxes()</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> my_inbox_shm_open_name<span class="op">[</span>NAME_MAX<span class="op">];</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> other_inbox_shm_open_name<span class="op">[</span>NAME_mAX<span class="op">];</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">/* open, creating if needed, an inbox shared memory region</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">   for the specified pid.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">   store the shm_open filename used in filename, which must</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">   be NAME_MAX bytes long.</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>setup_inbox_for<span class="op">(</span>pid_t pid<span class="op">,</span> <span class="dt">char</span> <span class="op">*</span>filename<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    snprintf<span class="op">(</span>filename<span class="op">,</span> NAME_MAX<span class="op">,</span> <span class="st">&quot;/</span><span class="sc">%d</span><span class="st">-chat&quot;</span><span class="op">,</span> pid<span class="op">);</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> fd <span class="op">=</span> shm_open<span class="op">(</span>filename<span class="op">,</span> O_CREAT <span class="op">|</span> O_RDWR<span class="op">,</span> <span class="bn">0666</span><span class="op">);</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>fd <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        perror<span class="op">(</span><span class="st">&quot;shm_open&quot;</span><span class="op">);</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        abort<span class="op">();</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>ftruncate<span class="op">(</span>fd<span class="op">,</span> BOX_SIZE<span class="op">)</span> <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        perror<span class="op">(</span><span class="st">&quot;ftruncate&quot;</span><span class="op">);</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        abort<span class="op">();</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>ptr <span class="op">=</span> mmap<span class="op">(</span>NULL<span class="op">,</span> BOX_SIZE<span class="op">,</span> PROT_READ <span class="op">|</span> PROT_WRITE<span class="op">,</span> MAP_SHARED<span class="op">,</span> fd<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>ptr <span class="op">==</span> <span class="op">(</span><span class="dt">char</span><span class="op">*)</span> MAP_FAILED<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        perror<span class="op">(</span><span class="st">&quot;mmap&quot;</span><span class="op">);</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>        abort<span class="op">();</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ptr<span class="op">;</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> setup_inboxes<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    my_inbox <span class="op">=</span> setup_inbox_for<span class="op">(</span>getpid<span class="op">(),</span> my_inbox_shm_open_name<span class="op">);</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    other_inbox <span class="op">=</span> setup_inbox_for<span class="op">(</span>other_pid<span class="op">,</span> other_inbox_shm_open_name<span class="op">);</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> cleanup_inboxes<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    munmap<span class="op">(</span>my_inbox<span class="op">,</span> BOX_SIZE<span class="op">);</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    munmap<span class="op">(</span>other_inbox<span class="op">,</span> BOX_SIZE<span class="op">);</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    shm_unlink<span class="op">(</span>my_inbox_shm_open_name<span class="op">);</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    shm_unlink<span class="op">(</span>other_inbox_shm_open_name<span class="op">);</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;This process&#39;s ID: </span><span class="sc">%ld\n</span><span class="st">&quot;</span><span class="op">,</span> <span class="op">(</span><span class="dt">long</span><span class="op">)</span> getpid<span class="op">());</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>line <span class="op">=</span> NULL<span class="op">;</span> <span class="dt">size_t</span> line_length <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">do</span> <span class="op">{</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;Enter other process ID: &quot;</span><span class="op">);</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(-</span><span class="dv">1</span> <span class="op">==</span> getline<span class="op">(&amp;</span>line<span class="op">,</span> <span class="op">&amp;</span>line_length<span class="op">,</span> stdin<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>            perror<span class="op">(</span><span class="st">&quot;getline&quot;</span><span class="op">);</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>            abort<span class="op">();</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">while</span> <span class="op">((</span>other_pid <span class="op">=</span> strtol<span class="op">(</span>line<span class="op">,</span> NULL<span class="op">,</span> <span class="dv">10</span><span class="op">))</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>line<span class="op">);</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>    setup_inboxes<span class="op">();</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>    <span class="co">// YOUR CODE HERE</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>    cleanup_inboxes<span class="op">();</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> EXIT_SUCCESS<span class="op">;</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h1 data-number="2" id="pid"><span
+class="header-section-number">2</span> PID</h1>
+<p><code>getpid()</code> (from <code>unistd.h</code>) returns the PID of
+the current process as a <code>pid_t</code>, which can be treated like
+an <code>int</code> in most situations. This can be printed (e.g., with
+<code>printf</code>) by one process and input to the other (e.g., with
+<code>scanf</code>).</p>
+<h1 data-number="3" id="signals"><span
+class="header-section-number">3</span> Signals</h1>
+<p>As shown in class, the key parts of signal handling are defining a
+handler function:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;signal.h&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> your_handler_function_name_here<span class="op">(</span><span class="dt">int</span> signum<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>signum <span class="op">==</span> SIGINT<span class="op">)</span> <span class="co">/* ... */</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>and the code in <code>main</code> to tell the OS to use it and for
+which signals:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> sigaction sa<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>sa<span class="op">.</span>sa_handler <span class="op">=</span> handler<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>sigemptyset<span class="op">(&amp;</span>sa<span class="op">.</span>sa_mask<span class="op">);</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>sa<span class="op">.</span>sa_flags <span class="op">=</span> SA_RESTART<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>sigaction<span class="op">(</span>SIGINT<span class="op">,</span> <span class="op">&amp;</span>sa<span class="op">,</span> NULL<span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>sigaction<span class="op">(</span>SIGTERM<span class="op">,</span> <span class="op">&amp;</span>sa<span class="op">,</span> NULL<span class="op">);</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">/* ... */</span></span></code></pre></div>
+<p>To send a signal, use <code>kill(pid_to_send_to, SIGTERM)</code> or
+the like.</p>
+<h1 data-number="4" id="shared-memory"><span
+class="header-section-number">4</span> Shared memory</h1>
+<p>One of the advantages of virtual memory is the OS can map the same
+physical page to different virtual pages in different processes. The
+processes can then directly communicate by loading what the other stored
+in that shared memory.</p>
+<p>In this assignment, we’ll use two regions of shared memory. If there
+are two chat processes running A and B, there will be an inbox for A and
+an inbox for B. In both A and B, our supplied code <q>maps</q> each of
+these memory regions so you can access them.</p>
+<p>Because shared memory needs to be able to span processes, it is a bit
+more involved to create and destroy than ordinary memory is.</p>
+<p>Our sample code provides functions that do this for you:</p>
+<ol type="1">
+<li><p><code>setup_inboxes()</code> sets <code>my_inbox</code> to point
+to the inbox for the current process and <code>other_inbox</code> to
+point to the inbox for the process with PID <code>other_pid</code>
+(which is read from user input). Each of these inboxes can be treated as
+4 kilobyte <code>char</code> array.</p>
+<p><code>setup_inboxes()</code> works using <code>shm_open</code>, which
+requires shared memory regions be identified by a string that works
+similarly to a filename. We choose the psuedo-filename
+<code>/1234-chat</code> where <code>1234</code> is the PID of a process.
+<code>shm_open</code> returns a <em>file descriptor</em>, which allows
+us to access the shared memory region similarly to how we would access a
+file. (In fact, on Linux, the shared memory regions are files that just
+happen to be stored in memory.)</p>
+<p><code>setup_inboxes()</code> uses <code>ftruncate</code> to set the
+size of the shared memory region, then uses <code>mmap()</code> to
+request that it be made available in the current process.
+<code>mmap()</code> returns a pointer that that can be used to access
+the shared memory.</p></li>
+<li><p><code>cleanup_inboxes()</code> frees resources associated with
+both inboxes. This consists of making the shared memory no longer be
+available in the current process using <code>munmap</code>, and then
+using <code>shm_unlink</code> to delete the current process’s
+region.</p>
+<p>If we fail to call <code>shm_unlink</code>, then the shared memory
+will remain present on the system indefinitely, even if both processes
+using the shared memory region exit. (Failing to call
+<code>munmap</code> won’t have this problem — the <q>mapping</q> of the
+memory to the current process wil be cleaned up when the current process
+exits or crashes.)</p></li>
+</ol>
+<h1 data-number="5" id="repeating-and-waiting"><span
+class="header-section-number">5</span> Repeating and waiting</h1>
+<p>You’ve got two things to do: keyboard ↦ outbox and inbox ↦
+screen.</p>
+<h2 data-number="5.1" id="keyboard-outbox"><span
+class="header-section-number">5.1</span> keyboard ↦ outbox</h2>
+<p>A loop in <code>main</code> is the way to go: <code>while(1)</code>
+<code>fgets</code> directly into the other_inbox (breaking out of the
+loop if <code>fgets</code> fails). After data is in the
+<code>other_inbox</code>, send SIGUSR1 (using <code>kill</code>) to the
+other process; then, wait for <code
+class="sourceCode c">other_inbox<span class="op">[</span><span class="dv">0</span><span class="op">]</span></code>
+to become <code
+class="sourceCode c"><span class="ch">&#39;</span><span class="sc">\0</span><span class="ch">&#39;</span></code>.
+Don’t just busy-wait though: check, then go to sleep for a bit, then
+check again. (A better strategy you could also try might be to wait for
+SIGUSR2 using sigprocmask() and sigwait() and have the receiving process
+send SIGUSR2 when it is done reading the input.)</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// wait for &#39;\0&#39; by checking 100 times a second</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">// 10,000,000 ns = 10 ms = 1/100 second</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span><span class="op">(</span>my_inbox<span class="op">[</span><span class="dv">0</span><span class="op">])</span> <span class="op">{</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> timespec ts <span class="op">=</span> <span class="op">{</span> <span class="op">.</span>tv_sec <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="op">.</span>tv_nsec <span class="op">=</span> <span class="dv">10000000</span> <span class="op">};</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    nanosleep<span class="op">(&amp;</span>ts<span class="op">,</span> NULL<span class="op">);</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 data-number="5.2" id="inbox-screen"><span
+class="header-section-number">5.2</span> inbox ↦ screen</h2>
+<p>When you handle <code>SIGUSR1</code></p>
+<ol type="1">
+<li><code>fputs</code> my_inbox so we can see what was sent;</li>
+<li><code
+class="sourceCode c">fflush<span class="op">(</span>stdout<span class="op">)</span></code>
+to ensure we see it now, not later;</li>
+<li>set the first character in the inbox to <code
+class="sourceCode c"><span class="ch">&#39;</span><span class="sc">\0</span><span class="ch">&#39;</span></code>
+so the other process knows we’re ready for it to send more</li>
+</ol>
+<h1 data-number="6" id="debugging-notes"><span
+class="header-section-number">6</span> Debugging notes</h1>
+<ol type="1">
+<li><p>If you run your program(s) in a debugger like GDB or LLDB, they
+will by default intercept signals:</p>
+<ul>
+<li>for most signals, GDB and LLDB automatically stop as if there was a
+breakpoint when your program receives the signal;</li>
+<li>for SIGINT and SIGTRAP, GDB and LLDB will not pass the signal to the
+program’s own signal handler (if any) by default;</li>
+</ul>
+<p>If you want to change this behavior, in LLDB you can use
+<code>process handle</code> command (see
+<code>help process handle</code> for documentation), and in GDB, the
+<code>info signals</code>, <code>catch</code>, and <code>handle</code>
+commands (see the <a
+href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Signals.html#Signals">GDB
+reference manual chapter on signals</a>).</p></li>
+<li><p>If you do not setup a signal handler for SIGUSR1 and it is
+received by a process, then, by default, the process will terminate and
+the shell will print the message <q>User defined signal 1</q>.</p></li>
+<li><p>If you’re having issues with <q>segmentation faults</q> and
+<q>bus errors</q>, then it might be useful to use AddressSanitizer (a
+memory error detector) by compiling and linking with
+<code>-fsanitize=address</code> and <code>-g</code>.</p></li>
+</ol>
+<h1 data-number="7" id="some-explanations-about-the-supplied-code"><span
+class="header-section-number">7</span> Some explanations about the
+supplied code</h1>
+<ol type="1">
+<li><p>For reading in the PID, our code uses getline() instead of
+something like <code>scanf("%d", ...)</code>. This is primarily because
+<code>scanf("%d", ...)</code> does not read a full line. For example, if
+the input is <code>"12\n"</code>, then it will read only the
+<code>"12"</code>, leaving <code>"\n"</code> on the input. This means a
+later call to <code>fgets()</code> or similar would later return that
+<code>"\n"</code> as an empty line immediately,</p></li>
+<li><p>As we’ll discuss when we cover virtual memory, the
+<code>mmap</code> function makes the contents of a file part of the
+process’s memory. When called with the <code>MAP_SHARED</code> argument,
+that memory is the same memory for every process that maps the file.
+(One way the OS could implement this is by loading the contents of the
+file into memory, and setting the memory mapping for each process that
+uses the file to refer to the same <q>real</q> addresses.)</p>
+<p><code>shm_open("/foo", ...)</code> gets a file descriptor (file
+handle, essentially) for a special type of file meant to be used
+specifically for sharing memory between processes. The name
+<code>/foo</code> serves to identify which shared memory region this
+should be associated with.</p></li>
+</ol>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech, with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

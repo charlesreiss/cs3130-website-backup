@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Computer Systems and Organization</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#learning-outcomes" id="toc-learning-outcomes"><span
+class="toc-section-number">1</span> Learning Outcomes</a></li>
+<li><a href="#readings" id="toc-readings"><span
+class="toc-section-number">2</span> Readings</a>
+<ul>
+<li><a href="#environment-for-assignments"
+id="toc-environment-for-assignments"><span
+class="toc-section-number">2.1</span> Environment for
+assignments</a></li>
+<li><a href="#old-quizzesexams" id="toc-old-quizzesexams"><span
+class="toc-section-number">2.2</span> Old quizzes/exams</a></li>
+</ul></li>
+<li><a href="#getting-help" id="toc-getting-help"><span
+class="toc-section-number">3</span> Getting Help</a></li>
+<li><a href="#course-staff" id="toc-course-staff"><span
+class="toc-section-number">4</span> Course Staff</a></li>
+</ul></nav>
+<p>This is the website for the Fall 2026 offering of CS 3130.</p>
+<p>You’ll probably find the <a href="schedule.html">schedule</a> link
+above most useful.</p>
+<h1 data-number="1" id="learning-outcomes"><span
+class="header-section-number">1</span> Learning Outcomes</h1>
+<p>As a result of taking this course, you should learn</p>
+<ul>
+<li>core system architecture, including DMA, interrupts, and cache
+coherency</li>
+<li>real hardware, including concurrency complexities and what makes
+SPECTRE work</li>
+<li>concurrency, including synchronization, mutual exclusion, coherency,
+and concurrency bugs</li>
+<li>virtual memory, including process isolation and shared memory</li>
+<li>practical networking, including familiarity with TCP/IP, DNS,
+snooping, spoofing, and TLS</li>
+<li>security, including unix permissions, privilege escalation, and
+modern exploits</li>
+<li>ethical and legal issues, including reporting</li>
+<li>a build system and practical command-line tools</li>
+</ul>
+<h1 data-number="2" id="readings"><span
+class="header-section-number">2</span> Readings</h1>
+<p>We have created several writeups for this course:</p>
+<ul>
+<li><a href="readings/intro.html">CSO2 overview</a></li>
+<li>Building
+<ul>
+<li><a href="readings/compilation.html">Compilation and
+Libraries</a></li>
+<li><a href="readings/make.html">Makefiles</a></li>
+</ul></li>
+<li><a href="readings/kernel.html">Kernels – Software for the
+Hardware</a>
+<ul>
+<li><a href="readings/vm.html">Virtual Memory</a></li>
+</ul></li>
+<li><a href="readings/accounts.html">User Accounts</a>
+<ul>
+<li><a href="readings/permissions.html">File Permissions</a></li>
+</ul></li>
+<li><a href="readings/bus.html">Buses (and networks)</a></li>
+<li><a href="readings/protocols.html">Networking Protocols</a></li>
+<li><a href="readings/sec.html">Cryptographic protocols</a></li>
+<li><a href="readings/cache.html">Caches – Keep a finger in it</a></li>
+<li><a href="readings/thread.html">Processes and threads</a>
+<ul>
+<li><a href="readings/sync.html">Synchronization primitives</a></li>
+<li><a href="readings/pthreads.html">Using POSIX Threads</a></li>
+<li><a href="readings/deadlock.html">Deadlock</a></li>
+<li><a href="readings/consistency.html">Consistency</a></li>
+</ul></li>
+<li><a href="readings/processors.html">Processors</a></li>
+</ul>
+<p>(The original version of these was written by Professor
+Tychonievich.)</p>
+<p>We will augment these with various examples, online articles, and
+other resources.</p>
+<h2 data-number="2.1" id="environment-for-assignments"><span
+class="header-section-number">2.1</span> Environment for
+assignments</h2>
+<p>We will test your assignments on an environment similar to the
+department’s Linux machines that are accessible via SSH.</p>
+<p>Unlike some offerings of CSO1, you are welcome to use an IDE of your
+choice (that doesn’t write your code for you) as long as your submission
+will work when we test it from a command line-like environment.</p>
+<p>A lot of students have had success using VSCode and its SSH support
+to access the department machines, as is (for example) described in <a
+href="https://researcher111.github.io/uva-cso1-F23-DG/labs/lab1-ssh-ed.html">the
+Fall 2023 CSO1’s first lab</a>. If using VSCode, you may find it helpful
+to install the <a
+href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools">C/C++</a>
+and <a
+href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.makefile-tools">Makefile</a>
+extensions.</p>
+<p>In addition, for accessing the department machines remotely, you may
+find these writeups helpful:</p>
+<ul>
+<li>options for <a href="ssh.html">using SSH and setting up keypairs to
+avoid retyping your password all the time</a></li>
+<li>instructions for <a
+href="https://www.cs.virginia.edu/wiki/lib/exe/fetch.php?media=nx-setup_v3a.pdf">remote
+desktop access (via NoMachine)</a></li>
+</ul>
+<h2 data-number="2.2" id="old-quizzesexams"><span
+class="header-section-number">2.2</span> Old quizzes/exams</h2>
+<p>On the <a href="exams.html">study materials link above</a>, you can
+find some old exams and quizzes.</p>
+<h1 data-number="3" id="getting-help"><span
+class="header-section-number">3</span> Getting Help</h1>
+<ul>
+<li><p><a href="oh.html">Office hours</a></p></li>
+<li><p>Piazza (linked off Canvas site)</p></li>
+<li><p>emailing us (not preferred for course material
+questions)</p></li>
+</ul>
+<h1 data-number="4" id="course-staff"><span
+class="header-section-number">4</span> Course Staff</h1>
+<dl>
+<dt><strong>Charles Reiss</strong></dt>
+<dd>
+Office: Rice 205. <br/>Email: creiss@virginia.edu <br/>Telephone:
+434-924-8274 <br/>Office Hours: (see <a href="oh.html">office hours</a>
+page)
+</dd>
+<dt><strong>TAs</strong></dt>
+<dd>
+Mich Hu, Arjun Rao, Ayaan Siddiqui, Haider Qureshi, James Beck, Maddox
+Shrum, Peter Nenyuk, Thomas Kennedy, Zhenxing Fan
+</dd>
+</dl>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

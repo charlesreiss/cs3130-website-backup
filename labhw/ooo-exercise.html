@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: OOO Exercise</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/ooo-exercise.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#hypothetical-ooo-processor"
+id="toc-hypothetical-ooo-processor"><span
+class="toc-section-number">1</span> Hypothetical OOO processor</a>
+<ul>
+<li><a href="#this-processors-pipeline"
+id="toc-this-processors-pipeline"><span
+class="toc-section-number">1.0.1</span> This processor’s
+pipeline</a></li>
+<li><a href="#this-processors-registers"
+id="toc-this-processors-registers"><span
+class="toc-section-number">1.0.2</span> This processor’s
+registers</a></li>
+<li><a href="#part-1-register-renaming"
+id="toc-part-1-register-renaming"><span
+class="toc-section-number">1.1</span> Part 1: register renaming</a></li>
+<li><a href="#part-2-instruction-dispatch"
+id="toc-part-2-instruction-dispatch"><span
+class="toc-section-number">1.2</span> Part 2: instruction
+dispatch</a></li>
+<li><a href="#part-3-pipeline-diagram"
+id="toc-part-3-pipeline-diagram"><span
+class="toc-section-number">1.3</span> Part 3: pipeline diagram</a></li>
+</ul></li>
+</ul></nav>
+<p>See the <a
+href="https://kytos02.cs.virginia.edu/cs3130-spring2026/ooo/ooo.php">answer
+sheet</a>.</p>
+<h1 data-number="1" id="hypothetical-ooo-processor"><span
+class="header-section-number">1</span> Hypothetical OOO processor</h1>
+<p>For this assignment, we will consider an out-of-order processor which
+has two execution units for arithmetic instructions, and one execution
+unit for memory instructions.</p>
+<h3 data-number="1.0.1" id="this-processors-pipeline"><span
+class="header-section-number">1.0.1</span> This processor’s
+pipeline</h3>
+<p>Instructions in this processor are executed as follows:</p>
+<ul>
+<li><p>first, they go through a set of in-order pipeline stages, two a
+time:</p>
+<ul>
+<li>fetch, where instructions are read from the pipeline stage. For this
+exercise, assume branch prediction is perfect so two new instructions
+are fetched every cycle</li>
+<li>decode, where the machine is interpreted</li>
+<li>rename, where register renaming takes place and instructions are
+placed into an instruction queue, available to be issued as early as the
+next cycle</li>
+</ul></li>
+<li><p>then, each cycle instructions are issued from the instruction
+queue:</p>
+<ul>
+<li>each cycle, the instruction queue is scanned for instructions whose
+operands are ready. (For this exercise, we’ll only account for their
+register operands being ready and assume that we do not need to worry
+about data memory-related dependencies.)
+<ul>
+<li>an instruction can be issued if its operand values will be available
+by the beginning next cycle (when it executes); so operands are
+considered <q>ready</q> during the cycle in which the instruction
+computing them executes</li>
+<li>once an instruction to issue is identified, the issue stage will
+handle forwarding its operand values or reading them from the register
+file, as appropriate</li>
+</ul></li>
+<li>the first memory instruction available and first two non-memory
+instructions available are selected to be issued. (If fewer instructions
+are available, as many are issued as possible.)</li>
+<li>during the cycle an instruction is issued, its register value inputs
+are read or forwarded</li>
+</ul></li>
+<li><p>when an instruction is issued, in the following cycles it is
+executed on an execution unit</p>
+<ul>
+<li>for memory instructions, this execution unit is a pipelined data
+cache. The data cache receives one instruction per cycle and produces
+the result after three cycles. To simplify this exercise, we will assume
+no cache misses.</li>
+<li>for non-memory instructions, this execution unit is one of two
+arithmetic logic units. Each of these ALUs receives one instruction per
+cycle and produces the result near the end of the same cycle.</li>
+</ul></li>
+<li><p>in the cycle after an instruction is executed its result is
+written back to the register file in one cycle</p></li>
+<li><p>finally, up to two instructions are <em>committed</em> each cycle
+using information placed in a reorder buffer during the issue stage. An
+instruction is only committed if all instructions fetched before have
+also committed.</p></li>
+</ul>
+<p>Given these stages, an non-memory instruction will take 7 cycles to
+go through the pipeline if it does not need to wait for it operands or
+wait for earlier instructions to commit (fetch, decode, rename,
+issue/register read, execute, writeback, commit). A memory instruction
+will take 9 cycles (two extra cycles of `execution’ because of the speed
+of the data cache).</p>
+<p>When operands are not available, an instruction will spend extra
+cycles waiting in the instruction queue between its rename and issue
+stage. When an instruction is written back but some prior instructions
+have not done so, then the instruction will spend extra cycles waiting
+in the reorder buffer before it is committed.</p>
+<h3 data-number="1.0.2" id="this-processors-registers"><span
+class="header-section-number">1.0.2</span> This processor’s
+registers</h3>
+<p>The processor has 15 logical registers <code>%r01</code> through
+<code>%r15</code>, but these are implemented using 64 physical registers
+and register renaming. We call the physical registers <code>%x01</code>
+through <code>%x64</code>.</p>
+<p>We will show instructions in a three-argument form like
+(<strong>regardless of whether register renaming has taken
+place</strong>):</p>
+<pre><code>add %r01, %r02 -&gt; %r03</code></pre>
+<p>this indicates to add %r01 and %r02 and put the result into %r03.</p>
+<p>Answer the questions on the answer sheet linked above.</p>
+<h2 data-number="1.1" id="part-1-register-renaming"><span
+class="header-section-number">1.1</span> Part 1: register renaming</h2>
+<p>Assume initially that <code>%r01</code> is assigned to
+<code>%x01</code>, <code>%r02</code> to <code>%x02</code>, and so on.
+Registers <code>%x16</code> through <code>%x63</code> are available for
+register renaming.</p>
+<p>Rewrite the following instructions using the <code>%x01</code> taking
+into account how register renaming might occur that would allow all of
+these instructions to be placed in the instruction queue at once:</p>
+<pre><code>add %r01, %r02-&gt; %r02   
+add %r02, %r03-&gt; %r03   
+imul %r02, %r03-&gt; %r03  
+mov 0x0(%r03)-&gt; %r01    
+sub %r02, %r03-&gt; %r03   
+add %r03, %r04-&gt; %r04   
+movq 0x0(%r01)-&gt; %r01   
+imul %r01, %r04-&gt; %r04  
+add %r04 %r04-&gt; %r04</code></pre>
+<p>Record your answer at the answer sheet linked above.</p>
+<h2 data-number="1.2" id="part-2-instruction-dispatch"><span
+class="header-section-number">1.2</span> Part 2: instruction
+dispatch</h2>
+<p>Suppose the instruction queue for this processor contains the
+following instructions <em>after renaming</em></p>
+<pre><code>A. movq (%x05) -&gt; %x16
+B. add %x04, %x06 -&gt; %x17
+C. sub %x01, %x02 -&gt; %x18
+D. imul %x16, %x18 -&gt; %x19
+E. movq (%x06) -&gt; %x20
+F. add %x03, %x08 -&gt; %x21
+G. add %x21, %x18 -&gt; %x22
+H. movq (%x18) -&gt; %x23
+I. imul %x22, %x20 -&gt; %x24
+J. movq %x21, (%x23) -&gt;</code></pre>
+<p>Initially the value of registers <code>%x01</code> through
+<code>%x15</code> is available.</p>
+<p>Complete the timeline to show how all the instructions can be issued
+and executed. (Assume there are no cases where loads and stores access
+the same or overlapping memory regions.)</p>
+<pre><code>                cycle 1    2    3   4    5    6   7    8     9    10   11    12 
+execution unit:       
+arithmetic 1          B
+arithmetic 2          C
+memory stage 1        A
+memory stage 2             A
+memory stage 3                  A</code></pre>
+<p>Record your answer at the answer sheet linked above.</p>
+<h2 data-number="1.3" id="part-3-pipeline-diagram"><span
+class="header-section-number">1.3</span> Part 3: pipeline diagram</h2>
+<p>Complete a pipeline diagram for the processor running the following
+instructions (shown in the form from <strong>before</strong> register
+renaming):</p>
+<pre><code>1. add %r02, %r01 -&gt; %r01
+2. add %r02, %r01 -&gt; %r01
+3. add %r02, %r03 -&gt; %r03
+4. add %r03, %r04 -&gt; %r04
+5. add %r04, %r06 -&gt; %r06
+6. add %r01, %r02 -&gt; %r05
+7. add %r04, %r03 -&gt; %r03
+8. add %r01, %r08 -&gt; %r08</code></pre>
+<p>Identify the stages as:</p>
+<ul>
+<li>F for when the instruction is feteched</li>
+<li>D for when an instruction is decoded</li>
+<li>R for when an instruction is renamed and dispatched into an
+instruction queue</li>
+<li>I for when an instruction is issued from an instruction queue and
+its registers are read</li>
+<li>E for when an instruction is being executed (after it is
+issued)</li>
+<li>W for when an instruction’s results are written back to the physical
+register file</li>
+<li>C for when an instruction is committed</li>
+</ul>
+<p>Leave the specified stage blank when an instruction is not being
+processed in any of the above ways (such as when the instruction is in
+the instruction queue waiting to be issued or any cycles between when an
+instruction is written back and when it is committed).</p>
+<p>The first three rows are:</p>
+<pre><code>1 F D R I E W C
+2 F D R   I E W C
+3   F D R I E W C</code></pre>
+<p>complete the remaining rows of the table at the answer sheet linked
+above.</p>
+<p>You may assume that register values computed by previous instructions
+are available and that physical registers are free such that stages will
+not be delayed for missing previous register values or lack of available
+physical registers.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

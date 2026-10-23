@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Kernels -- Software for the Hardware</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/kernel.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#kernel-mode-vs.-user-mode"
+id="toc-kernel-mode-vs.-user-mode"><span
+class="toc-section-number">1</span> Kernel Mode vs. User Mode</a>
+<ul>
+<li><a href="#definitions" id="toc-definitions"><span
+class="toc-section-number">1.1</span> Definitions</a></li>
+<li><a href="#motivation" id="toc-motivation"><span
+class="toc-section-number">1.2</span> Motivation</a>
+<ul>
+<li><a href="#limiting-bugs-potential-for-evil"
+id="toc-limiting-bugs-potential-for-evil"><span
+class="toc-section-number">1.2.1</span> Limiting Bugs’ Potential for
+Evil</a></li>
+<li><a href="#each-program-thinks-it-is-in-control"
+id="toc-each-program-thinks-it-is-in-control"><span
+class="toc-section-number">1.2.2</span> Each Program Thinks it is in
+Control</a></li>
+<li><a href="#wrapper-around-hardware"
+id="toc-wrapper-around-hardware"><span
+class="toc-section-number">1.2.3</span> Wrapper around Hardware</a></li>
+<li><a href="#multiple-users" id="toc-multiple-users"><span
+class="toc-section-number">1.2.4</span> Multiple Users</a></li>
+</ul></li>
+<li><a href="#implementation" id="toc-implementation"><span
+class="toc-section-number">1.3</span> Implementation</a>
+<ul>
+<li><a href="#protected-instructions-and-memory"
+id="toc-protected-instructions-and-memory"><span
+class="toc-section-number">1.3.1</span> Protected Instructions and
+Memory</a></li>
+<li><a href="#mode-bit" id="toc-mode-bit"><span
+class="toc-section-number">1.3.2</span> Mode Bit</a></li>
+<li><a href="#mode-switch-via-exceptions"
+id="toc-mode-switch-via-exceptions"><span
+class="toc-section-number">1.3.3</span> Mode-switch via
+Exceptions</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#exceptions" id="toc-exceptions"><span
+class="toc-section-number">2</span> Exceptions</a>
+<ul>
+<li><a href="#kinds" id="toc-kinds"><span
+class="toc-section-number">2.1</span> Kinds</a>
+<ul>
+<li><a href="#interrupts" id="toc-interrupts"><span
+class="toc-section-number">2.1.1</span> Interrupts</a></li>
+<li><a href="#faults" id="toc-faults"><span
+class="toc-section-number">2.1.2</span> Faults</a></li>
+<li><a href="#traps" id="toc-traps"><span
+class="toc-section-number">2.1.3</span> Traps</a></li>
+</ul></li>
+<li><a href="#handling" id="toc-handling"><span
+class="toc-section-number">2.2</span> Handling</a>
+<ul>
+<li><a href="#save-handle-restore" id="toc-save-handle-restore"><span
+class="toc-section-number">2.2.1</span> Save-Handle-Restore</a></li>
+<li><a href="#which-handler" id="toc-which-handler"><span
+class="toc-section-number">2.2.2</span> Which Handler?</a></li>
+<li><a href="#after-the-handler" id="toc-after-the-handler"><span
+class="toc-section-number">2.2.3</span> After the Handler</a></li>
+<li><a href="#example-linux-system-calls"
+id="toc-example-linux-system-calls"><span
+class="toc-section-number">2.2.4</span> Example: Linux system
+calls</a></li>
+</ul></li>
+<li><a href="#exception-like-constructs"
+id="toc-exception-like-constructs"><span
+class="toc-section-number">2.3</span> Exception-Like Constructs</a>
+<ul>
+<li><a href="#signals" id="toc-signals"><span
+class="toc-section-number">2.3.1</span> Signals</a></li>
+<li><a href="#setjmp-longjmp-and-software-exceptions"
+id="toc-setjmp-longjmp-and-software-exceptions"><span
+class="toc-section-number">2.3.2</span> <code
+class="sourceCode c">setjmp</code>, <code
+class="sourceCode c">longjmp</code>, and software exceptions</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#processes-and-threads"
+id="toc-processes-and-threads"><span class="toc-section-number">3</span>
+Processes and Threads</a></li>
+<li><a href="#typical-io-patterns" id="toc-typical-io-patterns"><span
+class="toc-section-number">4</span> Typical I/O patterns</a>
+<ul>
+<li><a href="#input" id="toc-input"><span
+class="toc-section-number">4.1</span> Input</a></li>
+<li><a href="#output" id="toc-output"><span
+class="toc-section-number">4.2</span> Output</a></li>
+</ul></li>
+<li><a href="#further-resources" id="toc-further-resources"><span
+class="toc-section-number">5</span> Further resources</a>
+<ul>
+<li><a href="#general" id="toc-general"><span
+class="toc-section-number">5.1</span> General</a></li>
+<li><a href="#for-signal-handling" id="toc-for-signal-handling"><span
+class="toc-section-number">5.2</span> For signal handling</a></li>
+<li><a href="#operating-system-organization-examples"
+id="toc-operating-system-organization-examples"><span
+class="toc-section-number">5.3</span> Operating system organization
+examples</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>7 Feb 2024: in further resources, note exception terms used by
+textbooks</li>
+<li>13 Feb 2024: correct typo in URL of link to processes and threads
+reading</li>
+<li>16 Sep 2025: <q>the could</q> -&gt; <q>the OS could</q> in I/O
+patterns section</li>
+</ul>
+</div>
+<h1 data-number="1" id="kernel-mode-vs.-user-mode"><span
+class="header-section-number">1</span> Kernel Mode vs. User Mode</h1>
+<p>All multi-purposed chips today have (at least) two modes in which
+they can operate: <em>user mode</em> and <em>kernel mode</em><a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>. Thus far you have probably only
+written user-mode software, and most of you will never write kernel-mode
+software during your entire software development careers.</p>
+<h2 data-number="1.1" id="definitions"><span
+class="header-section-number">1.1</span> Definitions</h2>
+<p>When running in <em>kernel mode</em>, the hardware allows the
+software to do all operations the hardware supports. In <em>user
+mode</em>, instead, some operations are not allowed.</p>
+<p>The code that runs in <em>kernel mode</em> is called the
+<em>kernel</em>.</p>
+<p>If the code running in user mode wants to perform one of the
+prohibited operations, it must instead ask the kernel to do so on its
+behalf.</p>
+<h2 data-number="1.2" id="motivation"><span
+class="header-section-number">1.2</span> Motivation</h2>
+<p>Running software in <em>user mode</em> only restricts what that
+software can do; it does not provide access to any additional
+functionality. But this restriction provides several advantages.</p>
+<h3 data-number="1.2.1" id="limiting-bugs-potential-for-evil"><span
+class="header-section-number">1.2.1</span> Limiting Bugs’ Potential for
+Evil</h3>
+<p>One reason to not run in kernel mode is to limit the impact a
+software bug can have. Inside the computer is all of the code and data
+that handles drawing the screen and tracking the mouse and reacting to
+keys and so on; I’d rather not be able to make a mistake when writing my
+Hello World program and accidentally mess up those core functionalities.
+By running in user mode, if my code tries to touch any of that it will
+be blocked from doing so: my program will crash, but the computer will
+keep running.</p>
+<h3 data-number="1.2.2" id="each-program-thinks-it-is-in-control"><span
+class="header-section-number">1.2.2</span> Each Program Thinks it is in
+Control</h3>
+<p>Physical computers have limited physical resources. One of the
+benefits of running in user mode is that the particular limitations are
+hidden from you by the kernel and hardware working together. For
+example, even if you only have 8GB of memory you can still use addresses
+larger than that limit: the kernel and hardware will work together to
+provide the illusion that there was enough memory even if there was
+not.</p>
+<p>This illusion is even more important when you are running more than
+one process simultaneously. Perhaps you have a terminal, an editor, and
+your developed code all running at once. The kernel and hardware will
+work together to ensure that your code cannot even see, let alone
+modify, the memory being used by the terminal or editor. Each program is
+given the illusion of being the only one running on an unlimited
+machine.</p>
+<h3 data-number="1.2.3" id="wrapper-around-hardware"><span
+class="header-section-number">1.2.3</span> Wrapper around Hardware</h3>
+<p>Each piece of hardware attached to a chip has its own protocols and
+nuances of operation. Fortunately, only the kernel needs to know about
+those details. If the mouse tries to talk to your program directly, the
+kernel intercepts the communication and handles it for you so you don’t
+notice it happened unless you asked the kernel to inform you about it.
+If you try to talk to the disk, the kernel likewise moderates that
+communication, keeping you from needing to know the specific protocol
+the currently-attached disk expects.</p>
+<h3 data-number="1.2.4" id="multiple-users"><span
+class="header-section-number">1.2.4</span> Multiple Users</h3>
+<p>Because the kernel is an unavoidable intermediary for talking to
+hardware, it can choose to forbid some interactions. One common use of
+this is to allow multiple user accounts. Since the kernel is the one
+that controls access to the disk, for example, it can choose to prohibit
+my processeses from accessing the part of the disk it has assigned to
+you and not me.</p>
+<h2 data-number="1.3" id="implementation"><span
+class="header-section-number">1.3</span> Implementation</h2>
+<h3 data-number="1.3.1" id="protected-instructions-and-memory"><span
+class="header-section-number">1.3.1</span> Protected Instructions and
+Memory</h3>
+<p>When in user mode, there are a set of instructions that cannot be
+executed and segments of memory that cannot be accessed. Examples of
+things you cannot directly access in user mode include</p>
+<ul>
+<li>the part of memory that stores information about which user account
+you are logged into</li>
+<li>instructions that send signals out of the chip to communicate with
+disks, networks, etc.</li>
+<li>instructions that let user-mode code execute in kernel mode</li>
+</ul>
+<h3 data-number="1.3.2" id="mode-bit"><span
+class="header-section-number">1.3.2</span> Mode Bit</h3>
+<p>The simplest way to create two modes is to have a single-bit register
+somewhere on the chip that indicates if the chip is currently executing
+in user mode or in kernel mode. Each protected instruction then checks
+the contents of that register and, if it indicates user mode, causes an
+exception instead of executing the instruction. A special protected
+instruction is added to change the contents of this mode register,
+meaning kernel-mode code can become user-mode, but not vice versa.</p>
+<p>Modern processors often have more than one operating mode with more
+than one level of privilege, which (among other benefits) can help make
+virtualization efficient; the details of these additional modes are
+beyond the scope of this course.</p>
+<h3 data-number="1.3.3" id="mode-switch-via-exceptions"><span
+class="header-section-number">1.3.3</span> Mode-switch via
+Exceptions</h3>
+<p>The core mechanic for switching to the kernel is a hardware
+exception. An exception results in several functionally-simultaneous
+changes to processor state, notably including both (a) changing to
+kernel mode and (b) jumping to code in kernel-only memory. Thus, the
+only mechanisms that exist for entering kernel mode will run kernel code
+for the next instruction, preventing user code from running itself in
+kernel mode.</p>
+<p>The nature of these hardware exceptions and the jump to kernel code
+that is associated with them is a large enough topic to deserve <a
+href="#exceptions">its own section</a>.</p>
+<h1 data-number="2" id="exceptions"><span
+class="header-section-number">2</span> Exceptions</h1>
+<p>Hardware exceptions are examples of <q>exceptional control flow</q>:
+that is, the sequence of instructions being operated around an exception
+is an exception to the usual rules of sequentiality and jumps. They also
+tend to appear in exceptional (that is, unusual) situations.</p>
+<h2 data-number="2.1" id="kinds"><span
+class="header-section-number">2.1</span> Kinds</h2>
+<p>There are several kinds of hardware exceptions.</p>
+<div class="aside long">
+<p>Confusingly, terms for exceptions and particular kinds of exceptions
+vary across sources. Here, we care that you know that hardware
+exceptions have many uses rather than knowing specific terms.</p>
+<p>In the convention we have followed, we use <q>exception</q> as the
+generic term and use the terms <q>interrupt</q> or <q>trap</q> for
+particular kinds of exceptions. Some sources use <q>interrupt</q> or
+`trap’ for the generic term instead and use <q>exception</q> to refer to
+a more specific term (probably roughly equivalent to what we call
+<q>faults</q>). There is also some other variation in the definitions of
+the more specific terms. So, when reading a processor manual or similar
+reference, be careful to look for context to see exactly how they define
+each of the terms below.</p>
+
+</div>
+<h3 data-number="2.1.1" id="interrupts"><span
+class="header-section-number">2.1.1</span> Interrupts</h3>
+<p>An interrupt occurs independently from the code being executed when
+it occurs. It might result from the mouse moving, a network packet
+arriving, or the like.</p>
+<p>Input devices commonly triggering interrupts allows the operating
+system to process and act on input even if that input occurs while an
+unrelated program is running.</p>
+<p>Interrupts are typically handled by the kernel in a way that is
+invisible to the user code. The user code is frozen, the interrupt is
+handled, and then the user code is resumed as if nothing had
+happened.</p>
+<h3 data-number="2.1.2" id="faults"><span
+class="header-section-number">2.1.2</span> Faults</h3>
+<p>A fault is the result of an instruction failing to succeed in its
+execution. Examples include dividing by zero, dereferencing a null
+pointer, or attempting to execute a protected instruction while in user
+mode.</p>
+<p>There are two basic families of responses to faults: either the
+kernel fixes the problem and reruns the user code that generated the
+fault, or it cannot fix the problem and kills the process that caused
+the fault. In practice, fixable faults happen quite often, most
+frequently the <em>page fault</em> that occurs when using virtual
+memory. (As described in more detail in the <a href="vm.html">virtual
+memory reading</a>, these occur when a program accesses memory that is
+not yet assigned to the program (as far as the hardware knows). The OS
+can choose to respond to the fault by assigning the memory to the
+program. Then, it can allow the memory acess to be retried and this
+time, the hardware will be able to complete the memory access.)</p>
+<p>Even faults the kernel cannot fix on its own may be handled by having
+the kernel’s fault handler ask the user code if it knows how to fix
+them. On Unix-like systems like Linux, this is done through a mechanism
+called <a href="#signals">signals</a>. However, many programs do not
+handle the signals, so the kernel’s handler will often end up just
+terminating the program regardless.</p>
+<h3 data-number="2.1.3" id="traps"><span
+class="header-section-number">2.1.3</span> Traps</h3>
+<p>A trap is an exception caused by a special instruction whose sole job
+is to generate exceptions. Traps are the main mechanism for
+intentionally switching from user mode to kernel mode and are the core
+of all <em>system calls</em>. System calls are typically function-call
+like interfaces provided by kernels to allow programs to access
+protected functionality. System calls are used to interact with the file
+system, spawn and wait on threads, listen for key presses, and anything
+else that you cannot do with simple code alone.</p>
+<div class="aside long">
+<p>The <q>system call interface</q>.</p>
+<p><img src="kernel-layers1.svg" style="width: 20em"></p>
+<p>We can view the combination of the limited user-mode hardware
+interface and system calls as collectively defining the interface user
+mode code sees.</p>
+
+</div>
+<h2 data-number="2.2" id="handling"><span
+class="header-section-number">2.2</span> Handling</h2>
+<p>When an exception occurs, the processor switches to kernel mode and
+jumps to a special function in kernel code called an <q>exception
+handler.</q> Because interrupts exist, this can happen without any
+particular instruction causing the jump, and thus might happen at any
+point during code execution. In order for the handler to later resume
+user code, the exception-handling process must also save the processor
+state before executing the handler.</p>
+<h3 data-number="2.2.1" id="save-handle-restore"><span
+class="header-section-number">2.2.1</span> Save-Handle-Restore</h3>
+<p>The basic mechanism for any exception to be handled is</p>
+<ol type="1">
+<li>Save (some of) the current state of the processor (program counter,
+kernel mode bit, etc.)</li>
+<li>Enter kernel mode</li>
+<li>Jump to code designed to react to the exception in question, called
+an <strong>exception handler</strong></li>
+<li>When the handler finishes, enter user mode and restore processor
+state (program counter, kernel mode bit, etc.)</li>
+</ol>
+<p>These steps (except for the actual execution of the exception
+handler) are all done atomically by the hardware.</p>
+<p>Processors vary in how much of the processor state they save and
+restore in hardware. The PC has to be saved and restored since jumping
+to the exception handler overwrites the old PC value. The processor may
+also save and restore the values of all or some of the other registers.
+If the processor itself does not, then the operating system’s exception
+handler code can do this instead.</p>
+<h3 data-number="2.2.2" id="which-handler"><span
+class="header-section-number">2.2.2</span> Which Handler?</h3>
+<p>In general, there can be as many different exception handlers as
+there are exception causes. To select which one to run, the hardware
+consults something called an <strong>exception table</strong>. The
+exception table is just an array of code addresses; the index into that
+array is determined by the kind of exception generated (e.g.,
+divide-by-zero uses index 0, invalid instructions use index 6, etc.).
+The index is called an <strong>exception number</strong> or
+<strong>vector number</strong> and the array of code addresses is called
+the <strong>exception table</strong>.</p>
+<div class="aside long">
+<p>Switches</p>
+<p>Having an array of code addresses is not unique to exception
+handlers; it is also present in C in the form of a <code
+class="sourceCode c"><span class="cf">switch</span></code>
+statement.</p>
+<p>For example, the following C code</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span><span class="op">(</span>x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">0</span><span class="op">:</span> f0<span class="op">();</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">1</span><span class="op">:</span> f1<span class="op">();</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">3</span><span class="op">:</span> f3<span class="op">();</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">2</span><span class="op">:</span> f2<span class="op">();</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">4</span><span class="op">:</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">5</span><span class="op">:</span> f5<span class="op">();</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">6</span><span class="op">:</span> f6<span class="op">();</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dv">8</span><span class="op">:</span> f6<span class="op">();</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>compiles down to the following assembly code</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>    cmpl    <span class="op">$</span><span class="bn">8</span><span class="op">,</span> <span class="op">%</span><span class="kw">eax</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">ja</span>      AfterSwitch</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    jmpq    <span class="op">*</span> Table<span class="op">(,%</span><span class="kw">rax</span><span class="op">,</span><span class="dv">8</span><span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Case0:</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    callq   f0</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Case1:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    callq   f1</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">Case3:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    callq   f3</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">Case2:</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    callq   f2</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">jmp</span>     AfterSwitch</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">Case5:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    callq   f5</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="fu">Case6:</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    callq   f6</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">jmp</span>     AfterSwitch</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="fu">Case8:</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    callq   f8</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="fu">AfterSwitch:</span></span></code></pre></div>
+<p>supported by the following jump table</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">section</span>    <span class="op">.</span>rodata</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Table:</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    .quad   Case0</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    .quad   Case1</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    .quad   Case2</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    .quad   Case3</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    .quad   Case5</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    .quad   Case5</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    .quad   Case6</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    .quad   AfterSwitch</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    .quad   Case8</span></code></pre></div>
+<p>Exception tables are just one particular use of this
+array-of-code-addresses idea.</p>
+
+</div>
+<h3 data-number="2.2.3" id="after-the-handler"><span
+class="header-section-number">2.2.3</span> After the Handler</h3>
+<p>Handlers may either abort the user code or resume its operation.
+Aborting is primarily used when there is no obvious way to recover from
+the cause of the exception.</p>
+<p>When resuming, the handler can either re-run the instruction that was
+running when it was generated or continue with the next instruction
+instead. A trap, for example, is similar to a <code>callq</code> in its
+behavior and thus resumes with the subsequent instruction. A fault
+handler, on the other hand, is supposed to remove the barrier to success
+that caused the fault and thus generally re-runs the faulting
+instruction.</p>
+<div class="aside long">
+<p>Aborts</p>
+<p>We <a href="#kinds">classified exceptions by cause</a>, but some
+texts classify them by result instead. If classified by what happens
+after the handler, there is a fourth class: aborts, which never
+return.</p>
+<dl>
+<dt>Fault</dt>
+<dd>
+re-runs triggering instruction
+</dd>
+<dt>Trap</dt>
+<dd>
+runs instruction after triggering instruction
+</dd>
+<dt>Interrupt</dt>
+<dd>
+runs each instruction once (has no triggering instruction)
+</dd>
+<dt>Abort</dt>
+<dd>
+stops running instructions
+</dd>
+</dl>
+<p>The abort result may be triggered by any cause: if a memory access
+detects memory inconsistency we have an aborting fault, an exit system
+call is an aborting trap, and integral peripherals like RAM can send
+aborting interrupts if they notice unrecoverable problems.</p>
+
+</div>
+<div class="aside long">
+<p>Nested exceptions and disabling interrupts</p>
+<p>It is possible for an exception to occur while another exception is
+being handled. For example, the processor may receive a keypress while a
+system call is being handled. It is, however, very difficult to write
+exception handlers that will behave correctly when interrupted in this
+way. So, processors usually provide a way for processors to <em>disable
+interrupts</em>, temporarily preventing exceptions from being handled.
+Usually, interrupts are automatically disabled while an exception
+handler runs, an operating system will not reenable them unless it has
+made sure that its data structures are in a state where a new exception
+can safely be handled.</p>
+
+</div>
+<h3 data-number="2.2.4" id="example-linux-system-calls"><span
+class="header-section-number">2.2.4</span> Example: Linux system
+calls</h3>
+<p>In Linux, almost all communications from user- to kernel-code are
+handled by a trap with exception number 128. Instead of using the
+exception number to select the particular action the user is requesting
+of the kernel, that action is put in a number in <code>%rax</code>; this
+decision allows Linux to have space for billions of different system
+calls instead of just the 200 or so that would fit in an exception
+number and are not reserved by the hardware.</p>
+<p>To see a list of Linux system calls, see <code
+class="sourceCode bash"><span class="fu">man</span> 2 syscall</code>.
+Most of these are wrapped in their own library function, listed in <code
+class="sourceCode bash"><span class="fu">man</span> 2 syscalls</code>.</p>
+<div class="example long">
+<p>Consider the C library function <code>socket</code>. The assembly for
+this function (as compiled into <code>libc.so</code>) begins</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">socket:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    endbr64 </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">mov</span>    <span class="op">$</span><span class="bn">0</span>x29<span class="op">,%</span><span class="kw">eax</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">syscall</span> </span></code></pre></div>
+<p>Let’s walk through this a bit at a time:</p>
+<dl>
+<dt><code class="sourceCode fasm">endbr64</code></dt>
+<dd>
+<p>This is part of the <a
+href="https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf">control-flow
+enforcement</a> elements of x86-64. It has no outwardly visible impact
+on program functionality, but it does add some security enforcement,
+making it harder for some classes of malicious code to access this
+function.</p>
+<p>Omitting some (important but tedious to describe) details, because
+this instruction is present in the function you can’t jump into the code
+except at that line. That means malicious code can’t jump a bit later
+into this function with the goal of executing the <code>syscall</code>
+instruction without first going through the <code>%rax</code>-setting
+instruction.</p>
+</dd>
+<dt><code
+class="sourceCode fasm"><span class="bu">mov</span> <span class="op">$</span><span class="bn">0</span>x29<span class="op">,%</span><span class="kw">eax</span></code></dt>
+<dd>
+Places 29<sub>16</sub> (41<sub>10</sub>) into <code>%rax</code>. Per
+<code>/usr/include/sys/syscall.h</code>, 41 is the number of the
+<q>socket</q> syscall.
+</dd>
+<dt><code
+class="sourceCode fasm"><span class="cf">syscall</span></code></dt>
+<dd>
+<p>A trap, generating exception number 128. This means the hardware
+saves the processor state, then jumps to the address stored in the
+kernel’s <code>exception_handler[128]</code>.</p>
+<p>The exception handler at index 128 checks that <code>%rax</code>
+contains a valid system call number (which 41 is), after which it jumps
+to the kernel’s <code>system_call_handler[41]</code>, the address of the
+socket call implementation.</p>
+<p>The kernel’s system calling convention has the same first three
+arguments as C’s calling convention, so the handler has access to the
+arguments from the <code
+class="sourceCode c"><span class="dt">int</span> socket<span class="op">(</span><span class="dt">int</span> domain<span class="op">,</span> <span class="dt">int</span> type<span class="op">,</span> <span class="dt">int</span> protocol<span class="op">)</span></code>
+invocation. It uses them to do whatever work is needed to create a
+socket, placing its file descriptor in <code>%rax</code> to be a return
+value.</p>
+<p>The handler ends by executing a protected return-from-handler
+instruction that</p>
+<ul>
+<li>restores the processor state (but leaves <code>%rax</code> alone as
+a return value),</li>
+<li>returns to user mode, and</li>
+<li>jumps back to user code</li>
+</ul>
+</dd>
+</dl>
+<p>After that is some error-checking code, and then the function
+returns. The whole function is only 11 instructions (24 bytes) long. The
+code in <code>system_call_handler[41]</code> of the kernel is
+considerably longer; many thousands of lines of C code, in fact (see <a
+href="https://github.com/torvalds/linux/tree/master/net"
+class="uri">https://github.com/torvalds/linux/tree/master/net</a>).</p>
+
+</div>
+<div class="aside long">
+<p>System libraries and system call wrappers.</p>
+<p><img src="kernel-layers2.svg" style="width: 20em"></p>
+<p>Very little application code directly makes system calls. Sometimes
+application use functions like <code>socket</code> above, which we can
+call <em>system call wrappers</em>. Since C does not support making
+system calls directly, these functions serve to allow applications
+written in languages like C to make system calls indirectly by calling
+the simple wrapper function. The system provides libraries that, among
+other things, include these wrapper functions.</p>
+<p>Often the system call interface is too low-level for typical
+applications to use, so the system libraries provide a higher-level
+interface that’s implemented using system calls. For example, on Linux
+(and all other multiuser OSes I am aware of), <code>malloc</code> and
+<code>printf</code> are implemented by library code that runs in user
+mode that makes simpler system calls.</p>
+
+</div>
+<h2 data-number="2.3" id="exception-like-constructs"><span
+class="header-section-number">2.3</span> Exception-Like Constructs</h2>
+<h3 data-number="2.3.1" id="signals"><span
+class="header-section-number">2.3.1</span> Signals</h3>
+<h4 data-number="2.3.1.1" id="introduction"><span
+class="header-section-number">2.3.1.1</span> Introduction</h4>
+<p>One view of exceptions is that they enable communication from user
+code to the kernel. Signals permit the opposite direction of
+communication.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">→ User code</th>
+<th style="text-align: center;">→ Kernel code</th>
+<th style="text-align: center;">→ Hardware</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>User code →</strong></td>
+<td style="text-align: center;">ordinary code</td>
+<td style="text-align: center;">Trap</td>
+<td style="text-align: center;"><em>via kernel</em></td>
+</tr>
+<tr class="even">
+<td><strong>Kernel code →</strong></td>
+<td style="text-align: center;"><strong>Signal</strong></td>
+<td style="text-align: center;">ordinary code</td>
+<td style="text-align: center;">protected instructions</td>
+</tr>
+<tr class="odd">
+<td><strong>Hardware →</strong></td>
+<td style="text-align: center;"><em>via kernel</em></td>
+<td style="text-align: center;">Interrupt</td>
+<td style="text-align: center;">—</td>
+</tr>
+</tbody>
+</table>
+<p>Signals are roughly the kernel-to-user equivalent of an interrupt. At
+any time, while executing any line of code, a signal may appear. It will
+suspend the currently executing code and see if you’ve told the kernel
+about a signal handler, a special function you believe will handle that
+signal. After running the handler, the interrupted code will resume.</p>
+<p>Linux defines many different signals, listed in <code
+class="sourceCode bash"><span class="fu">man</span> 7 signal</code>.
+Each of them has a default action if no handler is registered, most
+commonly terminating the process.</p>
+<div class="example long">
+<p>Typing Ctrl+C in the command line causes the SIGINT signal to be
+generated. If we want Ctrl+C to do something else, we have to handle
+that signal:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;signal.h&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> handler<span class="op">(</span><span class="dt">int</span> signum<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// send string to stdout (1) without &lt;stdio.h&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// not using printf() here in case the signal handler runs</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// while printf() is running</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    write<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="st">&quot;Provide end-of-file to end program.</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>          strlen<span class="op">(</span><span class="st">&quot;Provide end-of-file to end program.</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">));</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> sigaction sa<span class="op">;</span>       <span class="co">// how we tell the OS what we want to handle</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    sa<span class="op">.</span>sa_handler <span class="op">=</span> handler<span class="op">;</span>   <span class="co">// the function pointer to invoke</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    sigemptyset<span class="op">(&amp;</span>sa<span class="op">.</span>sa_mask<span class="op">);</span>  <span class="co">// do not &quot;block&quot; additional signals while signal handler is running</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    sa<span class="op">.</span>sa_flags <span class="op">=</span> SA_RESTART<span class="op">;</span>  <span class="co">// restart functions that can recognize they were interrupted</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>sigaction<span class="op">(</span>SIGINT<span class="op">,</span> <span class="op">&amp;</span>sa<span class="op">,</span> NULL<span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        fprintf<span class="op">(</span>stderr<span class="op">,</span> <span class="st">&quot;unable to override ^C signal&quot;</span><span class="op">);</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> buf<span class="op">[</span><span class="dv">1024</span><span class="op">];</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span><span class="op">(</span>scanf<span class="op">(</span><span class="st">&quot;</span><span class="sc">%1023s</span><span class="st">&quot;</span><span class="op">,</span> buf<span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span>feof<span class="op">(</span>stdin<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;token: </span><span class="sc">%s\n</span><span class="st">&quot;</span><span class="op">,</span> buf<span class="op">);</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+
+</div>
+<div class="example long">
+<p>Almost all signals can be overridden, but for many it is not wise to
+do so. For example, this code:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;signal.h&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> handler<span class="op">(</span><span class="dt">int</span> signum<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;Ignoring segfault.</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> sigaction sa<span class="op">;</span>       <span class="co">// how we tell the OS what we want to handle</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    sa<span class="op">.</span>sa_handler <span class="op">=</span> handler<span class="op">;</span>   <span class="co">// the function pointer to invoke</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    sigemptyset<span class="op">(&amp;</span>sa<span class="op">.</span>sa_mask<span class="op">);</span>  <span class="co">// do not &quot;block&quot; additional signals while signal handler is running</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    sa<span class="op">.</span>sa_flags <span class="op">=</span> SA_RESTART<span class="op">;</span>  <span class="co">// restart functions that can recognize they were interrupted</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>sigaction<span class="op">(</span>SIGSEGV<span class="op">,</span> <span class="op">&amp;</span>sa<span class="op">,</span> NULL<span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        fprintf<span class="op">(</span>stderr<span class="op">,</span> <span class="st">&quot;unable to override segfault signal&quot;</span><span class="op">);</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// let&#39;s make a segfault -- enters infinite handler loop</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span> buf<span class="op">;</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    buf<span class="op">[</span><span class="dv">1234567</span><span class="op">]</span> <span class="op">=</span> <span class="dv">89</span><span class="op">;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>… will print <q>Ignoring segfault.</q> repeatedly until you kill it
+with something like Ctrl+C. The last line creates a segfault, which
+causes the OS to run the handler. The handler returns normally, so the
+OS assumes the cause of the fault was fixed and re-runs the triggering
+code, which generates another segfault.</p>
+<p>Obviously, you should not do something like this in real code.</p>
+
+</div>
+<p>There is a system call named <q>kill</q> that asks the kernel to send
+a signal to a different process. While this can be used for
+inter-process communication, better systems (like sockets and pipes)
+exist for that if it is to be a major part of an application’s
+design.</p>
+<div class="aside long">
+<p>Command line and signals</p>
+<p>From a bash command line, you can send signals to running
+processes.</p>
+<ul>
+<li><p>Ctrl+C sends SIGINT, the <q>interrupt</q> signal that means <q>I
+want you to stop doing what you are doing.</q></p></li>
+<li><p>Ctrl+Z sends SIGTSTP, a signal whose default action is to suspend
+the process, freezing it in place until you ask for it to
+resume.</p></li>
+<li><p><code>bg</code> causes a suspended process to resume running, but
+in the background so you can use the terminal for other
+purposes.</p></li>
+<li><p><code>fg</code> causes a suspended or background process to
+resume running in the foreground, re-attaching the keyboard to
+<code>stdin</code>.</p></li>
+<li><p><code>kill &lt;pid&gt;</code> sends SIGTERM, the <q>terminate</q>
+signal, to the process with process ID <code>&lt;pid&gt;</code>. The
+<q>terminate</q> signal means <q>I want you to shut down now</q> but can
+be handled to save unsaved work or the like.</p></li>
+<li><p><code>kill -9 &lt;pid&gt;</code> sends SIGKILL, the <q>kill</q>
+signal, to the process with process ID <code>&lt;pid&gt;</code>. The
+<q>kill</q> signal cannot be handled; it always causes the OS to
+terminate the program.</p>
+<p>Any other signal can be provided in similar fashion, either by number
+(SIGKILL is signal number 9) or name (e.g.,
+<code>kill -KILL &lt;pid&gt;</code>).</p></li>
+</ul>
+<p>There are other tools for sending signals, but the above are
+sufficient for most common use cases.</p>
+
+</div>
+<h4 data-number="2.3.1.2" id="signal-safety"><span
+class="header-section-number">2.3.1.2</span> Signal safety</h4>
+<p>When a signal handlers runs in the middle of another function, this
+might severely limit what operations the signal handler can use. For
+example, if a signal handler runs in the middle of a call to
+<code>malloc()</code> (because of when you pressed Ctrl+C), then you
+probably cannot call <code>malloc()</code> from that signal handler. If
+you did so, probably malloc’s internal data structures would be
+corrupted.</p>
+<p>To let programmers avoid this issue, The Unix-like operating system
+standard POSIX documents a list of functions that are
+<q>async-signal-safe</q>. Linux reproduces this list in
+<code>man 7 signal-safety</code>. These functions are gaurenteed to
+behave correctly even if they signal handler calls them while they are
+already running. <code>write</code> is on this list, which is why I used
+it in the signal handler in the example above. Another way to avoid this
+problem is to temporarily block signal handlers from running in the
+middle of <q>unsafe</q> operations or explicitly tell the OS when to
+handle them, as described in the next section.</p>
+<h4 data-number="2.3.1.3"
+id="blocking-signals-and-handling-signals-without-signal-handlers"><span
+class="header-section-number">2.3.1.3</span> Blocking signals and
+handling signals without signal handlers</h4>
+<p>Sometimes we may not want a signal to be handled right away. For
+example, a program with a handler for Ctrl+C that handles saving before
+exiting may not want the handler to run while it’s loading a new file.
+To do this, you can functions like <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigprocmask.html"><code>sigprocmask</code></a>
+to <em>block</em> signals, temporarily disabling signals handlers from
+running:</p>
+<pre><code>sigset_t sigint_as_set;
+sigemptyset(&amp;sigint_as_set);
+sigaddset(&amp;sigint_as_set, SIGINT);
+sigprocmask(SIG_BLOCK, &amp;sigint_as_set, NULL);
+... /* do stuff without signal handler running yet */
+sigprocmask(SIG_UNBLOCK, &amp;sigint_as_set, NULL);</code></pre>
+<p>If a signal is sent to a process while it is blocked, then the OS
+will track that is <em>pending</em>. When the pending signal is
+unblocked, its signal handler will be run. Processors typically provide
+an analagous mechanism for operating systems to <q>disable
+interrupts</q>.</p>
+<p>Unix-like systems also provide functions that work with blocked
+signals to allow processing signals without having a signal handler
+interrupt normale execution. For example, <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigsuspend.html"><code>sigsuspend</code></a>
+will temporarily unblock a blocked signal just long enough to run its
+signal handler. Alternately, <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigwait.html"><code>sigwait</code></a>
+will wait until one of a specific set of signals are sent and
+<q>handle</q> them by returning instead of running any signal
+handler.</p>
+<h3 data-number="2.3.2"
+id="setjmp-longjmp-and-software-exceptions"><span
+class="header-section-number">2.3.2</span> <code
+class="sourceCode c">setjmp</code>, <code
+class="sourceCode c">longjmp</code>, and software exceptions</h3>
+<p>Portions of the save- and restore-state functionality used by
+exception handlers is exposed by the C library functions
+<code>setjmp</code> and <code>longjmp</code>.</p>
+<p><code>setjmp</code>, given a <code>jmp_buf</code> as an argument,
+fills that structure with information needed to resume execution at that
+location and then returns 0. Thereafter, <code>longjmp</code> can be
+called with that same <code>jmp_buf</code> as an argument;
+<code>longjmp</code> never returns, instead <q>returning</q> from
+<code>setjmp</code> for a second time. <code>longjmp</code> also
+provides an alternative return value for <code>setjmp</code>.</p>
+<div class="example long">
+<p>The following program</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;setjmp.h&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>jmp_buf env<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> b<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;b1: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;b2: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    longjmp<span class="op">(</span>env<span class="op">,</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;b3: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;b4: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> a<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;a1: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;a2: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    b<span class="op">();</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;a3: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;a4: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;main1: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;main2: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> got <span class="op">=</span> setjmp<span class="op">(</span>env<span class="op">);</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>got<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;main3: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;main4: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;main5: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;main6: n = </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>        a<span class="op">();</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;end of main</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>prints</p>
+<pre><code>main1: n = 0
+main2: n = 1
+main5: n = 1
+main6: n = 2
+a1: n = 2
+a2: n = 3
+b1: n = 3
+b2: n = 4
+main3: n = 4
+main4: n = 5
+end of main</code></pre>
+<p>See also a <a href="longjmp.html">step-by-step simulation</a> of this
+same process without the <code>printf</code>s.</p>
+
+</div>
+<p>There was a time when <code>setjmp</code>/<code>longjmp</code> were
+seen as effective ways of achieving
+<code>try</code>/<code>catch</code>-like error recovery, which cannot be
+handled with simple <code>goto</code> because it may skip multiple
+function call/returns.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>try</code>/<code>catch</code> constructs</th>
+<th><code>setjmp</code>/<code>longjmp</code> parallel</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><div class="sourceCode" id="cb10"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">f</span><span class="op">();</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> <span class="cf">catch</span> <span class="op">{</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">g</span><span class="op">();</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div></td>
+<td><div class="sourceCode" id="cb11"><pre
+class="sourceCode c"><code class="sourceCode c"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>setjmp<span class="op">(</span>env<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    f<span class="op">();</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    g<span class="op">();</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div></td>
+</tr>
+<tr class="even">
+<td><code
+class="sourceCode java"><span class="cf">throw</span> <span class="kw">new</span> <span class="fu">Exception3</span><span class="op">();</span></code></td>
+<td><code
+class="sourceCode c">longjmp<span class="op">(</span>env<span class="op">,</span> <span class="dv">3</span><span class="op">)</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>More efficient approaches to this have since been developed.
+<code>setjmp</code> records much of the state of the program in advance,
+which gives it a significant cost in time; because <code>try</code> is
+generally assumed to be executed far more often than <code>throw</code>,
+we’d rather make <code>throw</code> the expensive one, not
+<code>try</code>. Most of the information stored by <code>setjmp</code>
+into the <code>jmp_buf</code> can be found somewhere in the
+<code>setjmp</code>-invoking function’s stack frame, which many
+languages maintain with sufficient discipline that it can be
+<q>unwound</q> to restore a previous state upon a <code>throw</code>. C,
+however, lets you do anything, including violating assumptions about the
+stack organization, so C has an expensive <code>setjmp</code> and less
+expensive <code>longjmp</code> instead of an expensive
+<code>throw</code> and less expensive <code>try</code>.</p>
+<h1 data-number="3" id="processes-and-threads"><span
+class="header-section-number">3</span> Processes and Threads</h1>
+<blockquote>
+<p>2023-10-09: Most of the content of this section was moved to the
+processes threads reading to reduce duplication. You can find the old
+contents <a href="kernel-old.html">here</a>.</p>
+</blockquote>
+<p>A <strong>process</strong> is a software-only operating system
+construct that roughly parallels the end-user idea of a running program.
+The hardware knows the difference between user and kernel mode, but not
+the difference between a web browser and a text editor.</p>
+<p>We discuss processes in more detail in the <a
+href="thread.html">processes and threads</a> reading.</p>
+<h1 data-number="4" id="typical-io-patterns"><span
+class="header-section-number">4</span> Typical I/O patterns</h1>
+<h2 data-number="4.1" id="input"><span
+class="header-section-number">4.1</span> Input</h2>
+<p>When a program retrieves input from a device (like a keyboard or the
+network) often multiple exceptions and context switches are involved. A
+typical input operation might work like this:</p>
+<ol type="1">
+<li><p>A program needs to request input from the OS. It will do this
+with a system call.</p></li>
+<li><p>In some cases, the OS may already have the input available in its
+memory and be able to return that immediately to the program in the
+system call handler.</p></li>
+<li><p>Otherwise, most likely the program that made the system call will
+not be able to continue running until that input is available. So,
+rather than wasting processor time, the OS will, if possible, context
+switch to something else until input is available.</p></li>
+<li><p>Eventually, the device will indicate it has more input by
+triggering an interrupt. The OS can handle interrupt by copying the data
+and marking the waiting program as runnable again. Possibly, the OS
+could context switch to the waiting program immediately, or it might
+decide to let other programs run more first.</p></li>
+</ol>
+<h2 data-number="4.2" id="output"><span
+class="header-section-number">4.2</span> Output</h2>
+<p>The typical output scenario is very similar to the input
+scenario:</p>
+<ol type="1">
+<li><p>A program will request that the OS send output to a device on its
+behalf.</p></li>
+<li><p>In many cases, the OS will be able to send the output immediately
+to the device.</p></li>
+<li><p>Otherwise, the OS might need to wait until the device is ready to
+accept its output. If the current program can run while that’s
+happening, the OS can return to the current program. Otherwise, it would
+context switch to other programs until the device is ready for more
+output.</p></li>
+<li><p>Eventually, the device will indicate it can accept more output by
+triggering an interrupt. The OS will handle this interrupt by completing
+the output operation.</p></li>
+</ol>
+<h1 data-number="5" id="further-resources"><span
+class="header-section-number">5</span> Further resources</h1>
+<h2 data-number="5.1" id="general"><span
+class="header-section-number">5.1</span> General</h2>
+<ul>
+<li><p>Arpaci-Dusseau and Arpaci-Dusseau, <a
+href="https://pages.cs.wisc.edu/~remzi/OSTEP/"><em>Operating Systems:
+Three Easy Pieces</em></a> chapters 4, 6, 36. More detailed textbook on
+all these topics, intended in the context of a more dedicated operating
+systems course.</p>
+<p>In chapter 6, this textbook talks about exceptions referring to
+hardware exceptions triggered by attempting ot run an instruction (what
+we call system calls or faults) as <em>traps</em>, and exceptions
+triggered by external events as <em>interrupts</em>. It does not use the
+term <q>exception</q> explicitly.</p></li>
+<li><p><a href="https://diveintosystems.org/book/C13-OS/index.html">Dive
+Into Systems, Chapter 13</a></p>
+<p>Like Arpaci-Dusseau, this textbook uses the term <em>traps</em> to
+refer to exceptions triggered by attempting to run an instruction and
+<em>interrupts</em> to refer exceptions triggered by external
+events.</p></li>
+</ul>
+<h2 data-number="5.2" id="for-signal-handling"><span
+class="header-section-number">5.2</span> For signal handling</h2>
+<ul>
+<li>The POSIX documentation for <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html">sigaction</a>;
+the POSIX documentation for <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04">signal
+handling generally</a></li>
+</ul>
+<h2 data-number="5.3" id="operating-system-organization-examples"><span
+class="header-section-number">5.3</span> Operating system organization
+examples</h2>
+<ul>
+<li><p>Sections 1.3–1.6 of Bovet and Cesati, <em>Understanding the Linux
+Kernel, Third Edition</em>, available through <a
+href="https://www.oreilly.com/library/view/temporary-access/">O’Reilly</a>
+(click institution not listed and enter your UVa email)</p></li>
+<li><p>Chapter 2 of McKusick and Neville-Neil, <em>The Design and
+Implementation of the FreeBSD Operating System</em> (also available
+through O’Reilly)</p></li>
+<li><p>Chapter 2 of Yosifovich, Ionescu, Russinovich, and Solomon,
+<em>Windows Internals Seventh Edition Part 1</em> (Also available
+through O’Reilly)</p></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Sometimes, you’ll see these modes be referred to by
+different names. For example:</p>
+<ul>
+<li>Exception Level 0 (user mode) and Exception Level 1 (kernel mode,
+roughly) in the <a
+href="https://developer.arm.com/documentation/ddi0487/latest">ARM
+manual</a>.</li>
+<li>Privilege level 0 or ring 0 (kernel mode) and privilege level 3 and
+ring 3 (user mode) in the <a
+href="https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html">Intel
+x86-64 manuals</a>;</li>
+<li>User mode and supervisor mode in <a
+href="https://riscv.org/technical/specifications/">RISC V</a>;</li>
+</ul>
+<p>As some of these names suggest, some systems support additional modes
+of this type. These additional modes can allow for finer-grained
+restrictions on what operations are allowed.</p>
+<p>Early proposals for these modes (e.g., Michael D. Schroeder and
+Jerome H. Saltzer, <q>A Hardware Architecture for Implementing
+Protection Rings</q> from 1972) often proposed supporting around eight
+privilege levels which were called <q>rings</q> (with the innermost
+rings being more privileged than the outer one). Despite some hardware
+implementing these designs, most operating systems only found uses for
+two modes, the lowest (kernel mode) and the highest (user mode).]<a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech, with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Synchronization primitives</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/sync.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#day-to-day-life" id="toc-day-to-day-life"><span
+class="toc-section-number">1</span> Day-to-day life</a></li>
+<li><a href="#atomic-operation" id="toc-atomic-operation"><span
+class="toc-section-number">2</span> Atomic Operation</a></li>
+<li><a href="#semaphore" id="toc-semaphore"><span
+class="toc-section-number">3</span> Semaphore</a></li>
+<li><a href="#mutex" id="toc-mutex"><span
+class="toc-section-number">4</span> Mutex / Lock</a></li>
+<li><a href="#condition-variable" id="toc-condition-variable"><span
+class="toc-section-number">5</span> Condition Variable</a></li>
+<li><a href="#monitor" id="toc-monitor"><span
+class="toc-section-number">6</span> Monitor</a></li>
+<li><a href="#reader-writer-lock" id="toc-reader-writer-lock"><span
+class="toc-section-number">7</span> Reader-writer lock</a></li>
+<li><a href="#barrier" id="toc-barrier"><span
+class="toc-section-number">8</span> Barrier</a></li>
+<li><a href="#transaction" id="toc-transaction"><span
+class="toc-section-number">9</span> Transaction</a></li>
+<li><a href="#further-resources" id="toc-further-resources"><span
+class="toc-section-number">10</span> Further resources</a></li>
+</ul></nav>
+<h1 data-number="1" id="day-to-day-life"><span
+class="header-section-number">1</span> Day-to-day life</h1>
+<p>When you make a comment in a conversation, it is (usually) treated as
+an <a href="#atomic-operation">atomic operation</a>: you can divide the
+conversation into what happened before and what happened after your
+comment, but during it nothing else occurred. This is not true in most
+text-based chats, though, where it is common for multiple comments to be
+created concurrently.</p>
+<p>Study rooms, lavatory stalls, TV remotes, and many other resources
+are handled as if protected by a <a href="#mutex">mutex</a>: anyone can
+use them, but by using them you are excluding others from using them at
+the same time. <a href="#Semaphore">Semaphores</a> and <a
+href="#monitor">monitors</a> have some special properties but are
+roughly variations on the <a href="#mutex">mutex</a> theme.</p>
+<p>One person walking along a sidewalk does not prevent others from
+entering it as well, but one construction team repairing the sidewalk
+does because maintenance staff tend to use a <a
+href="#reader-writer-lock">reader-writer lock</a> to access sidewalks
+and many other parts of our lived environment: they may either be used
+by a single repair team (a <q>writer</q>) or any number of pedestrians
+(<q>readers</q>), but not both at the same time.</p>
+<p>If you’ve ever told a group a friends <q>we’ll meet up by the statue
+and then go out from there,</q> you’ve implemented a <a
+href="#barrier">barrier</a>: everyone arriving at the statue waits there
+until everyone arrives, and then you all move forward together from
+there.</p>
+<p>When you go to a store, a purchase only occurs if both you give them
+money and they give you the product. If either step fails, neither step
+occurs. This is an example of a <a href="#transaction">transaction</a>:
+multiple steps, between which other things can occur, but guaranteed to
+either all happen or none happen.</p>
+<h1 data-number="2" id="atomic-operation"><span
+class="header-section-number">2</span> Atomic Operation</h1>
+<p>An <strong>atomic operation</strong> is an action or set of actions
+are made to appear to happen all at once, with no ability for any other
+action to occur in the middle. For non-parallel concurrency, this can be
+guaranteed by the OS refusing to respond to interrupts until the atomic
+operation is completed. When there is parallelism, this generally
+requires extra support by the hardware. Either way, atomic operations
+are generally slower than their non-atomic counterparts and only a
+limited number of them are provided on any given system.</p>
+<p>Atomic operations are used to implement all of the other
+synchronization tools on this page.</p>
+<div class="aside long">
+<p>read/modify/write atomic operations</p>
+<p>Typically, processors guarantee that loading and storing
+pointer-sized values from memory into a register is atomic. Technically,
+along with disabling interrupts, this is sufficient to implement the
+synchronization constructs described below on a multi-core system (see,
+for example, <a
+href="https://en.wikipedia.org/wiki/Peterson%27s_algorithm">Peterson’s
+algorithm</a> to find out how). But to make such implementations more
+practical, processors usually provide atomic instructions that load,
+modify, and write-back a value to make implementing these constructs
+more practical.</p>
+<p>Which operations are supported varies between processors. One example
+is an atomic swap operation (<code>lock xchg</code> on x86-64), which
+swaps a register with a value in memory. Unlike a normal swap, no other
+processor can write the memory value in between when it is copied into
+the register and when the register value overwrites the value in memory.
+This can be achieved in hardware by ensuring that the value is stored in
+a cache during the swap and that no other processor’s cache obtains the
+value until the swap completes.</p>
+
+</div>
+<div class="aside long">
+<p>reordering and other optimizations</p>
+<p>When compiling or running programs, it’s common for compilers and
+processors to perform memory accesses in a different order than is
+written.</p>
+<p>For example, given code like:</p>
+<pre><code>global_variable = 0;
+for (int i = 0; i &lt; 1000; ++i) {
+    global_variable += array[i];
+}</code></pre>
+<p>it is much better if this ends up writing
+<code>global_variable</code> just once after the loop rather than
+reading and writing <code>global_variable</code> multiple times. A
+compiler might do this by keeping <code>global_variable</code>
+temporarily in a register. Processors can do this kind of optimization,
+too.</p>
+<p>A result of this is that the reads and writes to
+<code>global_variable</code> effectively occur later than the reads of
+the <code>array</code>, even though that’s not what the code
+specifies.</p>
+<p>When <code>global_variable</code> isn’t shared between cores, this
+change is invisible. But when other cores are acting on the value, this
+can change the result of the program. In an example like the above, this
+is not a problem, but many naive ways of achieving sychronization end up
+not working because of this, even if they use atomic operations. For
+example, one common idea is to use global <code>flag</code> variable set
+by one thread to stop another thread from doing something:</p>
+<pre><code>counter = 0;
+while (!flag &amp;&amp; counter &gt; 100000) {
+    counter += array[counter];
+}</code></pre>
+<p>A problem here is that the compiler is allowed to read the value of
+<code>flag</code> just once and keep it in a register. Or, alternately,
+an advanced processor will often do the same thing itself. It is not
+sufficient that the operation of reading the <code>flag</code> is
+atomic. It is still being done atomically, just not at the time the code
+appeared to specify.</p>
+<p>To avoid these kinds of optimizations, we need to tell compiler and
+processor that some operations cannot be reordered like this.
+Implementations of the synchronization constructs described below will
+almost always do this, so you can use them without worrying about these
+problems.</p>
+
+</div>
+<h1 data-number="3" id="semaphore"><span
+class="header-section-number">3</span> Semaphore</h1>
+<p>A variable indicating how many (a counting semaphore) or if any (a
+boolean semaphore) resources are available. Because simple variables are
+not modified atomically, semaphores are typically implemented as an
+abstract datatype with three methods for modifying them:</p>
+<dl>
+<dt>Acquire or wait</dt>
+<dd>
+<p>Attempt to acquire a resource, decrementing the count or setting the
+boolean to false. If the count is 0, suspend operation until it becomes
+1 again.</p>
+<p>This operation is sometimes called <strong>P</strong>,
+<strong>wait</strong>, <strong>down</strong>, <strong>acquire</strong>,
+<strong>pend</strong>, <strong>procure</strong>, or
+<strong>decrement</strong>.</p>
+</dd>
+<dt>Acquire if possible</dt>
+<dd>
+<p>Attempt to acquire a resource, decrementing the count or setting the
+boolean to false, and return a success code if successful. If the count
+was already 0, instead do nothing to the semaphore and return a failure
+code.</p>
+<p>This operation is present in many semaphore libraries, but rarely has
+its own name. Generally it is achieved by some kind of <q>don’t
+block</q> flag given to the same function that performed <q>acquire or
+wait.</q></p>
+</dd>
+<dt>Release</dt>
+<dd>
+<p>Increment the count, possibly causing a waiting process to become
+active.</p>
+<p>This operation is sometimes called <strong>V</strong>,
+<strong>signal</strong>, <strong>up</strong>, <strong>release</strong>,
+<strong>post</strong>, <strong>vacate</strong>, or
+<strong>increment</strong>.</p>
+</dd>
+</dl>
+<p>The naming of these operations is complicated by having first been
+defined by a dutch team (led by Edgar Dijkstra) who gave different words
+for <strong>P</strong> and <strong>V</strong> to stand for in different
+reports; for a brief summary of names, see <a
+href="https://en.wikipedia.org/wiki/Semaphore_(programming)#Operation_names"
+class="uri">https://en.wikipedia.org/wiki/Semaphore_(programming)#Operation_names</a>.</p>
+<p>Although I described counting semaphores as a count of how many
+resources are available, that can be adjusted; for example, some systems
+use a negative count to indicate how many processes are waiting for a
+resource. While these changes do not impact the overall functionality of
+a semaphore, they can impact initialization state and so on for a
+particular library, so be sure to read the manual for any library you
+use if the specific numbers are meaningful in your application.</p>
+<h1 data-number="4" id="mutex"><span
+class="header-section-number">4</span> Mutex / Lock</h1>
+<p>A <strong>mutex</strong> (from <q>mutual exclusion</q>) or
+<strong>lock</strong> is any device that ensures one and only one thread
+or process has access to some resource at a time.</p>
+<p>Mutexes can be implemented as a binary <a
+href="#semaphore">semaphore</a>, provided that an additional limitation
+is imposed where only the thread that has acquired and not yet released
+the semaphore releases it. More commonly, mutexes are built as more
+complicated constructs to provide extra features, including enforcing
+the <q>only the acquirer can release</q> property, automatic release if
+the acquirer terminates without releasing, etc.</p>
+<p>Operations on mutexes use similar vocabulary to the corresponding
+operations on <a href="#semaphore">semaphores</a>.</p>
+<h1 data-number="5" id="condition-variable"><span
+class="header-section-number">5</span> Condition Variable</h1>
+<p>A <strong>condition variable</strong>, despite having <q>variable</q>
+in its name, is not a variable, nor like one in any meaningful way.
+Instead, it is composed of at least two fairly complicated
+constructs:</p>
+<ul>
+<li><p>An <strong>assertion</strong><a href="#fn1" class="footnote-ref"
+id="fnref1" role="doc-noteref"><sup>1</sup></a>; that is, a condition
+that must be satisfied before operation continues.</p>
+<p>Some implementations no not actually store the assertion in any way,
+instead assuming that it is handled elsewhere in the code and that the
+associated <a href="#monitor">monitor</a> will invoke <em>wait</em> only
+if it was false and <em>signal</em> any time it becomes true.</p></li>
+<li><p>A <strong>wait-queue</strong>; that is, a collection (not
+necessarily a queue) of suspended threads awaiting the moment when the
+assertion will become true.</p></li>
+<li><p>Optionally, a <strong>ready queue</strong>; that is, a collection
+(not necessarily a queue) of suspended threads where the assertion is
+true and the thread is ready to run but has not yet been scheduled to do
+so.</p></li>
+</ul>
+<p>Condition variables are almost always discussed coupled with a <a
+href="#mutex">mutex</a>, the pair forming a <a
+href="#monitor">monitor</a>. Because condition variables are so often
+used in monitors, I have sometimes seen a monitor called a <q>condition
+variable</q> colloquially.</p>
+<h1 data-number="6" id="monitor"><span
+class="header-section-number">6</span> Monitor</h1>
+<blockquote>
+<p>See also: <a href="pthreads.html#monitor">pthreads API for condition
+variables</a></p>
+</blockquote>
+<p>A <strong>monitor</strong> is a paired <a href="#mutex">mutex</a> and
+<a href="#condition-variable">condition variable</a> with the following
+operations defined upon the pair:</p>
+<dl>
+<dt>wait</dt>
+<dd>
+<p>Used to wait until the condition variable’s assertion becomes
+true.</p>
+<p>Suspend operation of the current thread, leaving the mutex unlocked;
+place the thread into the condition variable’s wait-queue.</p>
+</dd>
+<dt>signal or notify</dt>
+<dd>
+<p>Used to indicate that the condition variable’s assertion became true,
+and that a waiting thread may thus execute.</p>
+<p>Pick one thread from the condition variable’s wait-queue and resume
+it, having it lock the mutex before it resumes operation.</p>
+</dd>
+<dt>broadcast or notifyAll</dt>
+<dd>
+<p>Used to tell all sleeping threads to wake up. Often used if the
+assertion of the condition variable was implicitly defined and the
+broadcasting code is unsure which, if any, sleeping threads are now
+ready to operate.</p>
+<p>Since each waking thread is supposed to acquire the mutex associated
+with the monitor, monitors that have a broadcast function can benefit
+from a ready queue to store the set of threads that are ready to run but
+are waiting for the mutex. Depending on the implementation of the mutex,
+that ready queue may be implicitly handled by the mutex instead.</p>
+</dd>
+</dl>
+<p>Monitors are sometimes implemented at a programming language level as
+the most user-friendly technique for achieving mutual exclusion. Java,
+for example, decided that every object would be a monitor and includes
+the <code
+class="sourceCode java"><span class="kw">synchronized</span></code>
+keyword and associated control constructs for automatically waiting on
+and signaling that monitor.</p>
+<h1 data-number="7" id="reader-writer-lock"><span
+class="header-section-number">7</span> Reader-writer lock</h1>
+<blockquote>
+<p>See also: <a href="pthreads.html#rwlock">pthreads API for
+reader/writer locks</a></p>
+</blockquote>
+<p>A reader-writer lock is used in two modes. If used by a writer, it is
+a <a href="#mutex">mutex</a>; if used by a reader, it is not. In
+particular, is has the following four operations</p>
+<dl>
+<dt>Begin read</dt>
+<dd>
+If there are no writers, increment the number of readers. Otherwise,
+wait for the writer to finish.
+</dd>
+<dt>End read</dt>
+<dd>
+Decrement the number of readers.
+</dd>
+<dt>Begin write</dt>
+<dd>
+If there are neither readers nor writers, set the number of writers to
+1. Otherwise, wait for the number of readers to become 0.
+</dd>
+<dt>End write</dt>
+<dd>
+Set the number of writers to 0.
+</dd>
+</dl>
+<p>There are implementations of this using multiple <a
+href="#mutex">mutexes</a> or a <a href="#monitor">monitor</a>, both
+augmented with a few extra variables. Several designs exist in part
+because of the multiple possible answers to the following question:</p>
+<ul>
+<li>If a writer is waiting for all the readers to be done, and a new
+reader arrives, should that reader be allowed in or made to wait for the
+writer to finish first?</li>
+</ul>
+<p>Both read-preferring and write-preferring reader-writer locks have
+pros and cons, and both are commonly implemented.</p>
+<h1 data-number="8" id="barrier"><span
+class="header-section-number">8</span> Barrier</h1>
+<blockquote>
+<p>See also: <a href="pthreads.html#barrier">pthreads API for
+barriers</a></p>
+</blockquote>
+<p>A <strong>barrier</strong> is somewhat similar to a counting
+semaphore, in that it can be thought of as a simple integer. However, it
+needs to be configured in advance with the number of processes it is to
+wait for, and once initialized, it has just has one action:</p>
+<dl>
+<dt>arrive</dt>
+<dd>
+<p>Increment the counter.</p>
+<p>If that increment caused the counter to reach the preconfigured
+number of processes this barrier is to wait for, resume all processes
+suspended at this barrier and reset the counter to 0. Otherwise, suspend
+the arriving process.</p>
+</dd>
+</dl>
+<p>In practice, somewhat more complicated structures are used to help
+this design scale and to ensure both that the increment-and-check
+happens atomically and that all waiting processes pass the barrier
+before others arrive.</p>
+<h1 data-number="9" id="transaction"><span
+class="header-section-number">9</span> Transaction</h1>
+<p>A <strong>transaction</strong>, or more formally an <strong>atomic
+transaction</strong>, is a group of operations that is guaranteed to
+occur as if it was a single <a href="#atomic-operation">atomic
+operation</a>. Appropriate use of <a href="#mutex">mutexes</a> and <a
+href="#monitor">monitors</a> can be used to implement transactions, but
+often when transactions are identified by name, they are instead
+implemented <q>optimistically,</q> using something like the
+read-copy-update mechanism.</p>
+<p>The principle behind read-copy-update is that a process checks to
+make sure none of the inputs of a computed value have changed before
+placing that value into memory.</p>
+<div class="example long">
+<p>Suppose you wanted to compute <code>x = a*x*x + b*x + c</code> as a
+transaction. You would</p>
+<ol type="1">
+<li>make a copy of the current values of <code>a</code>, <code>b</code>,
+<code>c</code>, and <code>x</code> as <code>A</code>, <code>B</code>,
+<code>C</code>, and <code>X</code>.</li>
+<li>compute the new value of <code>x</code> as
+<code>x_new = A*X*X + B*X + C</code>.</li>
+<li>use a mutex to ensure you are the only one accessing memory while
+you
+<ol type="a">
+<li>verify that the value now in <code>a</code> is still <code>A</code>,
+and similarly for <code>b</code> and <code>B</code>, <code>c</code> and
+<code>C</code>, and <code>x</code> and <code>X</code>.</li>
+<li>if so, write <code>x = x_new</code> and release the mutex.</li>
+<li>if not, release the mutex and return to step 1 to try again.</li>
+</ol></li>
+</ol>
+
+</div>
+<h1 data-number="10" id="further-resources"><span
+class="header-section-number">10</span> Further resources</h1>
+<ul>
+<li><a href="https://pages.cs.wisc.edu/~remzi/OSTEP/">OS:TEP</a>’s
+cahpters 26–32</li>
+<li><a
+href="https://diveintosystems.org/singlepage/#_leveraging_shared_memory_in_the_multicore_era">Dive
+Into Systems, chapter 14</a></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Note that this is not the usual programming definition
+of <q>assertion</q>; in code, an assertion is a function that checks a
+Boolean value and terminates the program with an error message if it is
+false.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech, with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

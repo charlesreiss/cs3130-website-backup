@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: User Accounts</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/accounts.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#per-process-permissions"
+id="toc-per-process-permissions"><span
+class="toc-section-number">1</span> Per-process permissions</a></li>
+<li><a href="#user-accounts" id="toc-user-accounts"><span
+class="toc-section-number">2</span> User accounts</a></li>
+<li><a href="#one-account-to-rule-them-all"
+id="toc-one-account-to-rule-them-all"><span
+class="toc-section-number">3</span> One account to rule them
+all</a></li>
+<li><a href="#daemons" id="toc-daemons"><span
+class="toc-section-number">4</span> Daemons</a></li>
+<li><a href="#what-is-the-operating-system"
+id="toc-what-is-the-operating-system"><span
+class="toc-section-number">5</span> What is <q>the operating
+system</q>?</a></li>
+</ul></nav>
+<p>From the hardware’s perspective, permissions are fairly simple:
+either the processor is operating in a privileged mode and can access
+any memory and all instructions, or else it is operating in user mode
+and is limited to unprivileged instructions and memory.</p>
+<p>This simple model allows the operating system to implement a much
+more involved set of permissions and restrictions.</p>
+<h1 data-number="1" id="per-process-permissions"><span
+class="header-section-number">1</span> Per-process permissions</h1>
+<p>Suppose you invoke <code
+class="sourceCode c">open<span class="op">(</span><span class="st">&quot;file.txt&quot;</span><span class="op">,</span> O_RDONLY<span class="op">)</span></code>
+in your code. This C wrapper function does little more than setting
+<code>%rax</code> to a system call number and then using the assembly
+operation <code>syscall</code> to trigger the exception handler for
+system calls. The handler, which is part of the operating system and is
+running in privileged mode, then has to decide if it wants to open that
+file for your program or not.</p>
+<p>The operating system could do anything to make that determination. It
+could say that you can only open files with names ending with a
+<code>t</code> if there are an even number of files on the disk or
+anything else it wants. In practice, though, most operating systems
+compare two data structures: one representing the permissions of the
+current process and another representing the restrictions on the
+requested resource.</p>
+<p>The operating system maintains information for all running processes.
+This information necessarily includes the processor state each had when
+it was last suspended by an exception and the base address of its page
+table. It also has a per-process list of open file descriptors and
+bookkeeping information such as the process’s name, how long it has been
+running, and its priority for getting scheduled to run again. And most
+operating systems maintain the user account under which it is
+running.</p>
+<h1 data-number="2" id="user-accounts"><span
+class="header-section-number">2</span> User accounts</h1>
+<p>User accounts are a common abstraction provided by operating systems.
+They typically include</p>
+<ul>
+<li>A login name, like <code>mst3k</code>.</li>
+<li>A real name, like <code>M. S. Theater</code>.</li>
+<li>A home directory, like <code>/home/mst3k</code>, where many per-user
+preferences like desktop backgrounds and so on can be stored as ordinary
+files.</li>
+<li>The cryptographic hash of a password. Most operating systems never
+store your password anywhere, instead hashing it and storing only the
+hash, so that even if someone breaks into the OS and reads everything it
+has stored they still won’t learn your password.</li>
+<li>A set of groups this user belongs to. Groups are often nothing more
+than a unique integer and string each.</li>
+</ul>
+<p>Notably absent from that list is any mention of permissions. Instead
+of permissions being listed per account, it is more typical to list, for
+each resource, which user accounts and groups may access it.</p>
+<div class="example long">
+<p>Suppose as part of the results of an <code
+class="sourceCode bash"><span class="fu">ls</span> <span class="at">-l</span></code>
+invocation you see the line</p>
+<pre><code>-rwxr-x--- 4 mst3k coa     371 Jan 18  2019 file.txt</code></pre>
+<p>Let’s take this line apart bit by bit:</p>
+<dl>
+<dt><code>-</code></dt>
+<dd>
+This is a normal file, not a directory
+</dd>
+<dt><code>rwx</code> and <code>mst3k</code></dt>
+<dd>
+Processes running under user account <code>mst3k</code> are allowed to
+read, write, and execute this file.
+</dd>
+<dt><code>r-x</code> and <code>coa</code></dt>
+<dd>
+Processes running under any user account that belongs to group
+<code>coa</code> are allowed to read and execute this file, but not
+write to it.
+</dd>
+<dt><code>---</code></dt>
+<dd>
+Processes running under any user account other than <code>mst3k</code>
+and not belonging to the group <code>coa</code> are not allowed to read,
+write, or execute it.
+</dd>
+<dt><code>371</code></dt>
+<dd>
+The file contains 371 bytes of data. This does not include its metadata
+(the filename, permissions, etc, listed by <code>ls</code>), only its
+contents.
+</dd>
+<dt><code>Jan 18  2019</code></dt>
+<dd>
+The file claims to have been last modified on <code>2019-01-18</code>.
+</dd>
+<dt><code>file.txt</code></dt>
+<dd>
+The name of the file is <code>file.txt</code>
+</dd>
+</dl>
+<p>Every piece of this is metadata stored on the disk with the file.
+When the operating system is asked to access this file, it first reads
+the metadata. It then compares the user account and groups of the
+running process to the user accounts and groups that the metadata
+asserts are allowed to access the file and only proceeds with the access
+if they match for the kind of activity the operating system is being
+asked to perform.</p>
+</div>
+<p>Because user accounts are enforced only by the operating system, not
+the hardware itself, they can all by bypassed if you can boot the
+computer using a different operating system. Since hardware almost
+always allows booting from removable media as part of how it permits
+updates and installations of operating systems, physical access to a
+computer, coupled with the right resources and patience, can bypass all
+user-account based protections.</p>
+<p>Being logged in as a user means that the software you see as the user
+interface (whether that’s a terminal or a visual display) is has that
+user listed in the operating system’s bookkeeping for that process.
+Since a process typically opens up other processes using the same
+account, that means that all the processes you run from this session
+will be under that same user.</p>
+<div class="aside long">
+<p>There are alternatives to having one account per user. For example,
+Android, which is based on the Linux kernel and thus has the same basic
+user account mechanisms as we describe here, creates <a
+href="https://source.android.com/security/app-sandbox">a different user
+account for each app</a>. Thus the user interface user can become any
+app’s user when launching the app, and different apps cannot (by
+default) access files created for one another. When an app is installed,
+Android not only installs its files but also creates a user account for
+it and provides a list of permissions for that account.</p>
+</div>
+<h1 data-number="3" id="one-account-to-rule-them-all"><span
+class="header-section-number">3</span> One account to rule them all</h1>
+<p>Typically, operating systems have one special account or group that
+is allowed to do anything, bypassing all normal account rules. On many
+UNIX-based systems this account is called <code>root</code>; it is also
+often referred as <q>the superuser</q>, <q>the administrator</q>, or
+<q>the administrator account</q> (or, if a group, <q>an administrator
+account</q>).</p>
+<p>Among the operations that are restricted by user account is the
+ability to change user accounts. It is common for OSs to limit this
+ability in two ways:</p>
+<ul>
+<li><p>The superuser may become any other user freely</p></li>
+<li><p>There is a set of accounts that may become other users, but only
+after the operating system forces them to type a password</p></li>
+</ul>
+<p>This has some parallel to how privileged mode operation works on
+hardware: if you are already privileged, you can lose that freely; but
+to gain privilege you have to pass through a special piece of OS-owned
+software—in this case, an OS-owned identity confirmation process to make
+sure the human who owns this account actually wants this process to
+become the superuser.</p>
+<p>For a combination of historical reasons and the annoyance of having
+to type passwords to install things, there remains<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> a
+trend for users of some operating systems to run their computers
+directly from the administrator account. Doing this is dangerous: it
+gives each and every process explicit permission to ignore all
+protections not enforced by the hardware and do anything it wants to any
+part of your system. Major OS vendors have worked steadily to
+disincentive this behavior, but these efforts have been limited by
+users’ lack of understanding about what protections non-admin accounts
+provide.</p>
+<h1 data-number="4" id="daemons"><span
+class="header-section-number">4</span> Daemons</h1>
+<p>It is common for a running computer to have well over a hundred
+processes running that don’t seem to be doing anything. They sit in the
+background, waiting for some event to occur. When it occurs the
+operating system gives them CPU time, but they often use only a few
+microseconds before they again go quiet, waiting for another event.</p>
+<div class="exercise long">
+<p>Try running <code>ps -A u</code> to list all current processes with
+their owning users, names, and various statistics about their
+running.</p>
+<p>How many processes are there?</p>
+<p>How many of them have been running for at least a day but used 0:00
+minutes of CPU time?</p>
+</div>
+<p>These processes are daemons, and can be thought of as the software
+parallel to an interrupt handler. Like an interrupt handler, they take
+up some memory at all times but only use the CPU when something happens.
+That <q>something</q>, however, is not an external event like a
+keystroke but rather an internal OS-moderated event like data appearing
+on a socket. There are various purposes to having a daemon, but one of
+them is to provide controlled, limited access to a different user
+account.</p>
+<div class="example long">
+<p>Most Linux systems use CUPS<a href="#fn2" class="footnote-ref"
+id="fnref2" role="doc-noteref"><sup>2</sup></a> to manage printing; CUPS
+runs primarily<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a> as a daemon <code>cupsd</code>.
+Because printing can involve large amounts of data being fed slowly
+though a mechanical device<a href="#fn4" class="footnote-ref"
+id="fnref4" role="doc-noteref"><sup>4</sup></a>, print jobs are
+<q>spooled</q> into files temporarily while being printed. Since we
+don’t want other programs to be able to see the contents of the print
+jobs we have pending, we want those files to be locked down to a special
+user account. On a default installation, that account is
+<code>root</code>, meaning <code>cupsd</code> needs to run as the
+<code>root</code> user.</p>
+<p>When a program wants to print, it contacts <code>cupsd</code>
+(typically via a socket) and sends it the information about the print
+job in question. Because <code>cupsd</code> is running as
+<code>root</code>, it can spool that information to a file owned by
+<code>root</code>, and thus inaccessible to non-<code>root</code> users,
+and send it to a printer by accessing system calls that the OS restricts
+to the <code>root</code> account.</p>
+</div>
+<h1 data-number="5" id="what-is-the-operating-system"><span
+class="header-section-number">5</span> What is <q>the operating
+system</q>?</h1>
+<p>The operating system is in fact a system: many different
+inter-operating components. When people refer to an operating system
+they might mean many different things, including:</p>
+<ol type="a">
+<li><p>The code that resides in the privileged memory of every process
+and runs in privileged mode: the list of processes, exception handlers,
+system call code, etc.</p></li>
+<li><p>All of a., plus the supplied wrapper functions like
+<code>open</code> and supplied headers and libraries that interface with
+a.</p></li>
+<li><p>All of a., plus all of the processes that run as
+<code>root</code> and are automatically started during boot-up, plus all
+of the user account and file permission bookkeeping that helps provide
+user separation</p></li>
+<li><p>The subset of c. that was shipped together as a named
+system</p></li>
+<li><p>All of d., plus all the applications that came bundled with
+it</p></li>
+<li><p>The subset of d. that cannot be easily swapped out for other
+components</p></li>
+</ol>
+<p>There are other definitions used too, but these provide a feel for
+the kinds of uncertainty and disagreements that this term entails.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>as of 2019<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>formerly <q>the Common UNIX Printing System</q> but
+officially changed to just CUPS due to trademark disputes about the use
+of the word UNIX<a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>see <a
+href="https://www.cups.org/doc/spec-design.html">the CUPS design
+overview</a> for how <code>cupsd</code> this works with the other
+components of CUPS<a href="#fnref3" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>among other reasons…<a href="#fnref4"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

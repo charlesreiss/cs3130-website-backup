@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: OpenMP -- parallelism made easy</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/openmp.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#task" id="toc-task"><span
+class="toc-section-number">1</span> Task</a></li>
+<li><a href="#introduction" id="toc-introduction"><span
+class="toc-section-number">2</span> Introduction</a>
+<ul>
+<li><a href="#set-up" id="toc-set-up"><span
+class="toc-section-number">2.1</span> Set-up</a></li>
+</ul></li>
+<li><a href="#the-map-reduce-pattern"
+id="toc-the-map-reduce-pattern"><span
+class="toc-section-number">3</span> The Map-Reduce pattern</a>
+<ul>
+<li><a href="#parallel-map" id="toc-parallel-map"><span
+class="toc-section-number">3.1</span> Parallel Map</a>
+<ul>
+<li><a href="#even-split" id="toc-even-split"><span
+class="toc-section-number">3.1.1</span> Even split</a></li>
+<li><a href="#task-queue" id="toc-task-queue"><span
+class="toc-section-number">3.1.2</span> Task queue</a></li>
+<li><a href="#task-queue-with-larger-tasks"
+id="toc-task-queue-with-larger-tasks"><span
+class="toc-section-number">3.1.3</span> Task queue with larger
+tasks</a></li>
+<li><a href="#openmps-parallel-for-schedules"
+id="toc-openmps-parallel-for-schedules"><span
+class="toc-section-number">3.1.4</span> OpenMP’s parallel for
+schedules</a></li>
+</ul></li>
+<li><a href="#parallel-reduce" id="toc-parallel-reduce"><span
+class="toc-section-number">3.2</span> Parallel Reduce</a>
+<ul>
+<li><a href="#atomic-reduction-non-parallel"
+id="toc-atomic-reduction-non-parallel"><span
+class="toc-section-number">3.2.1</span> Atomic reduction –
+non-parallel</a></li>
+<li><a href="#openmps-built-in-reduction-operator"
+id="toc-openmps-built-in-reduction-operator"><span
+class="toc-section-number">3.2.2</span> OpenMP’s built-in reduction
+operator</a></li>
+<li><a href="#many-to-few-reduction-atomic-version"
+id="toc-many-to-few-reduction-atomic-version"><span
+class="toc-section-number">3.2.3</span> Many-to-few reduction – atomic
+version</a></li>
+<li><a href="#many-to-few-reduction-array-version"
+id="toc-many-to-few-reduction-array-version"><span
+class="toc-section-number">3.2.4</span> Many-to-few reduction – array
+version</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#starting-code" id="toc-starting-code"><span
+class="toc-section-number">4</span> Starting code</a></li>
+<li><a href="#appendix-fancy-reduce"
+id="toc-appendix-fancy-reduce"><span class="toc-section-number">5</span>
+Appendix: Fancy Reduce</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>3 April 2026: correct nongrammatical placement of and in list of
+what performance.txt needs to contain</li>
+</ul>
+</div>
+<h1 data-number="1" id="task"><span
+class="header-section-number">1</span> Task</h1>
+<div class="exercise long">
+<p>Work, ideally with a paterner, to use OpenMP to parallelize the <a
+href="#starting-code">Starter code</a>. You should be able to understand
+all of the code provided, but will only need to work on the
+<code>geomean</code> function for this lab.</p>
+<p>To run the code, compile with the <code>-lm</code> flag and give it
+file names as command-line arguments. It will return the number of bytes
+in those files and the geometric mean value of those bytes. You can
+provide multiple files on the command line if you wish; all will be
+combined before analysis. Parallelism give the biggest benefit when
+given large inputs, so you might want to try some larger files: for
+example, on portal <code>/usr/bin/emacs</code> has more than 6 million
+characters.</p>
+<pre><code>$ gcc -fopenmp -O2 openmpstarter.c -lm
+$ ./a.out /usr/bin/emacs
+40731819 ns to process 6306696 characters: 4.75838</code></pre>
+<p>To parallelize, separate the code into Map and Reduce steps and try
+several OpenMP parallelization strategies described below; keep track of
+which was best.</p>
+<p>For full credit on submission, you must:</p>
+<ul>
+<li>implement multiple parallel versions of <code>geomean</code>, each
+of which uses a combination of a Map and Reduce version;</li>
+<li>test at least 3 Map strategies listed below (among all your versions
+of <code>geomean</code>)</li>
+<li>test at least 3 Reduce strategies listed below (among all your
+verisons of <code>geomean</code>)</li>
+<li>choose your combinations of Map and Reduce strategies so you have a
+reasonable guess about the best possible combination using any of the
+Map strategies and Reduce strategies you tested. Most simply, you could
+do this by timing all combinations. (Alternately, you could time all the
+map strategies with a single reduce strategy and vice-versa.)</li>
+</ul>
+<p>For full credit for an in-person checkoff, we may accept somewhat
+less being measured if you run out of time in the lab.</p>
+<p>When timing:</p>
+<ul>
+<li>test with an input file that is <em>at least</em> one megabyte in
+size;</li>
+<li>make sure the answer (<code>4.75838</code> in the output example
+above) does not change substantially because of our optimizations;
+and</li>
+<li>take multiple measurements so other activity on the machines doesn’t
+dramatically affect your results</li>
+</ul>
+<p>Then evaluate your results to make a reasonable guess about:</p>
+<ul>
+<li><p>the fastest Map strategy and Reduce strategy combination possible
+from combining all the Map and Reduce strategies you tested.</p>
+<p>(If you did not test all possible combinations, it may be that the
+best combination is not a combination you tested. In this case, you
+would infer what is likely best by separately timing map and reduce
+strategies. You would choose a map strategy that performed better than
+all other map strategies in the same circumstances. In the same way, you
+would choose a reduce strategy and guess that the speed difference would
+be preserved when combining them.)</p></li>
+<li><p>why that combination would be fastest</p></li>
+</ul>
+<p>Then either:</p>
+<ul>
+<li>submit your code (preferably as one file with multiple copies of the
+geomean function, including all versions you timed) and a text file
+<q>performance.txt</q> containing:
+<ul>
+<li>your measurements of performance;</li>
+<li>your guess about the fastest possible combination; and</li>
+<li>your guess as to why that combination would be fastest (1-2
+sentences)</li>
+</ul></li>
+<li>check-off with a TA, being prepared to explain which approach was
+fastest and your guess as to why</li>
+</ul>
+
+</div>
+<h1 data-number="2" id="introduction"><span
+class="header-section-number">2</span> Introduction</h1>
+<p>OpenMP is designed to make common kinds of speed-oriented parallelism
+simple and painless to write. It uses a special set of C pre-processor
+directives called <q>pragmas</q> to annotate common programming
+constructs and have then transformed into threaded versions. It also
+automatically picks a level of parallelism that matches the number of
+cores available.</p>
+<p>In this writeup we describe all the OpenMP functionality you should
+need. However, you may also find it useful to refer to (for
+example):</p>
+<ul>
+<li>Mattoson and Meadow’s <a
+href="https://www.openmp.org/wp-content/uploads/omp-hands-on-SC08.pdf">OpenMP
+introduction (slidedeck)</a> from the Supercomputing ’08 conference</li>
+<li>the <a
+href="https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf">official
+OpenMP reference guide</a>,</li>
+<li>Lawrence Livermore National Labroatory’s <a
+href="https://hpc-tutorials.llnl.gov/openmp/">OpenMP tutorial</a>,</li>
+</ul>
+<h2 data-number="2.1" id="set-up"><span
+class="header-section-number">2.1</span> Set-up</h2>
+<p>Your compiler has to be built with OpenMP support for OpenMP to work.
+On <code>portal.cs.virginia.edu</code>, the GCC compiler has been built
+that way but the CLang compiler has not, so you’ll need to use <code
+class="sourceCode bash"><span class="fu">gcc</span></code>, not <code
+class="sourceCode bash"><span class="fu">clang</span></code>, to compile
+code for this lab if you use portal. Note this requires <code
+class="sourceCode bash"><span class="ex">module</span> load gcc</code>.</p>
+<p>To verify your set-up works, try the following
+<code>test.c</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;omp.h&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp parallel</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    puts<span class="op">(</span><span class="st">&quot;I&#39;m a thread&quot;</span><span class="op">);</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    puts<span class="op">(</span><span class="st">&quot;non-threaded&quot;</span><span class="op">);</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Compile with <code
+class="sourceCode bash"><span class="fu">gcc</span> <span class="at">-fopenmp</span> <span class="at">-O2</span> test.c</code>
+and run as <code
+class="sourceCode bash"><span class="ex">./a.out</span></code>; if it
+worked, you’ll see multiple <code>I'm a thread</code> lines printed
+out.</p>
+<p>If you compile without the <code>-fopenmp</code> flag it will run on
+just one thread and print our <code>I'm a thread</code> just once.</p>
+<p>Note that an OpenMP <code>#pragma</code> applies to the subsequent
+statement, only. Thus in the above <code>puts("I'm a thread");</code> is
+threaded but <code>puts("non-threaded");</code> is not. If you want
+several statements to be parallelized, you’d put them in braces to
+combine them into one block statement, as e.g.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    puts<span class="op">(</span><span class="st">&quot;I&#39;m a thread&quot;</span><span class="op">);</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    puts<span class="op">(</span><span class="st">&quot;Also a thread&quot;</span><span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>puts<span class="op">(</span><span class="st">&quot;but not this one&quot;</span><span class="op">);</span></span></code></pre></div>
+<h1 data-number="3" id="the-map-reduce-pattern"><span
+class="header-section-number">3</span> The Map-Reduce pattern</h1>
+<p>Data races are a major limiting factor on parallel computation.
+Synchronization can remove races, but at the cost of reduced
+parallelism. Several programming patterns can avoid these problems; one
+of the most popular is the map-reduce paradigm.</p>
+<p>Map-reduce works as follows</p>
+<ol type="1">
+<li><p>Map: Turn an array of input values into an array of output
+values. Ensure that each output value is independent of the
+others.</p></li>
+<li><p>Reduce: combine an array of values into a single value.</p></li>
+</ol>
+<p>In both cases, the <q>array</q> might be implicitly defined; for
+example, the array of integers from 0 to 10000 could be implicit in the
+existence of a for loop.</p>
+<p>Many problems that take large amounts of data as input can be
+re-posed as a map, followed by a reduce. Both Map and Reduce can be
+efficiently parallelized. Parallelizing the map operation is relatively
+simple. Parallelizing the reduce operation efficiently is more complex,
+but efficient implementations of the reduction operation can be
+reused.</p>
+<p>In your implementations, you will <strong>combine a way of
+parallelizing map with a way of parallelizing reduce.</strong></p>
+<h2 data-number="3.1" id="parallel-map"><span
+class="header-section-number">3.1</span> Parallel Map</h2>
+<p>There are two main ways to parallelize Map: one that is easy but
+assumes every piece of work is of similar difficulty and another that is
+a bit trickier but allows for some tasks to be much harder than others
+efficiently.</p>
+<h3 data-number="3.1.1" id="even-split"><span
+class="header-section-number">3.1.1</span> Even split</h3>
+<p>If your serial code looks like</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>then the parallel code</p>
+<pre><code>#pragma omp parallel
+{
+#pragma omp for
+    for(int i=0; i&lt;N; i+=1) {
+        // ...
+    }
+}</code></pre>
+<p>which can also be more succintly written</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel for</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>works my splitting up the <code>0</code>–<code>N</code> range into a
+number of chunks equal to the number of threads. For example, if it uses
+4 threads then they will get the following range of <code>i</code>:</p>
+<ul>
+<li><code>0</code>–<code>N/4</code></li>
+<li><code>N/4</code>–<code>N/2</code></li>
+<li><code>N/2</code>–<code>3*N/4</code></li>
+<li><code>3*N/4</code>–<code>N</code></li>
+</ul>
+<p>To turn this strategy into a complete solution, you’ll need to
+combine it with one of the <q>reduce</q> parallelization techniques.</p>
+<p><strong>OpenMP pragmas used</strong>:</p>
+<ul>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp parallel</span></code>
+means <q>run the next statement/block simulatenously in separate
+threads</q></p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp for</span></code>
+means <q>assuming, we’re running the next for loop in parallel, run it
+with different bounds in every thread</q></p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp parallel for</span></code>
+means <q>have each thread run the next statement (a <code
+class="sourceCode c"><span class="cf">for</span></code> loop) with
+different bounds</q>; it’s a short-hand combining omp parallel and omp
+for</p></li>
+</ul>
+<h3 data-number="3.1.2" id="task-queue"><span
+class="header-section-number">3.1.2</span> Task queue</h3>
+<p>If your serial code looks like</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// work on item i</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>then the parallel code</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> i<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp atomic capture</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    i <span class="op">=</span> j<span class="op">++;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>i <span class="op">&gt;=</span> N<span class="op">)</span> <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// work on item i</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>has each thread atomically update a shared counter until it gets too
+big. This ensures that if some threads take a long time in the <code
+class="sourceCode c"><span class="co">// work on item i</span></code> of
+the other threads can still progress. It has more overhead than the
+previous method, though, as atomic actions are slower than non-atomic
+actions.</p>
+<p>(As mentioned below this can also be done with the
+<code>schedule</code> option to the <code>parallel for</code> construct,
+but we would like you to try first with the lower-level tools to better
+understand what is going on.)</p>
+<p><strong>OpenMP pragmas used</strong>:</p>
+<ul>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp parallel</span></code>
+means <q>have each thread run the next statement (the <code
+class="sourceCode c"><span class="cf">while</span></code>
+loop)</q>.</p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp atomic capture</span></code>
+means <q>the next statement (<code
+class="sourceCode c">i <span class="op">=</span> j<span class="op">++</span></code>)
+is a capture-type statement and needs to run atomically</q>. There are
+other atomic statement types; see <a
+href="https://www.openmp.org/spec-html/5.0/openmpsu95.html"
+class="uri">https://www.openmp.org/spec-html/5.0/openmpsu95.html</a>.</p></li>
+</ul>
+<h3 data-number="3.1.3" id="task-queue-with-larger-tasks"><span
+class="header-section-number">3.1.3</span> Task queue with larger
+tasks</h3>
+<p>A variant of the task queue method to reduce the impact of the
+performance the atomic operation might be to have threads increment the
+shared counter by some value <code>K</code> (instead of <code>1</code>)
+and do work for <code>K</code> items instead of 1:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> i<span class="op">;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp atomic capture</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    i <span class="op">=</span> j <span class="op">+=</span> K<span class="op">;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>i <span class="op">-</span> K <span class="op">&gt;=</span> N<span class="op">)</span> <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// work on item i - K through item min(i, N)</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 data-number="3.1.4" id="openmps-parallel-for-schedules"><span
+class="header-section-number">3.1.4</span> OpenMP’s parallel for
+schedules</h3>
+<p>OpenMP’s <code>parallel for</code> construct supports a
+<q>schedule</q> option where rather than dividing up the threads
+statically in as large chunks as possible, it can use another
+strategy.</p>
+<p>(For timing this, it’s sufficient to choose one of the schedules
+options below, though you may find it interesting to examine multiple if
+you have time.)</p>
+<p>The schedules that you choose from include:</p>
+<ul>
+<li><p>a <q>guided</q> schedule, which is like task queues with larger
+tasks, except it varies the size of task each thread gets automatically
+rather than having you choose a single value:
+<code>#pragma omp parallel for schedule(guided)     for(int i=0; i&lt;N; i+=1) {         // ...     }</code></p></li>
+<li><p>a <q>dynamic</q> schedule, which acts like task queues with
+fixed-sizes tasks. Code like the following will do something similar to
+the <q>Task queue</q> strategy:</p>
+<pre><code>#pragma omp parallel for schedule(dynamic)
+for(int i=0; i&lt;N; i+=1) {
+    // ...
+}</code></pre>
+<p>and code like the following will use something similar to the <q>Task
+queue with larger tasks</q> strategy:</p>
+<pre><code>#pragma omp parallel for schedule(dynamic, K)
+for(int i=0; i&lt;N; i+=1) {
+    // ...
+}</code></pre>
+<p>where <code>K</code> is some integer constant of the number of
+iterations to do as a <q>task</q>, which OpenMP’s documentation called
+the <q>chunk size</q>.</p></li>
+<li><p>the default <q>static</q> schedule, which can take a parameter of
+how many iterations to assign to threads at a time (instead of trying to
+do as large <q>chunks</q> as possible). For example</p>
+<pre><code>#pragma omp paralle for schedule(static, 10)
+for(int i=0; i&lt;N; i+=1) {
+    // ...
+}</code></pre>
+<p>with two threads would:</p>
+<ul>
+<li>assign 0..9, 20..29, 40..49, etc. (up to N) to thread 1</li>
+<li>assign 10..19, 30..39, etc. (up to N) to thread 2</li>
+</ul>
+<p>instead of assigning 0..(N/2) and (N/2) to N-1.</p></li>
+</ul>
+<h2 data-number="3.2" id="parallel-reduce"><span
+class="header-section-number">3.2</span> Parallel Reduce</h2>
+<p>There are two main ways to parallelize Reduce: either use an atomic
+operation or do partial reductions in each of several threads and then
+combine them all in oen thread afterwards.</p>
+<h3 data-number="3.2.1" id="atomic-reduction-non-parallel"><span
+class="header-section-number">3.2.1</span> Atomic reduction –
+non-parallel</h3>
+<p>The simplest way to reduce is to make the reduction step an <code
+class="sourceCode c"><span class="pp">#pragma omp atomic</span></code>
+of some type (usually <code>update</code>). This limits the performance
+value of parallelism, so it’s not recommended in general, but in some
+cases it is adequate to achieve a needed speedup.</p>
+<p>This is done by replacing</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    result op<span class="op">=</span> array<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>(where <code>op=</code> is some kind of augmented assignment, like
+<code>+=</code> or <code>*=</code>) with (assuming the mapping step uses
+the <q>even split</q> strategy):</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="pp"># pragma omp parallel for</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp atomic update</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    result op<span class="op">=</span> array<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>If the mapping step did not use the even split strategy, we would
+replace the for loop with another looping construct accordingly. For
+example, with the task queue map strategy mentioned above, we’d end up
+with code like:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> i<span class="op">;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp atomic capture</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    i <span class="op">=</span> j<span class="op">++;</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>i <span class="op">&gt;=</span> N<span class="op">)</span> <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp atomic update</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    result op<span class="op">=</span> array<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Note that since the bulk of the operation is atomic, it runs in a
+mostly serial fashion. However, the array lookup and loop indexing can
+be done in parallel, so it might still have some value. That value can
+be increased if it is merged with the mapping loop into a single
+parallel for loop, reducing threading overhead.</p>
+<p><strong>OpenMP pragmas used</strong>:</p>
+<ul>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp parallel for</span></code>
+means <q>have each thread run the next statement (a <code
+class="sourceCode c"><span class="cf">for</span></code> loop) with
+different bounds</q>.</p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp atomic update</span></code>
+means <q>the next statement (<code
+class="sourceCode c">result op<span class="op">=</span> local_result</code>)
+is an update-type statement and needs to run atomically</q>. There are
+other atomic statement types; see <a
+href="https://www.openmp.org/spec-html/5.0/openmpsu95.html"
+class="uri">https://www.openmp.org/spec-html/5.0/openmpsu95.html</a>.</p></li>
+</ul>
+<h3 data-number="3.2.2" id="openmps-built-in-reduction-operator"><span
+class="header-section-number">3.2.2</span> OpenMP’s built-in reduction
+operator</h3>
+<p>Rather than manually perform the reduction (like the strategies)
+here, you can annotate an OpenMP block with
+<code>#pragma omp ... reduction(OP:variable)</code> to indicate that
+OpenMP should combine the values of <code>variable</code> from each
+thread using the <code>OP</code> operation.</p>
+<p>Probably the operation OpenMP performs internally ends up being
+similar to the <q>many-to-few</q> reduction strategy one can perform
+<q>manually</q> described below.</p>
+<p>For example, when combined with the <q>even split</q> strategy, this
+would yield code similar to:</p>
+<pre><code>my_type result = zero_for_my_type;
+# pragma omp parallel for reduction(op:result)
+for(int i=0; i&lt;N; i+=1) {
+    result op= array[i];
+}</code></pre>
+<p>Or with the task queue strategy code like</p>
+<pre><code>my_type result = zero_for_my_type;
+int j = 0;
+#pragma omp parallel reduction(op:result)
+while (1) {
+    int i;
+    #pragma omp atomic capture
+    i = j++;
+    if (i &gt;= N) break;
+    result op= array[i];
+}</code></pre>
+<p><strong>OpenMP pragmas used</strong>:</p>
+<ul>
+<li><code
+class="sourceCode c"><span class="pp">#pragma omp reduction(op:variable)</span></code>
+means to combine the values of <code>variable</code> computed by each
+thread using the operation <code>op</code>.</li>
+</ul>
+<h3 data-number="3.2.3" id="many-to-few-reduction-atomic-version"><span
+class="header-section-number">3.2.3</span> Many-to-few reduction –
+atomic version</h3>
+<p>An alternative approach is to to reduce an array of <em>N</em> values
+into an array of <em>n</em> values, where <em>n</em> is the number of
+threads; then have one thread further reduce the <em>n</em> to 1.</p>
+<p>Given reduction code</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    result op<span class="op">=</span> array<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>(where <code>op=</code> is some kind of augmented assignment, like
+<code>+=</code> or <code>*=</code>) then the parallel code (assuming
+this reduction strategy is combined with an <q>even split</q> mapping
+strategy)</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    my_type local_result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp for nowait</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        local_result op<span class="op">=</span> array<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp atomic update</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    result op<span class="op">=</span> local_result<span class="op">;</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>will have each thread to its share of reductions on its own local
+copy of the result, then atomically update the shared total</p>
+<p>(If this was combined with a different mapping strategy, then we
+would replace the for loop above with a different loop structure.)</p>
+<p><strong>OpenMP pragmas used</strong>:</p>
+<ul>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp parallel</span></code>
+means <q>have each thread run the next statement (the block in
+<code>{ ... }</code>)</q>.</p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp for nowait</span></code>
+means <q>the next statement (a <code>for</code> loop) should have its
+bounds adjusted depending on which thread is running it.</q> It’s like
+the <code
+class="sourceCode c"><span class="pp">#pragma omp parallel for</span></code>
+discussed under the <a href="#even-split">Even split</a> section above,
+but instead of creating new threads it uses those already existing.</p>
+<p>The <code>nowait</code> means if one thread finishes before another,
+it can move on to post-<code>for</code>-loop code without waiting for
+the others to finish.</p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp atomic update</span></code>
+means <q>the next statement (<code
+class="sourceCode c">result op<span class="op">=</span> local_result</code>)
+is an update-type statement and needs to run atomically</q>. There are
+other atomic statement types; see <a
+href="https://www.openmp.org/spec-html/5.0/openmpsu95.html"
+class="uri">https://www.openmp.org/spec-html/5.0/openmpsu95.html</a>.</p></li>
+</ul>
+<h3 data-number="3.2.4" id="many-to-few-reduction-array-version"><span
+class="header-section-number">3.2.4</span> Many-to-few reduction – array
+version</h3>
+<p>If your reduction step is more than a single update operation, a more
+complicated solution is needed. See <a href="#appendix-fancy-reduce">the
+Appendix</a> for more.</p>
+<h1 data-number="4" id="starting-code"><span
+class="header-section-number">4</span> Starting code</h1>
+<div class="sourceCode" id="cb20"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span><span class="pp"> </span><span class="co">// fopen, fread, fclose, printf, fseek, ftell</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;math.h&gt;</span><span class="pp"> </span><span class="co">// log, exp</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span><span class="pp"> </span><span class="co">// free, realloc</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;time.h&gt;</span><span class="pp"> </span><span class="co">// struct timespec, clock_gettime, CLOCK_REALTIME</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;errno.h&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">// computes the geometric mean of a set of values.</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co">// You should use OpenMP to make faster versions of this.</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Keep the underlying sum-of-logs approach.</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> geomean<span class="op">(</span><span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*</span>s<span class="op">,</span> <span class="dt">size_t</span> n<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> answer <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>n<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>s<span class="op">[</span>i<span class="op">]</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span> answer <span class="op">+=</span> log<span class="op">(</span>s<span class="op">[</span>i<span class="op">])</span> <span class="op">/</span> n<span class="op">;</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> exp<span class="op">(</span>answer<span class="op">);</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="co">/// nanoseconds that have elapsed since 1970-01-01 00:00:00 UTC</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> <span class="dt">long</span> nsecs<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> timespec t<span class="op">;</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    clock_gettime<span class="op">(</span>CLOCK_REALTIME<span class="op">,</span> <span class="op">&amp;</span>t<span class="op">);</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t<span class="op">.</span>tv_sec<span class="op">*</span><span class="dv">1000000000</span> <span class="op">+</span> t<span class="op">.</span>tv_nsec<span class="op">;</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="co">/// reads arguments and invokes geomean; should not require editing</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">// step 1: get the input array (the bytes in this file)</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>s <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> n <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">1</span><span class="op">;</span> i<span class="op">&lt;</span>argc<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>        <span class="co">// add argument i&#39;s file contents (or string value) to s</span></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>        <span class="dt">FILE</span> <span class="op">*</span>f <span class="op">=</span> fopen<span class="op">(</span>argv<span class="op">[</span>i<span class="op">],</span> <span class="st">&quot;rb&quot;</span><span class="op">);</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>f<span class="op">)</span> <span class="op">{</span> <span class="co">// was a file; read it</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>            fseek<span class="op">(</span>f<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> SEEK_END<span class="op">);</span> <span class="co">// go to end of file</span></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>            <span class="dt">size_t</span> size <span class="op">=</span> ftell<span class="op">(</span>f<span class="op">);</span> <span class="co">// find out how many bytes in that was</span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>            fseek<span class="op">(</span>f<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> SEEK_SET<span class="op">);</span> <span class="co">// go back to beginning</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>            s <span class="op">=</span> realloc<span class="op">(</span>s<span class="op">,</span> n<span class="op">+</span>size<span class="op">);</span> <span class="co">// make room</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>            fread<span class="op">(</span>s<span class="op">+</span>n<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> size<span class="op">,</span> f<span class="op">);</span> <span class="co">// append this file on end of others</span></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>            fclose<span class="op">(</span>f<span class="op">);</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>            n <span class="op">+=</span> size<span class="op">;</span> <span class="co">// not new size</span></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span> <span class="co">// not a file; treat as a string</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>            errno <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> <span class="co">// clear the read error</span></span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>    <span class="co">// step 2: invoke and time the geometric mean function</span></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> <span class="dt">long</span> t0 <span class="op">=</span> nsecs<span class="op">();</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> answer <span class="op">=</span> geomean<span class="op">((</span><span class="dt">unsigned</span> <span class="dt">char</span><span class="op">*)</span> s<span class="op">,</span>n<span class="op">);</span></span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> <span class="dt">long</span> t1 <span class="op">=</span> nsecs<span class="op">();</span></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>s<span class="op">);</span></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>    <span class="co">// step 3: report result</span></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">%lld</span><span class="st"> ns to process </span><span class="sc">%zd</span><span class="st"> characters: </span><span class="sc">%g\n</span><span class="st">&quot;</span><span class="op">,</span> t1<span class="op">-</span>t0<span class="op">,</span> n<span class="op">,</span> answer<span class="op">);</span></span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h1 data-number="5" id="appendix-fancy-reduce"><span
+class="header-section-number">5</span> Appendix: Fancy Reduce</h1>
+<p>If the reduction operations is more complicated than a single atomic
+operation can support, we can store the threads’ intermediate results in
+an array.</p>
+<p>Given reduction code</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// arbitrary code to add array[i] to result</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>then the parallel code</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">// find out how many threads we are using:</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifdef OPENMP_ENABLE</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp parallel</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        <span class="pp">#pragma omp master    </span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">int</span> threads <span class="op">=</span> omp_get_num_threads<span class="op">();</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> threads <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>my_type <span class="op">*</span>results <span class="op">=</span> <span class="op">(</span>my_type <span class="op">*)</span>malloc<span class="op">(</span>threads <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span>my_type<span class="op">));</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma omp parallel</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifdef OPENMP_ENABLE</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> myid <span class="op">=</span> omp_get_thread_num<span class="op">();</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> myid <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    results<span class="op">[</span>myid<span class="op">]</span> <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#pragma omp for nowait</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>N<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>        <span class="co">// arbitrary code to add array[i] to results[myid]</span></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>my_type result <span class="op">=</span> zero_for_my_type<span class="op">;</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>threads<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">// arbitrary code to add results[i] to result</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>will have each thread to its share of reductions on its own local
+copy of the result, then have one thread update them all.</p>
+<div class="aside long">
+<p>false sharing</p>
+<p>The code above above can have problems with <em>false sharing</em>.
+Although each thread accesses an independent <code>results[i]</code>
+value, those values will often be in the same cache block. With mulitple
+cores, each core’s cache will need to take turns holding the cache
+blocks value, and so will not be able to work in parallel as much one
+might expect.</p>
+<p>This problem can be avoided by making the results[i]
+<code>my_type</code> take up a whole cache block or otherwise spacing
+out the <code>results</code> array more.</p>
+
+</div>
+<p><strong>OpenMP pragmas, macros, and functions used</strong>:</p>
+<ul>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp master</span></code>
+means <q>only one thread (called the master thread) gets to run
+this</q>.</p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#ifdef OPENMP_ENABLE</span></code>
+means <q>only if <code>-fopenmp</code> was provided at compile
+time</q></p></li>
+<li><p><code
+class="sourceCode c">omp_get_num_threads<span class="op">()</span></code>
+returns the number of threads OpenMP has running.</p></li>
+<li><p><code
+class="sourceCode c">omp_get_thread_num<span class="op">()</span></code>
+returns the index of this thread (between 0 and the number of
+threads)</p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp parallel</span></code>
+means <q>run the next statement in multiple threads</q></p></li>
+<li><p><code
+class="sourceCode c"><span class="pp">#pragma omp for nowait</span></code>
+means <q>the next statement (a <code>for</code> loop) should have its
+bounds adjusted depending on which thread is running it.</q> It’s like
+the <code
+class="sourceCode c"><span class="pp">#pragma omp parallel for</span></code>
+discussed under the <a href="#even-split">Even split</a> section above,
+but instead of creating new threads it uses those already existing.</p>
+<p>The <code>nowait</code> means if one thread finishes before another,
+it can move on to post-<code>for</code>-loop code without waiting for
+the others to finish.</p></li>
+</ul>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

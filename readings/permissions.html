@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: POSIX permissions</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/permissions.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#users-and-groups" id="toc-users-and-groups"><span
+class="toc-section-number">1</span> <q>Users</q> and
+<q>Groups</q></a></li>
+<li><a href="#posix-file-permissions"
+id="toc-posix-file-permissions"><span
+class="toc-section-number">2</span> POSIX file permissions</a>
+<ul>
+<li><a href="#defaults-the-umask" id="toc-defaults-the-umask"><span
+class="toc-section-number">2.1</span> Defaults: the
+<code>umask</code></a></li>
+<li><a href="#setuid-setgid-and-sticky"
+id="toc-setuid-setgid-and-sticky"><span
+class="toc-section-number">2.2</span> setuid, setgid, and
+sticky</a></li>
+</ul></li>
+<li><a href="#access-control-lists" id="toc-access-control-lists"><span
+class="toc-section-number">3</span> Access Control Lists</a></li>
+<li><a href="#exec-text" id="toc-exec-text"><span
+class="toc-section-number">4</span> Executable text files</a></li>
+<li><a href="#alternateadditional-sources"
+id="toc-alternateadditional-sources"><span
+class="toc-section-number">5</span> Alternate/additional
+sources</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>14 Sep 2023: change <q>owning users</q> to <q>owning user</q></li>
+<li>22 Jan 2025: add note re: independent of execute and read
+permission</li>
+<li>27 Jan 2026: add reference Dive Into Systems as alternate reading
+for chmod</li>
+</ul>
+</div>
+<h1 data-number="1" id="users-and-groups"><span
+class="header-section-number">1</span> <q>Users</q> and
+<q>Groups</q></h1>
+<p>Every program runs as some <strong>user</strong>. This is true even
+of the user interface, a program that allows you to run other programs.
+When one program runs another, the new program runs as the same user as
+the old one except in a few special circumstances. An example special
+circumstance is the <q>log in</q> program, which itself runs as
+<code>root</code>, but after you log in, runs your user interface as
+your user account.</p>
+<p>You can find out what user you are running as via the command <code
+class="sourceCode bash"><span class="fu">whoami</span></code>.</p>
+<p>Each user generally has a name and also a numerical ID. Typically,
+the numerical ID is what is used internally by the kernel to identify a
+user.</p>
+<p>Every user can belong to any number of <strong>groups</strong>. You
+can find out which groups a user belongs to by running the command <code
+class="sourceCode bash"><span class="fu">groups</span> <span class="op">&lt;</span>username<span class="op">&gt;</span></code>;
+if you omit the username, it will list your own group memberships.</p>
+<p>Every file and directory also has a user and a group—but just one
+group, not a whole set. The user of a file does not need to belong to
+the group of the file.</p>
+<h1 data-number="2" id="posix-file-permissions"><span
+class="header-section-number">2</span> POSIX file permissions</h1>
+<p>Permissions are split into three kinds, with different meanings
+for:</p>
+<dl>
+<dt>r</dt>
+<dd>
+<dl>
+<dt>for files</dt>
+<dd>
+permission to read its contents (e.g. <code>cat file</code> works)
+</dd>
+<dt>for directories</dt>
+<dd>
+permission to list its contents (e.g. <code>ls directory/</code> works)
+</dd>
+</dl>
+</dd>
+<dt>w</dt>
+<dd>
+<dl>
+<dt>for files</dt>
+<dd>
+permission to write its contents
+(e.g. <code>echo whatnot &gt;&gt; file</code> works)
+</dd>
+<dt>for directories</dt>
+<dd>
+permission to add and remove its contents
+(e.g. <code>rm directory/whatever</code> works)
+</dd>
+</dl>
+</dd>
+<dt>x</dt>
+<dd>
+<dl>
+<dt>for files</dt>
+<dd>
+permission to execute its contents (e.g. <code>./file</code> works). For
+compiled executables, this is usually sufficient to execute the file.
+For [executable test files]( (<q>scripts</q>), the interpreter program
+may also need permission to run the file in addition.
+</dd>
+<dt>for directories</dt>
+<dd>
+permission to access its contents (e.g. <code>directory/whatever</code>
+works)
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Every file has these permissions for 3 classes of users, stored as a
+nine-bit number; from high to low order, those bits are</p>
+<dl>
+<dt>u</dt>
+<dd>
+owning user may read/write/execute
+</dd>
+<dt>g</dt>
+<dd>
+members of owning group may read/write/execute
+</dd>
+<dt>o</dt>
+<dd>
+others may read/write/execute
+</dd>
+</dl>
+<p><code
+class="sourceCode bash"><span class="fu">ls</span> <span class="at">-l</span></code>
+includes the nine permission bits in letter form: a subset of rwxrwxrwx
+(e.g. <code>rw-rw----</code> means the owner and all users in the owning
+group have r and w permissions, but not x permission; and other users
+have no permissions). Commands that change these often use octal
+(base-8) representation of the number (e.g. 660 for
+<code>rw-rw----</code>).</p>
+<div class="aside long">
+<p>Using <code>chmod</code></p>
+<p>The most commonly used permission tool is <code>chmod</code>, used as
+<code>chmod [permission] file</code>. As noted in <code
+class="sourceCode bash"><span class="fu">man</span> chmod</code>, the
+permission argument can be either letters or octal</p>
+<ul>
+<li><code>chmod 644 file</code> means “change the permission bits to
+exactly 644<sub>8</sub> = 110100100<sub>2</sub> = rw-r–r–</li>
+<li><code>chmod ug+rw file</code> means <q>add r and w permissions for
+the owning <strong>u</strong>ser and the owning
+<strong>g</strong>roup</q></li>
+</ul>
+
+</div>
+<h2 data-number="2.1" id="defaults-the-umask"><span
+class="header-section-number">2.1</span> Defaults: the
+<code>umask</code></h2>
+<p>When you make a new file, its gets all permissions except a few; the
+omitted few are specified by the <code>umask</code>. A special command,
+<code>umask</code>, can display (and change) these, either in octal or
+letter format.</p>
+<div class="example long">
+<p>On the department machines, if you run <code>umask</code> you’ll see
+<code>0022</code>. That means that new files get permission
+<code>0755</code>: a nine-bit <code>~0022</code>. What that actually
+looks like can be see by adding the symbolic flag: <code>umask -S</code>
+shows <code>u=rwx,g=rx,o=rx</code>.</p>
+
+</div>
+<h2 data-number="2.2" id="setuid-setgid-and-sticky"><span
+class="header-section-number">2.2</span> setuid, setgid, and sticky</h2>
+<p>File permissions in POSIX-compatible systems also have three more
+permission bits which we <strong>recommend not using</strong> because of
+their potential dangers.</p>
+<dl>
+<dt>setuid</dt>
+<dd>
+<dl>
+<dt>executable file</dt>
+<dd>
+<p>If executable <code>xyxxy</code> is owned by <code>mst3k</code> and
+has <code>setuid</code> permissions, then when <code>tj1a</code> runs
+<code>./xyxxy</code>, the program runs as <code>mst3k</code>, not as
+<code>tj1a</code>. This is often used by OS-supplied programs like
+<code>sudo</code> that require more permissions than the user running
+them would normally have.</p>
+<p>There are many ways in which naively setting an executable program
+setuid is likely to create a major security vulnerability. Code that
+would be perfectly safe in other sensitive programs can be dangerous in
+setuid programs because of the extraordinary control an attacker has
+over the setuid program’s environment. Even the expertly-maintained
+programs like sudo have made <a
+href="https://www.kb.cert.org/vuls/id/794544">subtle but very serious
+mistakes</a>.</p>
+</dd>
+<dt>non-executable file</dt>
+<dd>
+does nothing
+</dd>
+<dt>directory</dt>
+<dd>
+does nothing on most POSIX systems
+</dd>
+</dl>
+</dd>
+<dt>setgid</dt>
+<dd>
+<dl>
+<dt>executable file</dt>
+<dd>
+like setuid, but with group, not user. This can be a security
+vulnerability and <strong>should not be used</strong> except when
+absolutely necessary.
+</dd>
+<dt>non-executable file</dt>
+<dd>
+does nothing
+</dd>
+<dt>directory</dt>
+<dd>
+when a new file is created in the directory, it inherits the directory’s
+group instead of the creating user’s group. This can be a security
+vulnerability and <strong>should not be used</strong> unless you are
+sure you know what you are doing.
+</dd>
+</dl>
+</dd>
+<dt>sticky</dt>
+<dd>
+<dl>
+<dt>file</dt>
+<dd>
+does nothing in most POSIX systems
+</dd>
+<dt>directory</dt>
+<dd>
+the files inside it can only be removed or renamed by the owner of the
+file, owner of the directory (but <code>root</code> is always allowed).
+</dd>
+</dl>
+</dd>
+</dl>
+<p>If you use a four-digital octal with <code>chmod</code>, these
+permissions will be the first octal digit. Sticky may sometimes be worth
+setting; we recommend never using the other two.</p>
+<h1 data-number="3" id="access-control-lists"><span
+class="header-section-number">3</span> Access Control Lists</h1>
+<p>Sometimes we need more fine-grained control than the three-way
+user-group-other distinction. This is provided using more general
+<em>access control lists</em>, or ACLs; they are a list of
+user+permission pairs associated with each file. Unlike the simpler
+POSIX permission bits, they can include settings for much more than a
+single user or group. Every OS I’ve ever used has ACL support, though
+actual use of them is relatively uncommon; the standard system works in
+most cases.</p>
+<p>The command <code
+class="sourceCode bash"><span class="ex">getfacl</span> file</code>
+shows the full permission information for a file. The command
+<code>setfacl</code> creates and modifies entries in the permissions
+list. There are many ways of doing this, as <code>man setfacl</code>
+shows, but three examples will suffice for most common cases:</p>
+<ul>
+<li><code>setfacl -m u:mst3k:rx</code>: this <code>m</code>odifies
+<code>u</code>ser <code>mst3k</code>’s permissions to be <code>r</code>
+and <code>x</code></li>
+<li><code>setfacl -m g:lab_fall2019:r</code>: this <code>m</code>odifies
+<code>g</code>roup <code>lab_fall2019</code>’s permissions to be
+<code>r</code> only (no <code>w</code> or <code>x</code>
+permission)</li>
+<li><code>setfacl -x u:mst3k</code>: this removes the <code>u</code>ser
+<code>mst3k</code>’s entry from the permission list, so
+<code>mst3k</code> will be handled like any other user.</li>
+</ul>
+<p>While ACLs are not commonly needed, they are a safe way of handling
+cases where they are needed.</p>
+<h1 data-number="4" id="exec-text"><span
+class="header-section-number">4</span> Executable text files</h1>
+<p>What does it mean for a file to be executable? On POSIX, there are
+two main cases where this is sensible:</p>
+<ul>
+<li><p>If the file is an executable binary (typically an ELF executable
+produced with help from something like a C compiler), then being
+executable means the loader will agree to give it memory and jump to its
+starting code.</p></li>
+<li><p>If the file is a plain text file, then being executable means
+<q>check for a shebang<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> line.</q></p>
+<p>A <q>shebang</q> is a line of the form
+<code>#!/path/to/program</code> (or sometimes
+<code>#!/usr/bin/env program</code>). That program, often called an
+<q>interpreter</q>, will be used to run the text file.</p>
+<p>One common shebang is <code>#!/bin/bash</code>, which runs
+<code>/bin/bash</code>, the most common Linux shell. If a file
+<code>gloop.sh</code> begins <code>#!/bin/bash</code> and is executable,
+then running <code>./gloop.sh</code> is equivalent to running
+<code>/bin/bash ./gloop.sh</code>.</p>
+<p>Because the interpreter program needs to read the text file, it will
+usually require read permission on the text file, even though an
+executable binary often will not.</p></li>
+</ul>
+<div class="example long">
+<p>A <strong>quine</strong> is a program that, when run, displays its
+own contents. The following file is a quine, provided it is
+executable:</p>
+<pre><code>#!/bin/cat</code></pre>
+<p>So is the following:</p>
+<pre><code>#!/bin/cat
+Quines are interesting to create in many languages.
+But if you use shebangs, they are trivial to create
+using the interpreter &quot;cat.&quot;</code></pre>
+
+</div>
+<h1 data-number="5" id="alternateadditional-sources"><span
+class="header-section-number">5</span> Alternate/additional sources</h1>
+<p>Alternate reading on <code>chmod</code>-style permissions:</p>
+<ul>
+<li><a href="https://diveintosystems.org/book/Appendix2/chmod.html">Dive
+Into Systems, section 17.7</a></li>
+</ul>
+<p>command references:</p>
+<ul>
+<li>POSIX’s specification for <a
+href="https://pubs.opengroup.org/onlinepubs/9799919799/utilities/chmod.html">chmod</a></li>
+<li>running <code>man setfacl</code> on portal</li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>”shebang” comes from the colloqial name of the first two
+characters: <code>#</code> is ”hash” and <code>!</code> is ”bang”.
+”Hashbang” was shortened to ”shbang,” with a vowel added for
+readability. You can still sometimes hear ”hashbang” used to mean the
+<code>#!</code> itself, as in ”a shebang begins with a hashbang, then
+path to the interpreter.”<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: C++ templates</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/templates.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#caveat" id="toc-caveat"><span
+class="toc-section-number">1</span> Caveat</a></li>
+<li><a href="#review" id="toc-review"><span
+class="toc-section-number">2</span> Review</a></li>
+<li><a href="#a-mathematical-vector-type"
+id="toc-a-mathematical-vector-type"><span
+class="toc-section-number">3</span> A Mathematical Vector type</a></li>
+<li><a href="#guides" id="toc-guides"><span
+class="toc-section-number">4</span> Guides</a></li>
+<li><a href="#cpp-iterators" id="toc-cpp-iterators"><span
+class="toc-section-number">5</span> C++ Iterators</a></li>
+</ul></nav>
+<p>We showed you some basic C++ last semester, including using templates
+like Java uses generics. But that is far from all C++ templates can do…
+This lab will help you explore this topic in more detail.</p>
+<p>We recommend that you work in pairs for this lab, like those before
+it.</p>
+<h1 data-number="1" id="caveat"><span
+class="header-section-number">1</span> Caveat</h1>
+<p>There exists a subset of programmers who believe that C++ templates
+beyond type generics are an abomination and should never be used. I hope
+this lab will help you make your own opinion, but be aware that if you
+work for a company that uses C++ and suggest some of these techniques,
+you might get some blow-back…</p>
+<h1 data-number="2" id="review"><span
+class="header-section-number">2</span> Review</h1>
+<p>Begin by reviewing the <a
+href="https://www.cs.virginia.edu/luther/CSO1/S2022/lab10-cpp.html">C++
+lab from CSO1</a>.</p>
+<p>We’ll be picking up from where those left off in this lab.</p>
+<h1 data-number="3" id="a-mathematical-vector-type"><span
+class="header-section-number">3</span> A Mathematical Vector type</h1>
+<p>In mathematics, a vector has fixed length and adding vectors of
+different length is meaningless. In this lab you’ll use C++ templates to
+make a mathematical vector class that uses the type checker to ensure at
+compile time that no wrong-sized operations occur.</p>
+<div class="exercise long">
+<p>Implement a templated mathematical vector type in C++. When you are
+done, the following code should do as the comments suggest (you’ll need
+to comment out the <q>does not compile</q> lines to get the others to
+work):</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> vec<span class="op">&lt;</span><span class="dt">double</span><span class="op">,</span> <span class="dv">2</span><span class="op">&gt;</span> vd2<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> vec<span class="op">&lt;</span><span class="dt">double</span><span class="op">,</span> <span class="dv">3</span><span class="op">&gt;</span> vd3<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> vec<span class="op">&lt;</span><span class="dt">int</span><span class="op">,</span><span class="dv">4</span><span class="op">&gt;</span> vi4<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    vd3 a<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> a <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0, 0)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    a<span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span> <span class="fl">2.5</span><span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> a <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0, 2.5)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">(</span>a <span class="op">+</span> a<span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0, 5)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> a <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0, 2.5)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    vd2 b<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> b <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0)</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    vi4 c<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> c <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0, 0, 0)</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">(</span>a <span class="op">+</span> b<span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// does not compile</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">(</span>a <span class="op">+</span> c<span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// does not compile</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    c<span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span> <span class="fl">2.5</span><span class="op">;</span> <span class="co">// implicitly casts a double to an int...</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    b<span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="fl">2.5</span><span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    c<span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> b <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 2.5)</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> c <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (0, 0, 2, 0)</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    vd3 x <span class="op">=</span> <span class="op">{</span><span class="fl">1.5</span><span class="op">,</span> <span class="fl">2.5</span><span class="op">,</span> <span class="fl">3.5</span><span class="op">};</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> x <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (1.5, 2.5, 3.5)</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    vd3 y <span class="op">=</span> <span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">};</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> y <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span> <span class="co">// prints (1, 2, 3)</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>You code should not contain any heap-allocated memory (no
+<code>new</code> or <code>malloc</code>)</p>
+<p>When you’re done submit your C++ files to the submission site, OR
+show your TA what you’ve done for check-off.</p>
+
+</div>
+<h1 data-number="4" id="guides"><span
+class="header-section-number">4</span> Guides</h1>
+<ul>
+<li><p>Precede your <code>struct</code> (or <code>class</code>) with
+<code
+class="sourceCode cpp"><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">typename</span> N<span class="op">,</span> <span class="dt">int</span> n<span class="op">&gt;</span></code>
+so it will work with multiple types and lengths. (The only difference
+between <code>struct</code> and <code>class</code> in C++ is whether it
+defaults to <code>public</code> or <code>private</code>.)</p>
+<p>Note that <code>template</code> classes and functions cannot be
+defined in separate <code>.o</code> files. So, when template
+implementations are split across multiple files, usually the
+implementations are placed in header files.</p></li>
+<li><p>Use a static array <code>N data[n]</code> (or the like) as the
+only field so avoid heap memory allocations</p></li>
+<li><p>Constructors have no return type and the same name as the
+<code>struct</code></p>
+<ul>
+<li>your default constructor should sets the data to all
+<code>0</code>s</li>
+<li>the other should accept an <q>initializer list</q>, which is what
+the <code>{1,2,3}</code> turns into at compile time
+<ul>
+<li><code>#include &lt;initializer_list&gt;</code></li>
+<li>1 argument, a <code>std::initializer_list&lt;R&gt;</code> where
+<code>R</code> is the type of value you expect to be passed in.</li>
+<li>a <code>std::initializer_list&lt;R&gt;</code> is a collection,
+meaning you access it by <a href="#cpp-iterators">iterator</a></li>
+<li>you’ll need to verify that the initializer list has the right number
+of values (it’s <code>size()</code> method should help)</li>
+<li>we recommend using a template to pick the initializer list contained
+type, e.g. with <code
+class="sourceCode cpp"><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> R<span class="op">&gt;</span></code>
+before the function</li>
+</ul></li>
+</ul></li>
+<li><p>Operator overloading uses special function names</p>
+<ul>
+<li><code>operator +</code> should accept only vectors of the same
+length</li>
+<li><code>operator []</code> needs two variants
+<ul>
+<li><code
+class="sourceCode c">N<span class="op">&amp;</span> operator<span class="op">[]</span> <span class="op">(</span><span class="dt">int</span> idx<span class="op">)</span></code>
+– allows setting by index by returning a reference</li>
+<li><code
+class="sourceCode c">N operator<span class="op">[]</span> <span class="op">(</span><span class="dt">int</span> idx<span class="op">)</span> <span class="dt">const</span></code>
+– allows reading when no reference exists</li>
+</ul></li>
+<li>Printing needs a special <q>friend</q> notation to let you access
+between the <code>ostream</code> and <code>vec</code> classes:
+<ul>
+<li>a declaration like <code
+class="sourceCode c">friend std<span class="op">::</span>ostream<span class="op">&amp;</span> operator <span class="op">&lt;&lt;</span> <span class="op">(</span>std<span class="op">::</span>ostream<span class="op">&amp;</span> out<span class="op">,</span> <span class="dt">const</span> vec<span class="op">&lt;</span>N<span class="op">,</span>n<span class="op">&gt;&amp;</span> x<span class="op">)</span></code>
+placed in the class definition, indicating that the
+<code>operator&lt;&lt;</code> defined outside the class can access
+private member variables and function in the class</li>
+<li>this function should use <code>out &lt;&lt; thing</code> and then
+<code>return out</code></li>
+</ul></li>
+</ul></li>
+<li><p>It is best practice (but not technically required) to</p>
+<ul>
+<li><p>put <code>template</code> declarations on the line before the
+struct or function they modify</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">typename</span> R<span class="op">&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>R dostuff<span class="op">(</span><span class="at">const</span> R<span class="op">&amp;</span> t<span class="op">)</span> <span class="op">{</span> <span class="co">/*...*/</span> <span class="op">}</span></span></code></pre></div></li>
+<li><p>use <code>const</code> for all arguments you will not modify</p>
+<p><code
+class="sourceCode cpp"><span class="dt">double</span> sqrt<span class="op">(</span><span class="at">const</span> <span class="dt">double</span> x<span class="op">)</span></code></p></li>
+<li><p>use reference types <code>const mytype&amp;</code> for
+<code>struct</code> arguments you don’t want to copy</p>
+<p><code
+class="sourceCode cpp"><span class="dt">double</span> length<span class="op">(</span><span class="at">const</span> vec<span class="op">&lt;</span><span class="dt">double</span><span class="op">,</span><span class="dv">3</span><span class="op">&gt;&amp;</span> x<span class="op">)</span></code></p></li>
+<li><p>use <code>const</code> for any method that does not modify
+<code>this</code>’s fields</p>
+<p><code
+class="sourceCode cpp"><span class="dt">double</span> length<span class="op">()</span> <span class="at">const</span></code></p></li>
+</ul></li>
+</ul>
+<h1 data-number="5" id="cpp-iterators"><span
+class="header-section-number">5</span> C++ Iterators</h1>
+<p>Many STL structures in C++ use the iterator pattern to allow access.
+This has a somewhat different look than it does in Java or the like.</p>
+<p>The collection offers two functions of note:</p>
+<ul>
+<li><code>.begin()</code> returns an iterator pointing to the first
+element of the collection</li>
+<li><code>.end()</code> returns an iterator pointing to the <q>past the
+end</q> element of the collection</li>
+</ul>
+<p>The iterator overloads three operators of note:</p>
+<ul>
+<li><code>operator !=</code> tells if two iterators point to distinct
+entries in the collection</li>
+<li><code>operator *</code> gets the item pointed to out of the
+iterator</li>
+<li><code>operator ++</code> moves the item to the next spot in the
+collection</li>
+</ul>
+<p>Thus, a loop that prints all items in a collection might look
+like</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> mycollection<span class="op">.</span>begin<span class="op">();</span> <span class="co">// create an iterator</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    it <span class="op">!=</span> mycollection<span class="op">.</span>end<span class="op">();</span>       <span class="co">// and while it&#39;s not off the end</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span>                         <span class="co">// move it forward</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span>  <span class="co">// derreference to print</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Note in the above that when you combine a declaration and
+initialization, you can declare the type to be <code
+class="sourceCode cpp"><span class="kw">auto</span></code> meaning
+<q>use whatever type the initialization gives me</q>.</p>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

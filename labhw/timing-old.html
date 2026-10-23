@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: timing homework</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/timing-old.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#scenarios" id="toc-scenarios"><span
+class="toc-section-number">1</span> Scenarios to time</a></li>
+<li><a href="#estimates" id="toc-estimates"><span
+class="toc-section-number">2</span> Requirements for time
+estimates</a></li>
+<li><a href="#hints" id="toc-hints"><span
+class="toc-section-number">3</span> Hints</a>
+<ul>
+<li><a href="#timing-apis" id="toc-timing-apis"><span
+class="toc-section-number">3.1</span> Timing APIs</a>
+<ul>
+<li><a href="#clock_gettime" id="toc-clock_gettime"><span
+class="toc-section-number">3.1.1</span>
+<code>clock_gettime</code></a></li>
+<li><a href="#the-cycle-counter" id="toc-the-cycle-counter"><span
+class="toc-section-number">3.1.2</span> the cycle counter</a></li>
+</ul></li>
+<li><a href="#obtaining-and-consolidating-multiple-measurements"
+id="toc-obtaining-and-consolidating-multiple-measurements"><span
+class="toc-section-number">3.2</span> Obtaining and consolidating
+multiple measurements</a></li>
+<li><a href="#avoiding-measurement-overhead"
+id="toc-avoiding-measurement-overhead"><span
+class="toc-section-number">3.3</span> Avoiding measurement overhead</a>
+<ul>
+<li><a href="#negative-times-from-overhead"
+id="toc-negative-times-from-overhead"><span
+class="toc-section-number">3.3.1</span> Negative times from
+overhead</a></li>
+</ul></li>
+<li><a href="#compiler-optimization-and-function-calls"
+id="toc-compiler-optimization-and-function-calls"><span
+class="toc-section-number">3.4</span> Compiler optimization and function
+calls</a></li>
+<li><a href="#if-sigaction-or-sigset_t-is-not-defined"
+id="toc-if-sigaction-or-sigset_t-is-not-defined"><span
+class="toc-section-number">3.5</span> If <code>sigaction</code> or
+<code>sigset_t</code> is not defined</a></li>
+<li><a href="#timing-the-signal-handler"
+id="toc-timing-the-signal-handler"><span
+class="toc-section-number">3.6</span> Timing the signal handler</a></li>
+<li><a href="#timing-receiving-a-signal-back"
+id="toc-timing-receiving-a-signal-back"><span
+class="toc-section-number">3.7</span> Timing receiving a signal back</a>
+<ul>
+<li><a href="#need-to-wait-for-signal"
+id="toc-need-to-wait-for-signal"><span
+class="toc-section-number">3.7.1</span> Need to wait for signal</a></li>
+<li><a href="#missing-signals-coming-back"
+id="toc-missing-signals-coming-back"><span
+class="toc-section-number">3.7.2</span> Missing signals coming
+back</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#collaboration" id="toc-collaboration"><span
+class="toc-section-number">4</span> Collaboration</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>30-31 Jan 2025: attempt to rearrange task description to declutter
+description</li>
+<li>9 Feb 2025: replace confusing <q>:</q> before nothing with
+<q>.</q></li>
+</ul>
+</div>
+<div class="exercise long">
+<ol type="1">
+<li><p>Write a program <code>gettimings</code> in C and/or assembly to
+take measurements needed to estimate the time required for each of the 5
+scenarios below (under the heading <q><a href="#scenarios">Scenarios to
+time</a></q>).</p>
+<p>Your program should take one command-line argument which is a number
+from <code>1</code> to <code>5</code> indicating which scenario above to
+produce timings for. (So we’d run it like <code>./gettimings 1</code>,
+<code>./gettimings 2</code>, etc.)</p></li>
+<li><p>Run your program and collect the data it outputs.</p></li>
+<li><p>Create a file called <code>timings.txt</code> with a single
+overall time estimate for each of the five scenarios.</p>
+<p>Your overall time estimates <em>must</em> comply the requirements
+below (under <q><a href="#estimates">Requirements for time
+estimates</a></q>).</p></li>
+<li><p>If you needed to do any calculations (e.g. averages, subtracting
+something) on your program’s output to get those time estimates, then
+also include in <code>timings.txt</code>:</p>
+<ul>
+<li>the data output by your program you used to produce the estimates
+(or a reference to .txt or .csv file containing that output), and</li>
+<li>a description of the calculations you performed on your program’s
+output to get the overall estimates</li>
+</ul></li>
+<li><p>Produce a <code>Makefile</code> whose default target (the one run
+by <code>make</code>) will compile and link your <code>gettimings</code>
+program.</p></li>
+<li><p>Submit all the <code>timings.txt</code> you created, any data
+files your <code>timings.txt</code> references, and all your source
+files (<code>Makefile</code>, and all the C and assembly source files)
+to the submission site.</p>
+<p>(If your data files are quite large (many megabytes) and would be
+hard to upload, you may instead put it something like <a
+href="https://virginia.service-now.com/its/?id=itsweb_kb_article&amp;sys_id=13f08053db7ac744f032f1f51d9619da">Box</a>
+and give a link in timings.txt.)</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="scenarios"><span
+class="header-section-number">1</span> Scenarios to time</h1>
+<ol type="1">
+<li><p>calling an empty function (such that the function call is not
+optimized away) and having it return</p></li>
+<li><p>running the <code>getppid</code> function from
+<code>&lt;unistd.h&gt;</code> (this is not the same as
+<code>getpid</code>)</p></li>
+<li><p>running a <code>system("/bin/true")</code> (which runs the
+command <code>/bin/true</code> in a shell) [or if you are on a system
+where <code>/bin/true</code> does not exist, but
+<code>/usr/bin/true</code> does, you may use
+<code>system("/usr/bin/true")</code> instead]</p></li>
+<li><p>sending a signal to the current process and having its signal
+handler start executing (but not including the signal handler
+returning)</p></li>
+<li><p>sending a signal to another process, then having that process’s
+signal handler send a signal back, then either:</p>
+<ul>
+<li><p>having a signal handler for signal sent back start executing in
+the original process (but not including the signal handler returning);
+or</p></li>
+<li><p>identifying that the signal was sent back in the original process
+using a function like <code>sigwait</code></p></li>
+</ul>
+<p>For scenario 5, we need to run two copies of your program, similar to
+the signals lab:</p>
+<ul>
+<li>The <q>other process</q> (the one not sending the first signal) we
+should be able to run as <code>./gettimings -1</code>. It should print
+its PID and read a pid from stdin.</li>
+<li>When we run <code>./gettimings 5</code> it should print its PID and
+read a pid from stdin.</li>
+<li>We will test by entering the PID of the <code>./gettimings 5</code>
+process into the <code>./gettimings -1</code> process first, then
+entering the PID of the <code>./gettimings -1</code> process into the
+<code>./gettimings 5</code> process.</li>
+<li>(It’s okay if we need to use control-C or similar to terminate
+<code>./gettimings -1</code> process.)</li>
+</ul></li>
+</ol>
+<h1 data-number="2" id="estimates"><span
+class="header-section-number">2</span> Requirements for time
+estimates</h1>
+<p>The overall time estimates you report must:</p>
+<ul>
+<li>have been produced using a program compiled with some optimizations
+enabled (at least <code>-Og</code> or <code>-O1</code> or
+<code>-Os</code> or similar) to avoid timing the very awkward assembly
+clang or gcc generate when all optimizations are disabled;</li>
+<li>make an attempt to account for any measurement overhead (that is,
+the time unintentionally included in raw timings not used to do the task
+being timed but instead to obtain clock measurements, setup the task,
+etc.) One strategy might be to measure the time required for
+<q>nothing</q> and subtract this time from other measurements. See below
+for more discussion on how to do this.</li>
+<li>be based on measuring multiple instances of the each scenario to
+obtain your estimate for that scenario (to limit the impact of variation
+in system performance on your estimates)</li>
+</ul>
+<h1 data-number="3" id="hints"><span
+class="header-section-number">3</span> Hints</h1>
+<h2 data-number="3.1" id="timing-apis"><span
+class="header-section-number">3.1</span> Timing APIs</h2>
+<p>Since we are timing very short events, you want some function that
+can obtain high precision time measurements.</p>
+<h3 data-number="3.1.1" id="clock_gettime"><span
+class="header-section-number">3.1.1</span>
+<code>clock_gettime</code></h3>
+<p>One way to do this on Linux is using <code>clock_gettime</code>:</p>
+<pre><code>struct timespec t;
+returnvalue = clock_gettime(CLOCK_MONOTONIC, &amp;t);</code></pre>
+<p>will, when successful, set <code>returnvalue</code> to 0 and
+<code>t.tv_sec</code> to a number of seconds and <code>t.tv_nsec</code>
+to a number of nanoseconds. When unsuccessful, it will set
+<code>returnvalue</code> to <code>-1</code> and <code>errno</code> (or
+utility functions like <code>perror</code>) can be used to obtain
+information about the error.</p>
+<blockquote>
+<p>On macOS X, <code>clock_gettime</code> exists, but (at least in the
+versions I have looked at with CLOCK_MONOTONIC and CLOCK_REALTIME) it is
+only accurate to the nearest microsecond (even though it reports its
+result in nanoseconds).</p>
+</blockquote>
+<p><code>CLOCK_MONOTONIC</code> specifies to use a timer that starts
+around system boot. There are also other clock options like
+<code>CLOCK_REALTIME</code> (measures seconds since 1 Jan 1970 midnight
+UTC).</p>
+<p>In order to use <code>clock_gettime</code>, use something like
+<code>#define _XOPEN_SOURCE 700</code> <em>before
+<code>#include</code>ing any files</em> then
+<code>#include &lt;time.h&gt;</code>. (The <code>#define</code> requests
+that header files make features from the X/Open Single Unix
+Specification available to you.)</p>
+<p>An example utility function for using this is:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define _XOPEN_SOURCE </span><span class="dv">700</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;time.h&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">...</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">/// returns the number of nanoseconds that have elapsed since an arbitrary time</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> <span class="dt">long</span> nsecs<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> timespec t<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    clock_gettime<span class="op">(</span>CLOCK_MONOTONIC<span class="op">,</span> <span class="op">&amp;</span>t<span class="op">);</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t<span class="op">.</span>tv_sec<span class="op">*</span><span class="dv">1000000000</span> <span class="op">+</span> t<span class="op">.</span>tv_nsec<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 data-number="3.1.2" id="the-cycle-counter"><span
+class="header-section-number">3.1.2</span> the cycle counter</h3>
+<p>x86-64 has a per-core <q>Time Stamp Counter</q> which can be accessed
+with the assembly instructions <code>rdtsc</code> (read time stamp
+counter) or <code>rdtscp</code> (read time stamp counter and processor
+ID).</p>
+<p><code>rdtscp</code> sets <code>%edx</code> to the upper 32 bits of
+the 64-bit time stamp counter, <code>%eax</code> to the lower 32 bits of
+time stamp counter, and <code>%ecx</code> to a ID number that should be
+unique to the core. The timestamp counter starts counting roughly when
+each core starts, but it may count at slightly different rates on each
+core, so you should not attempt to subtract numbers from two different
+cores.</p>
+<p>Without writing assembly, GCC and Clang expose these using some
+built-in wrapper functions declared in
+<code>&lt;immintrin.h&gt;</code>:</p>
+<pre><code>__int64 rdtsc();
+__int64 rdtscp(int *pointer_to_core_id);</code></pre>
+<p>where <code>__int64</code> is most likely the same as a
+<code>long</code> on 64-bit Linux. The cycle counter is in units of
+clock cycles (not seconds or similar). On systems with variable clock
+rates used for running instructions, often the time stamp counter will
+be based on clock cycles of a special constant rate clock rather than
+the clock used by each core to run instructions.</p>
+<h2 data-number="3.2"
+id="obtaining-and-consolidating-multiple-measurements"><span
+class="header-section-number">3.2</span> Obtaining and consolidating
+multiple measurements</h2>
+<p>There are several reasons why measurements will not be
+consistent:</p>
+<ul>
+<li>code or data may be loaded into memory and caches the first time it
+is run;</li>
+<li>processors may vary the clock rate they used for executing
+instructions (based on, e.g., temperature or power saving goals);</li>
+<li>other things on the system may interfere (for example, the operating
+system handling exceptions or moving the timing program to another
+core)</li>
+</ul>
+<p>To mitigate this, usually one would:</p>
+<ul>
+<li>take <strong>many</strong> timings and then compute an average
+and/or minimum and/or standard deviation and/or other statistics of your
+raw measurements</li>
+<li>time a loop with many iterations of the event and divide the
+time</li>
+<li>take timings after a significant number of <q>warmup</q> runs to
+allow the processor to load data into caches and decide on a hopefully
+stable clock speed</li>
+</ul>
+<p>(For how many timings, a possible rule of thumb is to take at least
+enough timings to take half a second of real time.)</p>
+<h2 data-number="3.3" id="avoiding-measurement-overhead"><span
+class="header-section-number">3.3</span> Avoiding measurement
+overhead</h2>
+<p><img src="files/timing-overhead.svg"
+     alt="Diagram showing getppid running. The timeline shows a call to getppid labeled 'what you want to measured', surrounded by events of getppid being called and calls to clock_gettime. Two points in the calls to clock_gettime are marked with dotted lines to indicate the point where clock_gettime reads the clock. The time between these two points is marked 'time measured directly'."
+></p>
+<p>Whenever you time something, in addition to timing that something you
+will also end up timing some of your timing code. For example, in the
+timeline diagram above, comparing the two results of
+<code>clock_gettime</code> calls measure <code>getppid</code> and also
+part of <code>clock_gettime</code> and the code that called
+<code>getppid</code> and <code>clock_gettime</code>. Because
+clock_gettime and other time reading functions can’t be called
+instantaneously, your raw time measurements will always include the time
+for some <q>extra</q> stuff. To compensate for this, I would recommend
+timing <q>nothing</q> (just running your timing code timing an empty
+block of code) and subtracting this from your other timings. Note that
+<q>nothing</q> has to be, in fact, <em>nothing</em> to make the overhead
+subtraction valid.</p>
+<p>In addition, the amount of overhead is generally lower when you
+compile with optimizations (for example, <code>-Og</code> or
+<code>-O1</code>) and (when timing) without enabling slow debugging
+features like <code>-fsanitize=address</code>, so I would recommend
+trying to do so. Keep in mind, however, to enable optimizations, you’ll
+need to keep the compiler from doing optimizations that eliminate the
+things you are trying to time. The ideas in section 2.4 can be helpful
+for this.</p>
+<h3 data-number="3.3.1" id="negative-times-from-overhead"><span
+class="header-section-number">3.3.1</span> Negative times from
+overhead</h3>
+<p>Sometimes students get consistently negative times after attempting
+to subtract overhead. <em>Usually</em> I think this is the result of
+issues like:</p>
+<ul>
+<li><p>not eliminating differences in the environment your overhead
+measurements come from and the environment your <q>real</q> measurements
+come from. For example, if they have loops that require different
+amounts of work to keep track of the loop indices, or if the compiler
+produces better assembly for one than the other.</p>
+<p>As part of trying to eliminate these differences, one thing I’d
+recommend is trying to enable some compiler optimizations so the
+compiler does not keep all values on the stack. Because of caches, the
+speed of memory accesses can vary based on how things are laid out in
+memory, but accesses to registers are more consistent. (As mentioned
+above, unfortunately, you may need to do extra work to make sure the
+compiler does not eliminate code you are timing that apparently <q>does
+nothing</q> to speed the program up.)</p></li>
+<li><p>not repeating measurements of overhead enough times to discount
+<q>warmup</q> effects (where the measurements will be slower the first
+few times they run). For example, if the overhead measurement needs to
+spend extra time loading the code for reading the clock into the
+processor’s caches (fast memories).</p></li>
+</ul>
+<p>If you you make an significant effort to eliminate/diagnose
+measurement errors that would cause a negative time and still have a
+negative time and you report it accurately when you report your results,
+that is fine. In some rare cases, these results could be <q>real</q> due
+to how modern processors work:</p>
+<p>Because processors try to run multiple instructions at a time, in
+some unusual cases, it might be possible that something that takes a
+very short amount of time runs entirely simultaneously with your timing
+code around it and so takes <q>no</q> time. In other unusual cases, it’s
+possible that relocating or making apparently inconsequential changes
+the timing code speeds that code up slightly (due to arranging code or
+data on the stack in a slightly better way in memory, etc.).</p>
+<p>There are ways to avoid instructions overlapping (by including
+instructions that the processor manufacturer designates to prevent this;
+see, for example, <a
+href="https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-32-ia-64-benchmark-code-execution-paper.pdf">this
+Intel document</a>) to make sure you are only timing the task of
+interest and not how it interacts with instructions around it, but that
+is not required for this assignment.</p>
+<h2 data-number="3.4"
+id="compiler-optimization-and-function-calls"><span
+class="header-section-number">3.4</span> Compiler optimization and
+function calls</h2>
+<p>I recommend turning on compiler optimizations to avoid measuring slow
+code for setting up system calls and the like. But, when timing a
+function call, you may have problems with the compiler’s optimizer
+replacing a function call with the body of that function. Some
+possibilities to avoid this:</p>
+<ul>
+<li>write the function in a separately compiled file, so the compiler
+will not have the information to do this optimization</li>
+<li>write the function call itself in assembly file, so it won’t be
+subject to the compiler’s optimizations at all</li>
+<li>make a C function marked with the
+<code>__attribute__((noinline))</code> before its return type and put
+<code>__asm__("")</code> in its body. The <code>noinline</code>
+attribute will tell Clang and GCC that they cannot copy the function’s
+body rather than calling the function. The inline assembly will tell
+Clang and GCC that calls to the function cannot be omitted even though
+the function does not appear to do anything.</li>
+</ul>
+<h2 data-number="3.5" id="if-sigaction-or-sigset_t-is-not-defined"><span
+class="header-section-number">3.5</span> If <code>sigaction</code> or
+<code>sigset_t</code> is not defined</h2>
+<p>If you compile with <code>-std=c11</code> or similar, , this requests
+only C standard functions by default, and &lt;signal.h&gt; is part of
+standard C, but includes only a limited set of functions/types (not
+including most of what we discussed for signal handling).</p>
+<p>You can request the full set of Linux/Unix functions (despite using
+<code>-std=c11</code>) by using a <q>feature test macro</q> like
+<code>#define _XOPEN_SOURCE 700</code> before including anything (or,
+equivalently, by compiling with an option like
+<code>-D_XOPEN_SOURCE=700</code>). This #define requests features from
+X/Open System Interfaces associated with the <a
+href="https://pubs.opengroup.org/onlinepubs/9699919799/">POSIX.1-2017
+standard</a>.</p>
+<p>There are similar feature test macros that request slightly different
+sets of functionality; Linux documents all of these in the
+<q>feature_test_macros</q> manpage.</p>
+<h2 data-number="3.6" id="timing-the-signal-handler"><span
+class="header-section-number">3.6</span> Timing the signal handler</h2>
+<p>When sending a signal <strong>to the current thread</strong>,
+<code>kill()</code> is guaranteed to return only after the signal is
+delivered. (This is <strong>not</strong> guaranteed if you send to
+another process.) If you want to avoid specifying the process ID, you
+can also use the function <code>raise()</code> [which can only send a
+signal to the current process] instead of <code>kill()</code> [which can
+send to any process].</p>
+<h2 data-number="3.7" id="timing-receiving-a-signal-back"><span
+class="header-section-number">3.7</span> Timing receiving a signal
+back</h2>
+<h3 data-number="3.7.1" id="need-to-wait-for-signal"><span
+class="header-section-number">3.7.1</span> Need to wait for signal</h3>
+<p>If you send a signal to another process <code>kill()</code> can and
+often will return before the signal is handled, so you can’t just call
+<code>kill()</code> the appropriate number of times. Also, if you send
+the same signal twice to a process before it is handled, then the signal
+may only be handled once.</p>
+<h3 data-number="3.7.2" id="missing-signals-coming-back"><span
+class="header-section-number">3.7.2</span> Missing signals coming
+back</h3>
+<p>The last timing task requires waiting for a signal to be received by
+your current process. The naive approach of:</p>
+<pre><code>send_signal_to_other_program();
+/* MIDDLE */
+wait_for_signal();</code></pre>
+<p>has the problem that the signal can be received at <q>MIDDLE</q> and
+<q>lost</q>. To avoid this problem, some approaches for doing this:</p>
+<ul>
+<li><q><a href="../readings/kernel.html#blocking">block</a></q> the
+signal temporarily with <code>sigprocmask</code>, then use
+<code>sigwait</code> to wait for the signal <em>instead of</em>
+installing a signal handler</li>
+<li>install a signal handler that finishes timing and have it set a flag
+in a global variable that is checked in a loop that calls something like
+<code>nanosleep</code>, similar to checking for <code>outbox[0]</code>
+to be 0 in the lab.<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></li>
+<li>install a signal handler, <q>block</q> the signal temporarily with
+<code>sigprocmask</code>, then use <code>sigsuspend</code> to briefly
+unblock the signal<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> and wait for the signal handler to
+run</li>
+<li>install a signal handler that uses a function like
+<code>siglongjmp</code> to continue execution of the post-timing code
+and call <code>sigsetjmp</code> before running the signal handler.
+<code>sigsetjmp</code> and <code>siglongjmp</code> work very similar to
+<code>setjmp</code> and <code>longjmp</code> with are described in the
+<q><a href="kernel.html#setjmp-longjmp-and-software-exceptions">setjmp,
+longjmp, and software exceptions</a></q> section of the kernel reading.
+Have the code that waits for the signal handler to run call a function
+like <code>pause()</code> to avoid wasting CPU time before
+<code>siglongjmp</code> runs. (You can also use the plain version of
+<code>setjmp</code> and <code>longjmp</code> provided that you restore
+the signal mask afterwards with a call to <code>sigprocmask</code> or
+register the signal handler with the SA_NODEFER flag.)</li>
+</ul>
+<p><q>Blocking</q> a signal ensures that the operating system will not
+deliver it (that is, will not run its signal handler), but blocked
+signals will still be recorded as <q>pending</q> (that is, needing to be
+handled at some point). In documentation, you may see the set of signals
+a process (or thread) has blocked referred to as the <q>signal
+mask</q>.</p>
+<h1 data-number="4" id="collaboration"><span
+class="header-section-number">4</span> Collaboration</h1>
+<p>As with most homework assignments, this assignment is to be completed
+individually.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>To be most reliable/portable, the flag should be
+declared as a <code>volatile sig_atomic_t</code> to tell the compiler to
+expect the value to be modified by signal handlers, but as long as the
+loop calls something like <code>nanosleep</code>, probably other types
+will work.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>sigsuspend sets the <q>signal mask</q>, which is the set
+of blocked signals. So you will want to ensrue that the set of signals
+you pass to sigsuspend does <em>not</em> include the signal you want to
+wait for. This is different than how <code>sigwait</code> would work.<a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

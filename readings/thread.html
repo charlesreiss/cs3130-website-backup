@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Processes and threads</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/thread.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#terminology" id="toc-terminology"><span
+class="toc-section-number">1</span> Terminology</a>
+<ul>
+<li><a href="#multitasking" id="toc-multitasking"><span
+class="toc-section-number">1.1</span> Multitasking</a></li>
+<li><a href="#processes" id="toc-processes"><span
+class="toc-section-number">1.2</span> Processes</a>
+<ul>
+<li><a href="#virtual-address-spaces"
+id="toc-virtual-address-spaces"><span
+class="toc-section-number">1.2.1</span> Virtual address spaces</a></li>
+</ul></li>
+<li><a href="#threads" id="toc-threads"><span
+class="toc-section-number">1.3</span> Threads</a></li>
+<li><a href="#multi-threaded-processes"
+id="toc-multi-threaded-processes"><span
+class="toc-section-number">1.4</span> Multi-threaded Processes</a></li>
+</ul></li>
+<li><a href="#implementing-multitasking"
+id="toc-implementing-multitasking"><span
+class="toc-section-number">2</span> Implementing multitasking</a>
+<ul>
+<li><a href="#context-switches" id="toc-context-switches"><span
+class="toc-section-number">2.1</span> Context Switches</a></li>
+<li><a href="#preemptive-multitasking"
+id="toc-preemptive-multitasking"><span
+class="toc-section-number">2.2</span> Preemptive multitasking</a></li>
+<li><a href="#cooperative-multitasking"
+id="toc-cooperative-multitasking"><span
+class="toc-section-number">2.3</span> Cooperative multitasking</a></li>
+<li><a href="#hardware-multitasking"
+id="toc-hardware-multitasking"><span
+class="toc-section-number">2.4</span> Hardware multitasking</a></li>
+</ul></li>
+<li><a href="#fork-et-al." id="toc-fork-et-al."><span
+class="toc-section-number">3</span> <code>fork</code> et al.</a>
+<ul>
+<li><a href="#new-process-whats-in-memory"
+id="toc-new-process-whats-in-memory"><span
+class="toc-section-number">3.1</span> New process, what’s in
+memory?</a></li>
+<li><a href="#using-fork" id="toc-using-fork"><span
+class="toc-section-number">3.2</span> Using <code>fork</code></a></li>
+<li><a href="#replacing-memory" id="toc-replacing-memory"><span
+class="toc-section-number">3.3</span> Replacing memory</a></li>
+<li><a href="#using-waitpid" id="toc-using-waitpid"><span
+class="toc-section-number">3.4</span> Using
+<code>waitpid</code></a></li>
+</ul></li>
+<li><a href="#file-descriptors" id="toc-file-descriptors"><span
+class="toc-section-number">4</span> File descriptors</a>
+<ul>
+<li><a href="#dup2" id="toc-dup2"><span
+class="toc-section-number">4.1</span> <code>dup2</code></a></li>
+<li><a href="#pipe" id="toc-pipe"><span
+class="toc-section-number">4.2</span> <code>pipe</code></a></li>
+</ul></li>
+<li><a href="#using-pthreads" id="toc-using-pthreads"><span
+class="toc-section-number">5</span> Using <code>pthreads</code></a></li>
+<li><a href="#coordinating-between-threads"
+id="toc-coordinating-between-threads"><span
+class="toc-section-number">6</span> Coordinating between
+threads</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>10 Feb 2024: add section on <code>pipe</code></li>
+</ul>
+</div>
+<h1 data-number="1" id="terminology"><span
+class="header-section-number">1</span> Terminology</h1>
+<h2 data-number="1.1" id="multitasking"><span
+class="header-section-number">1.1</span> Multitasking</h2>
+<p><strong>Multitasking</strong> is a generic term for having multiple
+flows through code occurring concurrently.</p>
+<p><strong>Preemptive multitasking</strong> is multitasking where the
+scheduling of which task has access to the processor and related
+resources is controlled by the OS, hardware, or other system external to
+the task itself, and the task’s access to them can be
+<em>preempted</em>, or taken away, from it by an asynchronous event like
+an interrupt.</p>
+<p><strong>Cooperative multitasking</strong> is multitasking where the
+scheduling of which task has access to the processor and related
+resources is controlled by a library that must be manually invoked by
+code that is willing to lose control of the resource.</p>
+<h2 data-number="1.2" id="processes"><span
+class="header-section-number">1.2</span> Processes</h2>
+<p>A <strong>process</strong> is a software-only operating system
+construct that roughly parallels the end-user idea of a running
+program.</p>
+<p>A <strong>process</strong> has a full complement of private state:
+program registers, condition codes, virtual address space,
+kernel-managed resources like file descriptors, etc.</p>
+<p>The process abstraction provides a kind of <q>virtual machine</q>,
+with its own equivalent of processor cores and of memory. To implement
+these, the operating system maintains a variety of data structures
+inside kernel-only memory to help track different processes. Portions of
+those structures relating to one process at a time<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> are
+loaded into hardware-accessible registers and memory so that the
+hardware mechanisms will cause running code to interact with the
+appropriate process’s memory and other state.</p>
+<h3 data-number="1.2.1" id="virtual-address-spaces"><span
+class="header-section-number">1.2.1</span> Virtual address spaces</h3>
+<p>We call the process’s equivalent of memory a <em>virtual address
+space</em>.</p>
+<p>Since each process has its own virtual address space, it can use
+memory without worrying about interfering with other programs
+accidentally.</p>
+<p>We discuss how this virtual address space is implemented in the <a
+href="vm.html">reading on virtual memory</a>. Briefly, the most common
+mechanism uses <em>address translation</em>, where based on settings in
+special registers, the hardware will convert a program’s addresses to
+real addresses in the hardware. The operating system controls which
+address space is active by changing these special registers.</p>
+<h2 data-number="1.3" id="threads"><span
+class="header-section-number">1.3</span> Threads</h2>
+<p>A <strong>thread</strong> has a limited complement of private state:
+primarily just program registers and condition codes. (Roughly
+corresponding to the state stored on an active processor core.)</p>
+<p>Since each thread has its own program registers and program counter,
+each thread can use registers and change the program counter without
+worrying about interferring with other programs.</p>
+<p>For the first part of the semester, we will only deal with processes
+that have a single thread. Later in the semester, we will discuss
+programming with multiple threads in more detail.</p>
+<h2 data-number="1.4" id="multi-threaded-processes"><span
+class="header-section-number">1.4</span> Multi-threaded Processes</h2>
+<p>All the threads of a given process share the same virtual address
+space, kernel-managed resources like file descriptors, etc. Because the
+stack is managed by a program register (<code>%rsp</code>), this means
+each thread has its own stack. Because heap, code, and globals are
+stored at known virtual addresses, that memory is shared by all
+threads.</p>
+<h1 data-number="2" id="implementing-multitasking"><span
+class="header-section-number">2</span> Implementing multitasking</h1>
+<h2 data-number="2.1" id="context-switches"><span
+class="header-section-number">2.1</span> Context Switches</h2>
+<p>Changing which thread and/or process’s state is currently loaded on a
+processor core is called a <strong>context switch</strong>. Most
+commonly operating systems with perform context switches as part of
+handling an exception.</p>
+<h2 data-number="2.2" id="preemptive-multitasking"><span
+class="header-section-number">2.2</span> Preemptive multitasking</h2>
+<p>Both processes and threads are scheduled by the operating system,
+with periodic interrupts being used to switch between them
+preemptively.</p>
+<p>All major user operating systems (but not all embedded-system
+operating systems) use a hardware timer to create an exception (a
+<q>timer interrupt</q>) every few dozen milliseconds to enable automated
+context switching and facilitate the illusion that more processes are
+running at a time than there are processors in the computer. Operating
+systems will also perform context switches at other times, such as when
+a program needs to wait for input before it can continue executing.</p>
+<h2 data-number="2.3" id="cooperative-multitasking"><span
+class="header-section-number">2.3</span> Cooperative multitasking</h2>
+<p>Some operating systems (including 1980s versions of Windows and Mac
+OS, as well as some modern systems for resource-constrained hardware)
+use cooperative multitasking for processes; this means, in particular,
+that if a process enters an infinite loop or otherwise runs forever
+without using the <q>give up control</q> system call, the entire
+computer can freeze.</p>
+<p>More commonly today, cooperative multitasking is used for
+user-mode-only event libraries. Being user-mode software, these are
+relatively easy to implement and change, resulting in many names
+(fibers, tasklets, coroutines, promises, futures, the asyc/await
+pattern, event libraries, continuation-passing style, etc.) and nuances
+of detail.</p>
+<h2 data-number="2.4" id="hardware-multitasking"><span
+class="header-section-number">2.4</span> Hardware multitasking</h2>
+<p>On some processors, two or more threads can be scheduled on the same
+core in parallel using <q>hyperthreading</q> or <q>simultaneous
+multithreading</q>. This hardware typically appears to the operating
+system as if it were multiple cores.</p>
+<h1 data-number="3" id="fork-et-al."><span
+class="header-section-number">3</span> <code>fork</code> et al.</h1>
+<p>On Unix-like systems, the most common functions for handling
+processes are <code>fork</code> and <code>waitpid</code>:
+<code>fork</code> creates a new process, and <code>waitpid</code>
+removes one.</p>
+<h2 data-number="3.1" id="new-process-whats-in-memory"><span
+class="header-section-number">3.1</span> New process, what’s in
+memory?</h2>
+<p>When creating a new process, a challenge exists: since it has its own
+address space, what do we put in that memory? In particular, what code
+will it run?</p>
+<p>We could say <q>you can only create a process if you give it a file
+containing memory contents to initialize it with,</q> but that decision
+ties the ability to create processes to the file format of a new
+process’s memory, which is an unnecessary limitation.</p>
+<p>As an alternative, we could say <q>the new process has a copy of the
+same memory as the old.</q> That way we can have code that wants to
+create a new process set up its memory and code arbitrarily. Conversely,
+this involves copying a lot of memory…</p>
+<p>Fortunately, we can avoid copying by adding a <q>copy-on-write</q>
+bit to each page table entry. If this bit is set and we try to write to
+that page of memory, the memory management unit (MMU) first duplicates
+the page table and<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> resets the bit to 0. This way,
+whichever process writes to that page first gets its own copy, and if
+neither write, only read, then no copying is needed.</p>
+<p>The most common implementation is the <q>copy of memory</q> approach,
+implemented by <code>fork</code>. When new contents of memory are
+desired, the <code>fork</code> is immediately followed by a system call
+to replace the entire contents of memory (i.e., via <code>execve</code>
+or its friends).</p>
+<h2 data-number="3.2" id="using-fork"><span
+class="header-section-number">3.2</span> Using <code>fork</code></h2>
+<p>The <code>fork</code> function wraps the process-creating system
+call. Its semantics are that you invoke it once and it returns twice,
+once in each process. We need the two to do different things next (else
+what was the point of <code>fork</code>ing?), so each return has a
+different value:</p>
+<ul>
+<li>One process (traditionally called the <strong>child</strong>) has a
+return value of 0</li>
+<li>The other process (traditionally called the <strong>parent</strong>)
+has as its return value the unique integer the OS uses to identify the
+child process.</li>
+</ul>
+<div class="aside long">
+<p><strong>Fork bombing</strong></p>
+<p>Consider (but <strong>never run!</strong>) the following code:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span><span class="dv">30</span><span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    fork<span class="op">();</span></span></code></pre></div>
+<p>This code runs a loop 30 times, but each run doubles the number of
+processes. If we try to work it out in low-level step-by-step
+action:</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Processes</th>
+<th style="text-align: left;">Code</th>
+<th><code>i</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><code>i=0</code></td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1 → 2</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2 → 4</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4 → 8</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8 → 16</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">16</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">16</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">16 → 32</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">32</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">…</td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">268,435,456</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">268,435,456 → 536,870,912</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">536,870,912</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>29</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">536,870,912</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">536,870,912 → 1,073,741,824</td>
+<td style="text-align: left;"><code>fork()</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1,073,741,824</td>
+<td style="text-align: left;"><code>i+=1</code></td>
+<td>30</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1,073,741,824</td>
+<td style="text-align: left;"><code>i&lt;30</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>… we see that we’d need over 1 billion processes. The OS cannot
+handle anywhere near that many; it will generally crash, but might first
+start swapping out the pages of kernel memory that store the list of
+processes, resulting in many thousands of times slowdown on all
+operations.</p>
+<p>This is called a <q>fork bomb</q> and is one of the few simple
+mistakes that can result in freezing or crashing an entire computer.</p>
+
+</div>
+<h2 data-number="3.3" id="replacing-memory"><span
+class="header-section-number">3.3</span> Replacing memory</h2>
+<p>Because copy-on-write makes <code>fork</code> an efficient and simple
+way to make new processes, the usual pattern for launching a new program
+is</p>
+<ol type="1">
+<li>The launcher <code>fork</code>s.</li>
+<li>The child process changes its memory to the new code using
+<code>execve</code> or its relatives.</li>
+</ol>
+<p>The <code>execve</code> program is defined as follows:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> execve<span class="op">(</span><span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>filename<span class="op">,</span> <span class="dt">char</span> <span class="op">*</span><span class="dt">const</span> argv<span class="op">[],</span> <span class="dt">char</span> <span class="op">*</span><span class="dt">const</span> envp<span class="op">[]);</span></span></code></pre></div>
+<dl>
+<dt><code>filename</code></dt>
+<dd>
+The path of a binary executable.
+</dd>
+<dt><code>argv</code></dt>
+<dd>
+<p>An array of argument strings passed to the new program. By
+convention, the first of these strings (i.e., <code>argv[0]</code>)
+should contain the filename associated with the file being executed.</p>
+<p>The <code>argv</code> array must include a <code>NULL</code> pointer
+to mark the end of the array.</p>
+</dd>
+<dt><code>envp</code></dt>
+<dd>
+<p>An array of strings, conventionally of the form
+<code>key=value</code>, which are passed as environment<a href="#fn3"
+class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> to
+the new program.</p>
+<p>The <code>envp</code> array must include a <code>NULL</code> pointer
+to mark the end of the array.</p>
+</dd>
+</dl>
+<p>Assuming there are no errors in the arguments, <code>execve</code>
+does not return; instead, it overwrites all of user-space memory with
+the memory contents described in the binary executable file and jumps to
+the initial instruction of the newly-loaded code.</p>
+<h2 data-number="3.4" id="using-waitpid"><span
+class="header-section-number">3.4</span> Using <code>waitpid</code></h2>
+<p>A common use of <code>fork</code> is from a terminal, shell, or
+graphical launcher. In this situation, the basic flow is</p>
+<ol type="1">
+<li>The launcher <code>fork</code>s.</li>
+<li>The child process changes its memory to the new code.</li>
+<li>The child process runs.</li>
+<li>The child process terminates.</li>
+<li>The launcher displays something if the child crashed instead of
+terminating gracefully.</li>
+</ol>
+<p>The first four of these steps can be done with <code>fork</code>
+alone, but the last requires some way for the launcher to be notified
+when a child terminates, with information about how it ended.</p>
+<p>When a process ends, it becomes a <strong>zombie</strong>—still
+listed in the process list in the OS, but its memory is freed and it is
+never scheduled. If a parent process has a zombie child, it can
+<strong>reap</strong> that process by using the <code>waitpid</code>
+function. This can be run in several ways, as documented in <code
+class="sourceCode bash"><span class="fu">man</span> waitpid</code>, but
+they all involve removing one zombie process from the list of processes
+in the OS and returning some information about how long it ran, what
+exit code it provided, etc.</p>
+<div class="example long">
+<p>The following program</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;sys/wait.h&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    pid_t pid <span class="op">=</span> fork<span class="op">();</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>pid <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;This is the child process</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="dv">12</span><span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;This is the parent process</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="dt">int</span> status<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        waitpid<span class="op">(</span>pid<span class="op">,</span> <span class="op">&amp;</span>status<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">&quot;Child exited with status code: </span><span class="sc">%d\n</span><span class="st">&quot;</span><span class="op">,</span> WEXITSTATUS<span class="op">(</span>status<span class="op">));</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>when compiled and run prints either</p>
+<pre><code>This is the parent process
+This is the child process
+Child exited with status code: 12</code></pre>
+<p>or</p>
+<pre><code>This is the child process
+This is the parent process
+Child exited with status code: 12</code></pre>
+<p>depending on whether the parent or child gets to its first
+<code>printf</code> first.</p>
+<p>The <code>status</code> integer also has other information, such as
+if it was terminated with a signal and if so which signal, which can be
+accessed with other macros instead of <code>WEXITSTATUS</code>.</p>
+
+</div>
+<h1 data-number="4" id="file-descriptors"><span
+class="header-section-number">4</span> File descriptors</h1>
+<p>On POSIX systems, programs access open files using <em>file
+descriptors</em>. For every process, a POSIX OS track which files it has
+open using a table of pointers to information needed to access (read,
+write, etc.) an open file, which POSIX calls an <em>open file
+description</em>. The <em>file descriptor</em> is an integer used to
+index into this table.</p>
+<p>Creating a new file descriptor such as with the <code>open()</code>
+function creates a new open file descirption and adds pointer to it to
+the table. The file descriptor is in the index at which it was added to
+the table. Running <code>close()</code> removes an entry from the table.
+(When an open file description no longer has any pointers to it,
+resources associated with it are freed.) By convention, file descriptor
+0 corresponds to standard input (<code>stdin</code> in
+<code>&lt;stdio.h&gt;</code>), file descriptor 1 to standard output
+(<code>stdout</code>), and file descriptor 2 to standard error
+(<code>stderr</code>).</p>
+<p>The file descriptor table is copied by <code>fork()</code>, so the
+new process will have pointers to the same set of open file
+descriptions. and not changed by <code>execv()</code>. For this reason,
+usually if your program is outputting to one terminal and starts a new
+process, by default that process also outputs to the same terminal.
+Unless you make an effort to change the file descrpitors, the new
+process’s file descriptor for stdout will specify the same process.</p>
+<h2 data-number="4.1" id="dup2"><span
+class="header-section-number">4.1</span> <code>dup2</code></h2>
+<p>The library call <code>dup2()</code> allows one to copy a file
+descriptor onto another. <code>dup2(X, Y)</code> makes file descriptor Y
+refer to the same open file description as file descriptor X. Most
+notably, this can be used to reassign where stdin or stdout go. This
+functionality is used by shells when executing a command like
+<code>./a.out &gt; output.txt</code>, which runs <code>./a.out</code>
+but sends its output to the file <code>output.txt</code>.</p>
+<div class="example long">
+<p>The following program</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;This is before open</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span> fflush<span class="op">(</span>stdout<span class="op">);</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> fd <span class="op">=</span> open<span class="op">(</span><span class="st">&quot;output.txt&quot;</span><span class="op">,</span> O_WRONLY <span class="op">|</span> O_CREAT <span class="op">|</span> O_TRUNC<span class="op">);</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>fd <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> printf<span class="op">(</span><span class="st">&quot;Error in open</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span> <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span> <span class="op">}</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;This is after open</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span> fflush<span class="op">(</span>stdout<span class="op">);</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    dup2<span class="op">(</span>fd<span class="op">,</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;This is after dup2</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span> fflush<span class="op">(</span>stdout<span class="op">);</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    close<span class="op">(</span>fd<span class="op">);</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;This is after close</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span> fflush<span class="op">(</span>stdout<span class="op">);</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>will output</p>
+<pre><code>This is before open
+This is after open</code></pre>
+<p>to the terminal and</p>
+<pre><code>This is after dup2
+This is after close</code></pre>
+<p>to <code>output.txt</code> (assuming it can be succesfully
+opened.</p>
+<p>Note that the <code>close()</code> only effects when one file
+descriptor, even when there are multiple file descriptors referring to
+the same open file.</p>
+
+</div>
+<h2 data-number="4.2" id="pipe"><span
+class="header-section-number">4.2</span> <code>pipe</code></h2>
+<p>The library call <code>pipe()</code> creates a pair of file
+descriptors that are connected to each other. One of the file
+descriptors is the <q>write end</q> of the pipe and one is the <q>read
+end</q>. Data written to the <q>write end</q> can be read from the
+<q>read end</q> of the pipe.</p>
+<p>This functionality along with <code>dup2</code> is used by shells
+when executing a command like <code>./first | ./second</code> (called a
+<em>pipeline</em>), which runs <code>./first</code> and
+<code>./second</code> at the same time, sending the output of
+<code>./first</code> as the input of <code>./second</code>.</p>
+<p>The OS implements pipes with a limited size buffer. If the buffer
+would become full from writing, attempts to write will hang until a
+process reads from the pipe to free up space in the buffer. This means
+that when executing a command like <code>./first | ./second</code>, the
+first command may end up being slowed down so the second command can
+keep up.</p>
+<h1 data-number="5" id="using-pthreads"><span
+class="header-section-number">5</span> Using <code>pthreads</code></h1>
+<p>The POSIX standard defines a set of interfaces for handling threads,
+which are implemented as a native threading mechanism on Linux and OS X
+and as an optional mechanism on Windows. POSIX threads, often
+abbreviated pthreads, are complicated enough to deserve <a
+href="pthreads.html">their own writeup</a>.</p>
+<h1 data-number="6" id="coordinating-between-threads"><span
+class="header-section-number">6</span> Coordinating between threads</h1>
+<p>The topic of coordinating between threads, especially when multiple
+threads are accessing the same values in memory, is a very complicated
+topic. So we have three writeups related to this:</p>
+<ul>
+<li>on <a href="sync.html">synchronization primitives</a> — interfaces
+provided to allow programmers to coordinate how the threads work
+together; and</li>
+<li>on <a href="deadlock.html">deadlock</a> — a common problem that
+results in hanging when using synchronization primitives
+incorrectly</li>
+<li>on <a href="consistency.html">consistency</a> — on when other
+threads see modifications to values in shared storage</li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>or one per processor depending on the multiprocessor
+design<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>This is an oversimplification. What if three processes
+were sharing the page? Keeping a count of number of copies needed works
+better, but that count has to be placed in a finite-sized field with
+special logic for if that overflows… The full details are a bit
+distracting, hence the simple <q>one bit</q> discussion above.<a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>We have not spent much time on environments, but every
+program has access to the global array of strings <code
+class="sourceCode c"><span class="kw">extern</span> <span class="dt">char</span> <span class="op">**</span>environ</code>,
+which is used to communicate such things as which directories should be
+searched for executables and where windows should be opened. See <code
+class="sourceCode bash"><span class="fu">man</span> 7 environ</code> for
+more.<a href="#fnref3" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

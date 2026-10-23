@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Cryptographic protocols</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/sec.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#four-useful-tools" id="toc-four-useful-tools"><span
+class="toc-section-number">1</span> Four useful tools</a>
+<ul>
+<li><a href="#hashes" id="toc-hashes"><span
+class="toc-section-number">1.1</span> Hashes</a></li>
+<li><a href="#symmetric-chiphers" id="toc-symmetric-chiphers"><span
+class="toc-section-number">1.2</span> Symmetric chiphers</a></li>
+<li><a href="#message-authentication-codes-and-authenticated-encryption"
+id="toc-message-authentication-codes-and-authenticated-encryption"><span
+class="toc-section-number">1.3</span> Message authentication codes and
+authenticated encryption</a></li>
+<li><a href="#asymmetric-ciphers" id="toc-asymmetric-ciphers"><span
+class="toc-section-number">1.4</span> Asymmetric ciphers</a>
+<ul>
+<li><a href="#randomization" id="toc-randomization"><span
+class="toc-section-number">1.4.1</span> Randomization</a></li>
+</ul></li>
+<li><a href="#digital-signatures" id="toc-digital-signatures"><span
+class="toc-section-number">1.5</span> Digital Signatures</a></li>
+<li><a href="#diffie-hellman" id="toc-diffie-hellman"><span
+class="toc-section-number">1.6</span> Diffie-Hellman</a>
+<ul>
+<li><a href="#mathematical-details" id="toc-mathematical-details"><span
+class="toc-section-number">1.6.1</span> Mathematical details</a></li>
+</ul></li>
+<li><a href="#cryptographically-secure-random-numbers"
+id="toc-cryptographically-secure-random-numbers"><span
+class="toc-section-number">1.7</span> Cryptographically-secure random
+numbers</a></li>
+</ul></li>
+<li><a href="#using-the-tools" id="toc-using-the-tools"><span
+class="toc-section-number">2</span> Using the tools</a>
+<ul>
+<li><a href="#signatures" id="toc-signatures"><span
+class="toc-section-number">2.1</span> Signatures</a></li>
+<li><a href="#CA" id="toc-CA"><span
+class="toc-section-number">2.2</span> Should I trust you?</a></li>
+<li><a href="#storing-passwords" id="toc-storing-passwords"><span
+class="toc-section-number">2.3</span> Storing passwords</a></li>
+<li><a href="#lets-talk-privately" id="toc-lets-talk-privately"><span
+class="toc-section-number">2.4</span> Let’s talk privately</a></li>
+</ul></li>
+<li><a href="#pitfalls-of-cryptographic-protocols"
+id="toc-pitfalls-of-cryptographic-protocols"><span
+class="toc-section-number">3</span> Pitfalls of cryptographic
+protocols</a>
+<ul>
+<li><a href="#symmetric-cencryption-but-not-authentication"
+id="toc-symmetric-cencryption-but-not-authentication"><span
+class="toc-section-number">3.1</span> Symmetric cencryption but not
+authentication</a></li>
+<li><a href="#public-key-encryption-but-not-authentication"
+id="toc-public-key-encryption-but-not-authentication"><span
+class="toc-section-number">3.2</span> Public key encryption but not
+authentication</a></li>
+<li><a href="#replay-attacks" id="toc-replay-attacks"><span
+class="toc-section-number">3.3</span> Replay attacks</a></li>
+<li><a href="#other-attacks-prevention"
+id="toc-other-attacks-prevention"><span
+class="toc-section-number">3.4</span> Other attacks, prevention</a></li>
+</ul></li>
+<li><a href="#side-channels" id="toc-side-channels"><span
+class="toc-section-number">4</span> Side channels</a></li>
+<li><a href="#further-resources" id="toc-further-resources"><span
+class="toc-section-number">5</span> Further resources</a>
+<ul>
+<li><a href="#textbooks" id="toc-textbooks"><span
+class="toc-section-number">5.1</span> Textbooks</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>4 Feb 2023: don’t actually describe trap door functions as
+asymmetric encryption, add section on message authentication codes;
+reorganize asymmetric encyrption section to not assume that encryption
+function and decryption are the same function with different parameters;
+add section on pitfalls with cryptographic protocols; reorganize
+Diffie-Hellman key exchange to separate out of the more mathematical
+parts</li>
+<li>5 Feb 2023: adjust security property phrasing for MACs to mirror
+symmetric ciphers more; add further resourecs; expand on the existence
+of other protocol attacks</li>
+<li>10 Apr 2024: explicitly discuss cipher malleability</li>
+<li>16 Apr 2024: explicitly discuss randomization of public-key
+encryption</li>
+</ul>
+</div>
+<p>Three basic primitives provide a great deal of modern security:
+hashes, symmetric (or shared-key) ciphers, and asymmetric (or
+public-key) ciphers. This writeup is designed to explain the concepts
+behind these tools and how they are used to achieve common security
+objectives without the algorithmic and mathematical complexity of
+current implementations.</p>
+<h1 data-number="1" id="four-useful-tools"><span
+class="header-section-number">1</span> Four useful tools</h1>
+<h2 data-number="1.1" id="hashes"><span
+class="header-section-number">1.1</span> Hashes</h2>
+<p>A <strong>hash function</strong> takes an input of any size (often
+generalized as a byte stream) and returns an output of a fixed size
+(often generalized as a large binary number) such that changing any byte
+of the input would also change the output.</p>
+<div class="aside">
+<p>The word <q>hash</q> is used to refer to (a) the output of this
+function, (b) the function itself, and (c) the action of running this
+function. It is grammatically correct to say <q>I hashed it with my
+favorite hash to get the following hash:
+<code>f4ca408dc68ca2776e5d294e8f1166b56ee5af9b</code>.</q></p>
+
+</div>
+<p>A <strong>crytographically-secure hash function</strong> is not
+feasibly invertible. That is, given the output of the hash function and
+the code of the function itself, finding an input that would generate
+that output requires work equivalent to guessing random inputs until one
+happens to have the desired output.</p>
+<div class="example long">
+<p>The following code implements a hash function, in that any sized
+input will provide a fixed-size output</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>uint hash<span class="op">(</span>uint <span class="op">*</span>arr<span class="op">,</span> <span class="dt">size_t</span> len<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    uint ans <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">size_t</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>len<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        ans <span class="op">=</span> <span class="op">(</span>ans <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">)</span> <span class="op">^</span> arr<span class="op">[</span>i<span class="op">]</span> <span class="op">^</span> <span class="op">(</span>ans<span class="op">&gt;&gt;</span><span class="dv">31</span><span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ans<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>However, that code it not even close to being cryptographically
+secure; to get a desired output <code>x</code> all that is needed is to
+input an array containing only <code>x</code>.</p>
+
+</div>
+<p>It is very difficult to prove that a hash function is
+crytographically secure, and we have a long history of compromising one
+hash function (e.g., by figuring out how to rule out 99% of all inputs
+so we only have to guess 1% as many) and adopting another.</p>
+<h2 data-number="1.2" id="symmetric-chiphers"><span
+class="header-section-number">1.2</span> Symmetric chiphers</h2>
+<p>A <strong>symmetric cipher</strong> or <strong>symmetric-key
+cipher</strong> is a pair of functions, one to encrypt and one to
+decrypt, each taking two inputs: a message of arbitrary length and a
+limited-size <em>secret key</em>. They should have the following
+properties:</p>
+<ul>
+<li><span class="math inline">e(m, k) = c \ne m</span> — that is,
+encryption results in a <strong>ciphertext</strong> which is unlike the
+original message</li>
+<li><span class="math inline">d(e(m, k), k) = m</span> — that is,
+decryption undoes encryption</li>
+<li>recovering <span class="math inline">m</span> from <span
+class="math inline">e</span> and <span class="math inline">c</span>
+without <span class="math inline">k</span> is no easier than trying
+every possible <span class="math inline">k</span> until one works</li>
+</ul>
+<div class="example long">
+<p>The following code implements a symmetric cipher, albeit not a secure
+one</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> e<span class="op">(</span>uint <span class="op">*</span>arr<span class="op">,</span> <span class="dt">size_t</span> len<span class="op">,</span> <span class="dt">size_t</span> key<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">size_t</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>len<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        arr<span class="op">[</span>i<span class="op">]</span> <span class="op">+=</span> key<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> d<span class="op">(</span>uint <span class="op">*</span>arr<span class="op">,</span> <span class="dt">size_t</span> len<span class="op">,</span> <span class="dt">size_t</span> key<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">size_t</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>len<span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        arr<span class="op">[</span>i<span class="op">]</span> <span class="op">-=</span> key<span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Describing why this is insecure stems from the fact that messages
+have internal patterns. If I know that you are sending a PDF document,
+for example, I know that the first four bytes are always 0x25, 0x50,
+0x44, 0x46; I can simply subtract that from the first four bytes of the
+ciphertext and recover the key.</p>
+
+</div>
+<p>Getting the first two properties is easy; getting the third is hard,
+contributing to a history of finding a weakness in one cipher and
+picking another to replace it.</p>
+<p>Symmetric ciphers functions often do not protect against
+<em>malleability</em>. For example, some symmetric ciphers make flipping
+certain bits in the ciphertext also flip corresponding bits in the
+corresponding plaintext.<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> In such a scheme, an attacker who
+knows or guesses that <em>c</em> is the ciphertext for a message m =
+<q>PAY $1000</q> may figure out that flipping a particular bit of
+<em>c</em> will change the message to m’ = <q>PAY $9000</q>.</p>
+<h2 data-number="1.3"
+id="message-authentication-codes-and-authenticated-encryption"><span
+class="header-section-number">1.3</span> Message authentication codes
+and authenticated encryption</h2>
+<p>A <strong>message authentication code</strong> are functions similar
+to a hash function except it takes a limited-size secret key <span
+class="math inline">k</span>. These functions have the following
+properties:</p>
+<ul>
+<li><span class="math inline">f(m, k) = t</span> — applying the message
+authentication code <span class="math inline">f</span> produces a
+<em>tag</em> <span class="math inline">t</span></li>
+<li>recovering <span class="math inline">k</span> from <span
+class="math inline">f</span> and <span class="math inline">m</span> and
+<span class="math inline">t</span> is no easier than trying every
+possible <span class="math inline">k</span> until one works</li>
+<li>knowing <span class="math inline">f</span> and <span
+class="math inline">m</span> and <span class="math inline">t</span>,
+finding another message <span class="math inline">m&#39;</span> and
+corresponding tag <span class="math inline">t&#39;</span> such that
+<span class="math inline">f(m&#39;,k)=t&#39;</span> is no easier than
+finding <span class="math inline">k</span></li>
+</ul>
+<p>By sending the <q>tag</q> along with our message, we can ensure that
+the message was sent by someone who had the secret key <span
+class="math inline">k</span>.</p>
+<p>Frequently, this is used in conjunction with symmetric ciphers. The
+symmetric cipher itself only ensures that the message contents is
+secret, but it doesn’t ensure that it is not maliciously corrupted.
+Combining asymmetric encryption and a message authentication code is
+called <strong>authenticated encryption</strong>.</p>
+<p>Sometimes libraries for encryption will provide authenticated
+encryption by default and simply call it <q>encryption</q>, but quite
+often they require users to explicitly ask for this protection against
+malicious corruption.</p>
+<h2 data-number="1.4" id="asymmetric-ciphers"><span
+class="header-section-number">1.4</span> Asymmetric ciphers</h2>
+<p>An <strong>asymmetric cipher</strong> or <strong>public-key
+cipher</strong><a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> is pair of functions that can both
+encrypt and decrypt. However, unlike symmetric ciphers, keys come in
+pairs. If <span class="math inline">(e,d)</span> is an asymmetric cipher
+and <span class="math inline">(k_1, k_2)</span> is a key pair then</p>
+<ul>
+<li><span class="math inline">d(e(m, k_1), k_2) = m</span> — <span
+class="math inline">k_2</span> decrypts what <span
+class="math inline">k_1</span> encrypts, and</li>
+<li>knowing <span class="math inline">d</span>, <span
+class="math inline">c</span>, and <span class="math inline">k_1</span>
+should not make determining <span class="math inline">k_2</span> or
+<span class="math inline">m</span> too easy</li>
+</ul>
+<p>Generally, <span class="math inline">k_1</span> is called the
+<em>public key</em> and <span class="math inline">k_2</span> is called
+the <em>private key</em>.</p>
+<p>In practice, only a limited set of asymmetric ciphers are known and
+they do not offer quite as good security as <q>no better than brute
+force,</q> but they do have (near) proofs of difficulty to break
+<em>if</em></p>
+<ul>
+<li>Certain generally-accepted but not-yet-proven theorems hold (notably
+<q><strong>P</strong> ≠ <strong>NP</strong></q> and <q>factorization ∉
+<strong>P</strong></q>)</li>
+<li>You only encrypt small data</li>
+</ul>
+<div class="example long">
+<p>The following code implements an asymmetric cipher, albeit not a
+secure one</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> e<span class="op">(</span><span class="dt">int</span> msg<span class="op">,</span> <span class="dt">int</span> key<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> msg <span class="op">*</span> key<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> d<span class="op">(</span><span class="dt">int</span> msg<span class="op">,</span> <span class="dt">int</span> key<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> msg <span class="op">*</span> key<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>A key pair is a pair of integers that multiplies to give
+<code>1</code>, which is possible because <code>int</code> has finite
+size; for example <code>2501 * 3221654797 == 0x75400000001</code>, which
+truncated to 32 bits is just 1; thus (2501, 3221654797) is a key pair
+for this function.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> message <span class="op">=</span> <span class="bn">0xdeadbeef</span><span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> k1 <span class="op">=</span> <span class="dv">2501</span><span class="op">,</span> k2 <span class="op">=</span> <span class="dv">3221654797</span><span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">&quot;-&gt; message: </span><span class="sc">%x</span><span class="st">; ciphertext: </span><span class="sc">%x</span><span class="st">; decrypted: </span><span class="sc">%x\n</span><span class="st">&quot;</span><span class="op">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    message<span class="op">,</span> e<span class="op">(</span>message<span class="op">,</span> k1<span class="op">),</span> d<span class="op">(</span>e<span class="op">(</span>message<span class="op">,</span> k1<span class="op">),</span> k2<span class="op">));</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">&quot;&lt;- message: </span><span class="sc">%x</span><span class="st">; ciphertext: </span><span class="sc">%x</span><span class="st">; decrypted: </span><span class="sc">%x\n</span><span class="st">&quot;</span><span class="op">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    message<span class="op">,</span> e<span class="op">(</span>message<span class="op">,</span> k2<span class="op">),</span> d<span class="op">(</span>e<span class="op">(</span>message<span class="op">,</span> k2<span class="op">),</span> k1<span class="op">));</span></span></code></pre></div>
+<p>displays</p>
+<pre><code>-&gt; message: deadbeef; ciphertext: 776a54eb; decrypted: deadbeef
+&lt;- message: deadbeef; ciphertext: ba965523; decrypted: deadbeef</code></pre>
+<p>This cipher is not secure because the <a
+href="https://en.wikipedia.org/wiki/Modular_multiplicative_inverse#Extended_Euclidean_algorithm">extended
+Euclid’s algorithm</a> can efficiently derive <span
+class="math inline">k_1</span> from <span
+class="math inline">k_2</span>. It is also not secure beacuse it is not
+randomized, as discussed below.</p>
+
+</div>
+<p>Typically, keys are generated in pairs and one of them (chosen
+arbitrarily) is kept secret while the other one is shared publicly. If
+you have my public key, you can use it to encrypt messages only I can
+decrypt (you can’t even decrypt them yourself) and to decrypt messages
+only I can encrypt.</p>
+<p>Unlike <a href="#symmetric-ciphers">symmetric ciphers</a>, of which
+there are many, only a few asymmetric ciphers have ever been
+popular:</p>
+<ul>
+<li>RSA<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a> encryption is the most well known by
+far.</li>
+<li>ElGamal encryption and ECIES and some similar schemes, which are all
+based on Diffie-Hellman key exchange (see below)</li>
+</ul>
+<h3 data-number="1.4.1" id="randomization"><span
+class="header-section-number">1.4.1</span> Randomization</h3>
+<p>Since with asymmetric encryption, anyone can encrypt any message,
+secure public key encryption schemes are usually non-deterministic.
+Otherwise, in scenarios where there are a relatively small number of
+possible messages (for example, maybe corresponding to the 10000
+possible PINs for a debit card), an attacker can enumerate all the
+possible messages, encrypt each in the same way, and check which one
+matches. A simple way to avoid this is to use some random data when
+encrypting any message; as long as the attacker cannot guess this random
+data in addition to the message itself, they should not be able encrypt
+the message in the same way and compare the result.</p>
+<h2 data-number="1.5" id="digital-signatures"><span
+class="header-section-number">1.5</span> Digital Signatures</h2>
+<p>A <strong>digital signature scheme</strong> (sometimes just called a
+<strong>signature</strong> or <strong>public-key signature</strong>) is
+pair of functions <code>s</code> (sign) and <code>v</code> (verify).
+Like asymmetric encryption, digital signature schemes use keypairs. If
+<span class="math inline">(s,v)</span> is a digital signature scheme and
+<span class="math inline">(k_1,k_2)</span>, then</p>
+<ul>
+<li><span class="math inline">s(k_2,m)=S</span> is called a
+<strong>signature</strong>,</li>
+<li><span class="math inline">v(k_1,S,m) = 1</span> but <span
+class="math inline">v(k_1,X,m)=0</span> for almost all <span
+class="math inline">X \not= S</span></li>
+<li>knowing <span class="math inline">s</span>, <span
+class="math inline">v</span>, <span class="math inline">m</span>, <span
+class="math inline">S</span> and <span class="math inline">k_1</span>
+should not make determining <span class="math inline">k_2</span> easy,
+and</li>
+<li>knowing <span class="math inline">s</span>, <span
+class="math inline">v</span>, <span class="math inline">m</span>, <span
+class="math inline">S</span> and <span class="math inline">k_1</span>
+should not make finding other values <span
+class="math inline">S&#39;</span>, <span
+class="math inline">m&#39;</span> such <span
+class="math inline">v(k_1,S&#39;,m&#39;)=1</span> too easy</li>
+</ul>
+<p>Like with asymmetric encryption, <span class="math inline">k_1</span>
+is called the <em>public key</em> and <span
+class="math inline">k_2</span> is called the private key.</p>
+<p>Less formally, we can describe that last security porperty as
+disallowing the <q>forging</q> of a signature on any new message.</p>
+<p>Like with asymmetric ciphers, only a few digital signature schemes
+have ever been popular: * RSA signatures. RSA signatures and RSA
+encryption are based on the same underlying functions, so the decrypt
+function in RSA encryption is similar to the sign function for RSA
+signatures. * DSA and ECDSA and EdDSA and some similar schemes, which
+are all mathematically related to Diffie-Hellman key exchange.</p>
+<div class="aside long">
+<p>Trapdoor functions and relating signatures and public-key
+encryption</p>
+<p>Most of the popular digital signature schemes have mathematically
+related asymmetric encryption algorithms. Typically, both the signature
+scheme and the asymmetric encryption scheme are based on the same
+<em>trapdoor</em> function.</p>
+<p>A trapdoor function will be easy to compute in one direction but very
+hard to compute in the inverse direction without some private
+information. To construct a trapdoor function, someone will generate a
+private key (the private information) and a corresponding public key
+which is related to the private key. will call the function that is easy
+to compute the <q>public</q> operation and the function that is hard to
+compute the <q>private</q> operation. The public operation is requires
+the public key and the private operation requires the private key.</p>
+<p>Given a trapdoor function, asymmetric encryption can be implemented
+by something similar to using the public operation as the encryption
+function and the private operation as decryption operation. Digital
+sigantures can be implemented by using something similar to: * using the
+private operation as the sign function, and * applying the public
+operation to a signature and comparing to the original message for the
+verify function In practice, there are often some extra details required
+to make a secure asymmetric encryption or signature scheme secure,
+depending on the details of the trapdoor function.</p>
+<p>There are some digital signature schemes which are not based on a
+trapdoor function, like the <a
+href="https://en.wikipedia.org/wiki/Lamport_signaturs">Lamport
+signatures</a>. There are some asymmetric encryption schemes where a
+related digital signature scheme is far less straightforward than for
+the popular RSA or ECDSA, such as <a
+href="https://en.wikipedia.org/wiki/McEliece_cryptosystem">McEliece</a>.</p>
+
+</div>
+<h2 data-number="1.6" id="diffie-hellman"><span
+class="header-section-number">1.6</span> Diffie-Hellman</h2>
+<p>The <strong>Diffie-Hellman key exchange</strong><a href="#fn4"
+class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> is
+a method of causing two (or more) parties to agree on a single shared
+random integer without anyone else listening in being able to know what
+number they agreed upon.</p>
+<p>Without going into mathematical details, when performing
+Diffie-Hellamn key exchange: * each party generates a random private key
+* each party generates a public value from their private key and sends
+it to the other party * each party can then combine the other’s public
+value with their private key to obtain the same number</p>
+<h3 data-number="1.6.1" id="mathematical-details"><span
+class="header-section-number">1.6.1</span> Mathematical details</h3>
+<p>To make this possible mathematically, the process requires
+identifying a <q>cyclic group</q> – that is, a set of values (integers
+are preferred) and an operator on elements of that set such that <span
+class="math inline">op(op(x, y), z) = op(op(x, z), y)</span>. For this
+scheme to be secure, the set of values <span
+class="math inline">f</span> works on should be large and the <span
+class="math inline">f</span> operation hard to undo (i.e., knowing both
+<span class="math inline">x</span> and <span
+class="math inline">op(x,y)</span> should not make it easy to determine
+<span class="math inline">y</span>).</p>
+<div class="example long">
+<p>The following code implements a cyclic group (i.e., <code
+class="sourceCode c">f<span class="op">(</span>f<span class="op">(</span>x<span class="op">,</span>y<span class="op">),</span>z<span class="op">)</span> <span class="op">==</span> f<span class="op">(</span>f<span class="op">(</span>x<span class="op">,</span>z<span class="op">),</span>y<span class="op">)</span></code>,
+albeit not a secure one</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> f<span class="op">(</span><span class="dt">int</span> generator<span class="op">,</span> <span class="dt">int</span> key<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> generator <span class="op">*</span> key<span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is insecure for the same reason it was for asymmetric
+ciphers.</p>
+
+</div>
+<p>If two people want to create a shared secret, they</p>
+<ol type="1">
+<li>Agree (in public) on an initial random number <span
+class="math inline">g</span></li>
+<li>Each (privately, without telling anyone at all) pick a second random
+number, their private key</li>
+<li>Each applies the operator to <span class="math inline">g</span> and
+their key, sharing the result (in public) with the others</li>
+<li>Each applies the operator to what they received and their key to
+attain their shared secret</li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">person A knows</th>
+<th style="text-align: center;">shared publicly</th>
+<th style="text-align: right;">person B knows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"><span class="math inline">f</span>,
+<span class="math inline">g</span></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">a</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: right;"><span class="math inline">b</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"><span class="math inline">f(g,
+a)</span>, <span class="math inline">f(g, b)</span></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">f(f(g,b),
+a)</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: right;"><span class="math inline">f(f(g,a),
+b)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="example long">
+<p>Suppose you and I are communicating, using the (insecure) <span
+class="math inline">f</span> from the previous example.</p>
+<ol type="1">
+<li><p>One of us picks <code>0x3308006d</code> as <span
+class="math inline">g</span> and we both agree to use it</p></li>
+<li><p>I pick <code>0x71563a35</code> as my key, compute
+<code>f(g, 0x71563a35) = 0xa25ec891</code>, and share
+<code>0xa25ec891</code></p></li>
+<li><p>You pick <code>0xd380203f</code> as your key, compute
+<code>f(g, 0xd380203f) = 0x9c85bad3</code>, and share
+<code>0x9c85bad3</code></p></li>
+<li><p>I use what you shared (<code>0x9c85bad3</code>) and my secret
+(<code>0x71563a35</code>) to compute
+<code>f(0x9c85bad3, 0x71563a35) = 0x99e57baf</code></p></li>
+<li><p>You use what I shared (<code>0xa25ec891</code>) and your secret
+(<code>0xd380203f</code>) to compute
+<code>f(0xa25ec891, 0xd380203f) = 0x99e57baf</code></p></li>
+<li><p>You and I now both know <code>0x99e57baf</code>, but all anyone
+listening in knows are <code>0x3308006d</code>, <code>0xa25ec891</code>,
+and <code>0x9c85bad3</code>.</p>
+<p>Because we picked an insecure operator <span
+class="math inline">f</span>, this public information does allow others
+to figure out our secret keys via the extended Euclid’s algorithm and
+thus learn our shared secret. If we had picked a better <span
+class="math inline">f</span> (an elliptic curve, perhaps) this would not
+have been feasible.</p></li>
+</ol>
+
+</div>
+<h2 data-number="1.7" id="cryptographically-secure-random-numbers"><span
+class="header-section-number">1.7</span> Cryptographically-secure random
+numbers</h2>
+<p>Many security activities depend at some point on a random number
+being used. These need to be random in the sense that there is no
+ability to guess them, even if you know a great deal about the code that
+created them.</p>
+<p>Most software <q>random number generators</q> are actually
+<em>pseudo</em>-random number generators, meaning they are created by a
+deterministic subroutine with some internal state; if you know the value
+of that state, you can predict the sequence of <q>random</q> numbers
+perfectly, and observing a sequence of generated numbers is sufficient
+to re-construct the state.</p>
+<p>Cryptographically-secure random number generators instead rely on
+some form of <strong>entropy harvesting</strong> to collect
+unpredictable bits from sources invisible to outsiders. For example, as
+I type this writeup the low-order bit of the microsecond at which I
+press each key may appear to be <q>pure entropy</q>—that is, without
+pattern or meaning. We could likewise harvest the low-order bits of each
+mouse movement, CPU temperature reading, etc. We don’t actually know
+that such measurements are random; there might be a pattern we haven’t
+noticed, and if so even secure algorithms may be breakable by attackers
+that know those patterns. However, it’s almost certainly more secure
+than using something entirely predictable like the output of a
+pseudo-random generator seeded with the time of day.</p>
+<p>Modern operating systems typically harvest likely sources of entropy
+and maintain an entropy pool. Since entropy cannot be generated on
+demand, there is always risk that the entropy pool will not contain
+enough bytes for a needed cryptographic purpose.</p>
+<div class="example long">
+<p>As explained in <code
+class="sourceCode bash"><span class="fu">man</span> 4 urandom</code>,
+Linux maintains an entropy pool in <code>/dev/random</code>. It is
+designed to be read-once: if you read a byte from
+<code>/dev/random</code>, there is one fewer byte there than there was
+before, and it is relatively easy to empty it entirely.</p>
+<p>To avoid having cryptographic tools wait for more entropy to be
+generated, Linux also provides <code>/dev/urandom</code>, a
+pseudo-random number generator that uses harvested entropy to prevent
+itself becoming predictable.</p>
+<p>As noted on the manual page, <q>The <code>/dev/random</code>
+interface is considered a legacy interface, and
+<code>/dev/urandom</code> is preferred and sufficient in all use cases,
+with the exception of applications which require randomness during early
+boot time.</q> Explaining how the cryptographic security of
+<code>/dev/urandom</code> was established is beyond the scope of this
+course.</p>
+
+</div>
+<h1 data-number="2" id="using-the-tools"><span
+class="header-section-number">2</span> Using the tools</h1>
+<h2 data-number="2.1" id="signatures"><span
+class="header-section-number">2.1</span> Signatures</h2>
+<dl>
+<dt>Task</dt>
+<dd>
+Verify that a document has been approved in its current form by a
+particular individual.
+</dd>
+<dt>Solution</dt>
+<dd>
+<p>Have them sign the document — or, more commonly, a hash of the
+document, with their <a href="#digital-signature">private key</a> using
+a digital signature scheme.</p>
+<p>To check the signature, see if the digital signature scheme’s verify
+function returns true.</p>
+</dd>
+</dl>
+<h2 data-number="2.2" id="CA"><span
+class="header-section-number">2.2</span> Should I trust you?</h2>
+<dl>
+<dt>Task</dt>
+<dd>
+Convince someone you don’t know that you are who you say you are.
+</dd>
+<dt>Solution</dt>
+<dd>
+<ol type="1">
+<li>Have someone who knows both of you <a href="#signatures">sign</a> a
+document saying <q>this person’s public key for asymmetric encryption is
+<span class="math inline">x</span>.</q></li>
+<li>Give that document, called a <em>certificate</em>, to the skeptic
+who doubts your identity.</li>
+<li>The skeptic then generates a random number <span
+class="math inline">y</span>, encrypts it with your <a
+href="#asymmetric-ciphers">public key</a>, and tells you the encrypted
+result <span class="math inline">z</span>.</li>
+<li>You decrypt <span class="math inline">z</span> with your <a
+href="#asymmetric-ciphers">private key</a> and tell the skeptic <q>it’s
+really me: your number was <span class="math inline">y</span>.</q></li>
+</ol>
+</dd>
+</dl>
+<p>The internet today uses a few well-known <em>certificate
+authorities</em> who validating website identity and signing
+certificates.<a href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a></p>
+<p>A key insight about digital certificates is that presenting the
+certificate is just half of the authentication process; it must be
+followed with a challenge to verify you can use your private key, and
+that private key is never given away. It’s a bit like (but much more
+secure than) an ID card with a picture of you on it: you have to have
+your card (which others could steal) <em>and</em> your face (which you
+never intentionally give to anyone) to use it.</p>
+<p>In this example, the certificate contained a public key for
+encryption. Something similar can be done if the certificate instead
+contains a public key for a digital signature.</p>
+<p>There are alternative ways of establishing trust without a
+centralized set of certificate authorities, but the approach described
+here is dominant at the time of writing<a href="#fn6"
+class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>.</p>
+<h2 data-number="2.3" id="storing-passwords"><span
+class="header-section-number">2.3</span> Storing passwords</h2>
+<dl>
+<dt>Task</dt>
+<dd>
+I want the computer to recognize my password, but even the root account
+is not to be able to learn what my password is.
+</dd>
+<dt>Solution</dt>
+<dd>
+<p>Store only a <a href="#hashes">hash</a> of the password.</p>
+<p>Note that a simple implementation of this makes possible exploits
+like <a href="https://en.wikipedia.org/wiki/Rainbow_table">rainbow
+tables</a>, where the hashes of a large number of plausible passwords
+are precomputed to compare against the hashes stored on a computer. One
+partial solution to this is to <em>salt</em> the password before
+hashing: we generate a random value, store it with the password, and
+include it and the password in the hash.</p>
+</dd>
+</dl>
+<p>Passwords on the internet are much less secure than this. We hope
+servers store only hashes (though verifying this is hard), but we still
+have to get the password to them to hash, so they typically are
+transmitted in their raw forms. Thus, if your browser is remembering
+your passwords, it <em>cannot</em> be remembering only the hashes
+because it needs to enter the actual passwords into web forms for you.
+However, if you are good about using a different password for each site,
+browser storage of them can be more secure than typing them manually, as
+it prevents you accidentally providing one site with another site’s
+password.</p>
+<p>A better approach to web passwords is to use a password manager. This
+still has to store your passwords, but it can encrypt them using a
+symmetric key derived from your <q>master</q> password, which it stores
+only as a hash, so that compromise of the password manager has limited
+loss. It can also generate random, virtually-unguessable passwords for
+each site and continue to provide access to your passwords even if you
+are not on your usual browser.</p>
+<h2 data-number="2.4" id="lets-talk-privately"><span
+class="header-section-number">2.4</span> Let’s talk privately</h2>
+<dl>
+<dt>Task</dt>
+<dd>
+Initialize private communication with a new acquaintance in a public
+place.
+</dd>
+<dt>Solution</dt>
+<dd>
+<p>Since communication has patterns that can be used to bypass the
+security of public key cryptography, we need to establish a shared key
+for use with a <a href="#symmetric-ciphers">symmetric cipher</a>. Such a
+key is generally little more than a random number, so we can use <a
+href="#diffie-hellman">Diffie-Hellman</a> to generate it.</p>
+<p>Of course, we first need to agree on which symmetric cipher to use
+and possibly share <a href="#should-i-trust-you">certificates</a> to
+make sure we are who we say we are, and Diffie-Hellman involves several
+communication steps itself, so establishing this communication requires
+a multi-step back-and-forth protocol. One popular protocol for this is
+called <a
+href="https://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a>,
+which provides an interface similar to TCP sockets that gaurentees
+privacy and prevents tampering by malicious networks.</p>
+</dd>
+</dl>
+<div class="aside long">
+<p>TLS key exchange</p>
+<p>The TLS protocol has a lot of ways it can work, depending on the
+server and browser configuraiton, but the basic flow of one of the more
+common configurations today when your browser connects to a web
+server:</p>
+<ul>
+<li>your browser generates a private key for using Diffie-Hellman key
+exchange and sends the corresponding public value to the server</li>
+<li>the server generates a temporary private key for using
+Diffie-Hellamn key exchange and sends the coresponding public value to
+the server</li>
+<li>the browser and server combine the public values with private keys
+to obtain several new keys for symmetric encryption and message
+authentication codes.</li>
+<li>the server sends its <a href="#CA">certificate(s)</a>. The
+certificate contains a copy of the server’s long-term public key, signed
+by a certificate authority that the browser is already aware of.</li>
+<li>the server hashes all the messages it sent so far, then signs this
+hash with its long-term public signature key. This lets the client make
+sure the server is the one identified by the certificate.</li>
+<li>the server sends a message authentication code over everything sent
+so far. This lets the client make sure that the server is the same one
+who sent the public Diffie-Hellman value the client used.</li>
+<li>the browser verifies the signature on the certificate. Then, using
+the information in the certificate, it verifies and message
+authentication code</li>
+<li>the client and server communicate using the authenticated symmetric
+encryption using keys generated via Diffie-Hellman</li>
+</ul>
+
+</div>
+<h1 data-number="3" id="pitfalls-of-cryptographic-protocols"><span
+class="header-section-number">3</span> Pitfalls of cryptographic
+protocols</h1>
+<p>Non-careful use of encryption and authentication has often resulted
+in suprising security flaws despite using otherwise secure
+cryptopgraphic functions.</p>
+<p>As an example, let’s say A is trying to tell B what payments to make
+for company.</p>
+<p>A naive approach to do this would be for A to simply encrypt their
+messages to B, either using shared secret key and symmetric encryption
+or using a keypair and asymmetric encryption. These ideas are likely to
+run into a lot of problems.</p>
+<h2 data-number="3.1"
+id="symmetric-cencryption-but-not-authentication"><span
+class="header-section-number">3.1</span> Symmetric cencryption but not
+authentication</h2>
+<p>Just because messages are encrypted does not mean they cannot be
+tampered with.</p>
+<p>With symmetric encryption, often it is possible for a malicious party
+to manipulate the encrypted message despite not being able to encrypt
+it. For example, let’s say A sending a message like:</p>
+<blockquote>
+<p>pay $ 1000.00 to Mallroy</p>
+</blockquote>
+<p>and encrypts this message. An attacker might not be able to decrypt
+this message, but may be able to guess the contents of the message from
+other sources. With many encryption algorithms this would let them
+change the contents of the message in a targeted way. For example, they
+would know where in the cipertext the data for <q>1000.00</q> would be
+and could try flipping some bits to change the number there. A
+countermeasure to this type of attack is to authenticate messages (such
+as with a message authentication code).</p>
+<h2 data-number="3.2"
+id="public-key-encryption-but-not-authentication"><span
+class="header-section-number">3.2</span> Public key encryption but not
+authentication</h2>
+<p>With public-key encryption, the public keys are public. This means
+that anyone can encrypt a message to a public key. So if A is sending a
+message to B by encrypting to B’s public key that says:</p>
+<blockquote>
+<p>pay $ 1000.00 to Mallroy</p>
+</blockquote>
+<p>then an attacker M can do exactly what A did: send their own message
+to B by encrypting with B’s public key. And when M does this process,
+they could change the number. To prevent M from pretending to be B, B
+could, for example, require messages to also be signed using a public
+key that corresponds to a private key only A has.</p>
+<h2 data-number="3.3" id="replay-attacks"><span
+class="header-section-number">3.3</span> Replay attacks</h2>
+<p>Let’s go back to the example of the message:</p>
+<blockquote>
+<p>pay $ 1000.00 to Mallroy</p>
+</blockquote>
+<p>If this message is signed and encrypted, an attacker might still have
+access to the signature and ciphertext. Using this, they can send the
+message as many times as they like. If A is willing to make multiple
+payments for B, then A will end up paying Mallroy too much.</p>
+<p>A common countermeasure for replay attacks are <em>nonces</em>,
+numbers used only once. For example, instead the message could be:</p>
+<blockquote>
+<p>payment #15: pay $ 1000.00 to Mallroy</p>
+</blockquote>
+<p>and B could verify that the payment number is larger than any that
+has been used before.</p>
+<p>If we wanted to avoid having B remember the highest payment number,
+an alternate scheme would be to have B choose a large random number to
+use a <em>nonce</em>, remember it and send it to A, and require that A’s
+next message uses a number it just sent A.</p>
+<h2 data-number="3.4" id="other-attacks-prevention"><span
+class="header-section-number">3.4</span> Other attacks, prevention</h2>
+<p>Besides failing to authenticate or replay attacks, there are other
+issues that have plagued implementations of cryptographic protocols,
+despite use of otherwise secure building blocks. Some examples:</p>
+<ul>
+<li>trying to have A prove that they are talking to B by decrypting a
+message asymmetrically encrypted from B to A, but not realizing <a
+href="https://en.wikipedia.org/wiki/Needham%E2%80%93Schroeder_protocol#An_attack_on_the_protocol">that
+this allows B decrypt messages others sent to A</a></li>
+<li>implementing verification of the server on the other end of the
+connection, but skipping it <a
+href="https://mitls.org/pages/attacks/SMACK">when the server sends a
+message that would normally only be used after the verification
+completed</a></li>
+</ul>
+<p>Because of the difficulty of verifying protocol correctness by hand,
+the state of the art is to use machine-checked proofs that protocols
+have certain security properties.</p>
+<h1 data-number="4" id="side-channels"><span
+class="header-section-number">4</span> Side channels</h1>
+<p>Having a secure protocol and entropy source is not sufficient to have
+a secure system. Humans are often a weak point, picking bad passwords
+and sharing them too freely. However, side channels are also a major
+possible weakness.</p>
+<p>A <strong>side channel</strong> is something that can carry
+information but was not the communication channel the designer of the
+system had in mind. There are many side channels and many side channel
+attacks, but one example will suffice to show the complexity involved in
+anticipating and preventing them.</p>
+<p>Suppose I want to learn the randomly-generated private key you used
+in <a href="#diffie-hellman">Diffie-Hellman</a>. I look through your
+code and consult the specs of your processor and notice that it takes
+your code 2 microseconds to process each 0-bit and 3 microseconds to
+process each 1-bit. There are a few other aspects that are hard for me
+to time perfectly, like how long it takes me to see your messages, but
+after watching a few hundred DH key exchanges I get a reasonable
+estimate on those as well.</p>
+<p>Now suppose for a particular 32-bit DH session I time your code and
+determine you have 13 1-bits in your key. To brute-force guess your key,
+I only need to check the 347,373,600 32-bit numbers that have 13 1-bits,
+not all 4,294,967,296, a savings of approximately 12×.</p>
+<h1 data-number="5" id="further-resources"><span
+class="header-section-number">5</span> Further resources</h1>
+<h2 data-number="5.1" id="textbooks"><span
+class="header-section-number">5.1</span> Textbooks</h2>
+<ul>
+<li><p>Anderson, <em><a
+href="https://www.cl.cam.ac.uk/~rja14/book.html">Security
+Engineering</a></em> (e.g. the Protocols chapter of any edition; note
+that PDFs of the second edition are on that website)</p></li>
+<li><p>Ferguson, Schneier, and Kohno, <em>Cryptography
+Engineering</em></p></li>
+<li><p>Menezes, Oorschot, and Vanstone, <em><a
+href="https://cacr.uwaterloo.ca/hac/">Handbook of Applied
+Cryptography</a></em> (particularly chapter 1) (This book takes a very
+mathematical approach, unlike the prior two books, which more oriented
+towards cryptography implementators.</p></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>An example of such a scheme is AES in CTR mode. There
+are also common symmetric ciphers (for example, AES in CBC mode) which
+are malleable, but not in such a clearly useful way. However, this more
+limited malleability has still lead to practical attacks (for example,
+see Wikipedia’s section on <a
+href="https://en.wikipedia.org/wiki/Padding_oracle_attack#Padding_oracle_attack_on_CBC_encryption">CBC
+padding oracle attacks</a>.)<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Note that <q>public-key</q> is an overloaded term; for
+example, <a href="#diffie-hellman">Diffie-Hellman</a> does not use the
+type of asymmetric cipher described here, but is asymmetric in a
+different way and is also sometimes called a <q>public-key</q>
+protocol.<a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>RSA is short for Rivest-Shamir-Adleman, named after Ron
+Rivest, Adi Shamir, and Len Adleman, its inventors. It was previously
+invented by Clifford Cocks, but Cocks’ document describing it was given
+a top-secret classification by the British government and not made
+public until 1997.<a href="#fnref3" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>There is some difference of opinion about the justice of
+this name. Whitfield Diffie and Martin Hellman published a paper
+describing it in 1976, but Hellman later stated the idea in the paper
+was that of their graduate student Ralph Merkle.<a href="#fnref4"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p> Since you are connecting to a website, the
+<q>identity</q> that most certificate authorities are verifying is
+control over a particular domain name. You might think that this would
+be done by looking up who has the domain registered and contacting them
+in some secure way. The reality is maybe less satisfying. As of this
+writing, the <a href="https://cabforum.org/">CA/Browser forum</a> sets
+the criteria for verifying domain control and primarily it’s based on
+what machine(s) the certificate finds when they lookup that name on
+their internet connection(s) when they create the certificate.<a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>2023<a href="#fnref6" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

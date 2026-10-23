@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Virtual Memory</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/vm.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#introduction" id="toc-introduction"><span
+class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#regions-of-memory" id="toc-regions-of-memory"><span
+class="toc-section-number">2</span> Regions of Memory</a>
+<ul>
+<li><a href="#segments-revisited" id="toc-segments-revisited"><span
+class="toc-section-number">2.1</span> Segments revisited</a></li>
+<li><a href="#pages" id="toc-pages"><span
+class="toc-section-number">2.2</span> Pages</a>
+<ul>
+<li><a href="#protection-but-side-channels"
+id="toc-protection-but-side-channels"><span
+class="toc-section-number">2.2.1</span> Protection… but side
+channels?</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#page-tables" id="toc-page-tables"><span
+class="toc-section-number">3</span> Page Tables</a>
+<ul>
+<li><a href="#single-level-page-tables"
+id="toc-single-level-page-tables"><span
+class="toc-section-number">3.1</span> Single-level page tables</a></li>
+<li><a href="#multi-level-page-tables"
+id="toc-multi-level-page-tables"><span
+class="toc-section-number">3.2</span> Multi-level page tables</a>
+<ul>
+<li><a href="#fixed-depth-high-arity-trees"
+id="toc-fixed-depth-high-arity-trees"><span
+class="toc-section-number">3.2.1</span> Fixed-depth high-arity
+trees</a></li>
+<li><a href="#multi-level-page-table-implementation"
+id="toc-multi-level-page-table-implementation"><span
+class="toc-section-number">3.2.2</span> Multi-level page table
+implementation</a></li>
+</ul></li>
+<li><a href="#translation-lookaside-buffer"
+id="toc-translation-lookaside-buffer"><span
+class="toc-section-number">3.3</span> Translation Lookaside
+Buffer</a></li>
+</ul></li>
+<li><a href="#usage" id="toc-usage"><span
+class="toc-section-number">4</span> Usage</a>
+<ul>
+<li><a href="#lazy-allocation" id="toc-lazy-allocation"><span
+class="toc-section-number">4.1</span> Lazy allocation</a></li>
+<li><a href="#page-swapping" id="toc-page-swapping"><span
+class="toc-section-number">4.2</span> Page Swapping</a>
+<ul>
+<li><a href="#shared-memory" id="toc-shared-memory"><span
+class="toc-section-number">4.2.1</span> Shared Memory</a></li>
+</ul></li>
+<li><a href="#process-switching" id="toc-process-switching"><span
+class="toc-section-number">4.3</span> Process Switching</a></li>
+<li><a href="#direct-memory-access" id="toc-direct-memory-access"><span
+class="toc-section-number">4.4</span> Direct Memory Access</a></li>
+</ul></li>
+<li><a href="#further-resources" id="toc-further-resources"><span
+class="toc-section-number">5</span> Further resources</a>
+<ul>
+<li><a href="#general" id="toc-general"><span
+class="toc-section-number">5.1</span> General</a></li>
+<li><a href="#virtual-memory-system-examples"
+id="toc-virtual-memory-system-examples"><span
+class="toc-section-number">5.2</span> Virtual memory system
+examples</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>30 Oct 2023: link to dive into systems under further resources</li>
+<li>3 Apr 2024: correct typo in link to cache reading</li>
+</ul>
+</div>
+<h1 data-number="1" id="introduction"><span
+class="header-section-number">1</span> Introduction</h1>
+<p>One of the most important functions provided by a collaboration
+between the hardware and the operating system is virtual memory. Virtual
+memory provides</p>
+<ol type="a">
+<li>each process with the illusion that it is the only process in
+memory</li>
+<li>each process with the illusion that all possible addresses exist, no
+matter how much physical memory is available.</li>
+<li>memory protection such that user-mode code cannot access kernel
+memory.</li>
+<li>an efficient mechanism for communicating with processes.</li>
+</ol>
+<h1 data-number="2" id="regions-of-memory"><span
+class="header-section-number">2</span> Regions of Memory</h1>
+<p>To provide process separation, each memory access needs to be checked
+to ensure it is permitted. Specific sets of permissions may vary by
+system, but a common set includes</p>
+<ul>
+<li>Read-only vs. read-write memory (e.g. is <code
+class="sourceCode fasm"><span class="bu">mov</span> <span class="op">%</span><span class="kw">rax</span><span class="op">,</span> address</code>
+allowed?)</li>
+<li>Kernel-only vs. user-mode memory (e.g. is <code
+class="sourceCode fasm"><span class="bu">mov</span>  address<span class="op">,</span> <span class="op">%</span><span class="kw">rax</span></code>
+allowed if not in kernel mode?)</li>
+<li>Executable vs. data-only memory (e.g. is <code>jmp address</code>
+allowed?)</li>
+<li>Valid vs. invalid addresses (e.g. no code can use address 0)</li>
+</ul>
+<p>Because most instructions would need to check at least one of these
+constraints, there is reason to encode them very efficiently. Because
+each process may access a very large number of memory addresses, they
+also need to be efficient in space, meaning that in practice,
+permissions are applied to large contiguous regions of memory.</p>
+<h2 data-number="2.1" id="segments-revisited"><span
+class="header-section-number">2.1</span> Segments revisited</h2>
+<p>A common internal representation of memory regions used by operating
+systems is a list of <strong>segments</strong>, pairs of starting and
+stopping addresses and a set of permissions for the intermediate
+addresses.</p>
+<p>Segments are never directly visible to the hardware<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:
+instead, the operating system uses the segments to create
+hardware-visible <a href="Pages">page table entries</a> and to react to
+hardware-generated, page-related <a href="Faults">faults</a> and
+potentially convert them into <a href="Signals">signals</a> to convey to
+the user process.</p>
+<div class="example long">
+<p>Because segments are a software-only construct, each operating system
+can store them in a different way. One simple example might be the
+following:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> segment_node <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">*</span>low_address<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">*</span>high_address<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">unsigned</span> <span class="dt">int</span> permissions_flags<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> segment_node <span class="op">*</span>next<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+
+</div>
+<div class="example long">
+<p>It is common to refer to the crashing of a program that tries to
+access an invalid address as a <q>segfault,</q> short for
+<q>segmentation fault.</q> This is technically a misnomer, as the fault
+is generated by hardware, which does not even know about segments; the
+generating fault is either a page fault or a protection fault. The
+operating system may react to that fault by generating a <q>segmentation
+violation signal,</q> often abbreviated as SEGV or SIGSEGV.</p>
+<p>Many people and programs using the term <q>segfault</q> are aware
+that it is technically incorrect; it is arguably an example of a
+computing colloquialism.</p>
+
+</div>
+<p>POSIX-compatible operating systems provide the library functions
+<code>mmap</code> and <code>munmap</code> for requesting the operating
+system to adjust its segments. Typical user applications use
+higher-level wrappers such as <code>malloc</code> instead.</p>
+<h2 data-number="2.2" id="pages"><span
+class="header-section-number">2.2</span> Pages</h2>
+<p>Hardware access to memory protections is designed to be very simple
+so that it can be very rapid. Each address is split into two parts: a
+<strong>page number</strong> made up of the high-order bits and a
+<strong>page offset</strong> made up of the low-order bits.</p>
+<p>Each time memory is accessed in any way—including fetching the
+instruction itself, meaning at least once per instruction—the address is
+<strong>translated</strong>. Translation converts an address as it
+appears in code (called a <strong>virtual address</strong>) into an
+address that can be used to access the memory chip (called a
+<strong>physical address</strong>). This translation involves the
+following steps:</p>
+<ol type="1">
+<li><p>The virtual page number is used as a key or index into a data
+structure called a <em>page table</em> to retrieve a <em>page table
+entry</em> (see <a href="#page-tables">Page Tables</a>). Conceptually
+this is what Java would call a <code
+class="sourceCode java"><span class="bu">Map</span><span class="op">&lt;</span>VirtualPageNumber<span class="op">,</span> PageTableEntry<span class="op">&gt;</span></code>.
+It is stored in memory, using physical, not virtual, addresses, and its
+location is stored in a register that is changed on each context switch
+so that the operating system can maintain a different page table for
+each process.</p></li>
+<li><p>The <strong>page table entry</strong> contains a variety of
+protection or flag bits. In addition to the various
+read/write/execute/kernel permission bits, it may also contain an
+<q>unmapped</q> flag indicating that this virtual page has no
+corresponding physical page.</p>
+<p>If the access cannot proceed for any reason, a fault is generated (a
+<strong>page fault</strong> if unmapped, otherwise a protection fault).
+The fault handler should either modify the page table so that the
+address will work on a second attempt or kill the program.</p></li>
+<li><p>If the necessary permissions are present, the page table entry
+contains a physical page number. This physical page number, concatenated
+with the page offset from the virtual address, is the <em>physical
+address</em>.</p></li>
+</ol>
+<p>Hardware uses various optimizations to speed up this process, notably
+using the <a href="#translation-lookaside-buffer">Translation Lookaside
+Buffer</a>.</p>
+<h3 data-number="2.2.1" id="protection-but-side-channels"><span
+class="header-section-number">2.2.1</span> Protection… but side
+channels?</h3>
+<p>Address translation is designed so that the hardware guarantees
+that</p>
+<ul>
+<li>Only kernel-mode code can change the page table.</li>
+<li>All memory accesses are guarded by the page table.</li>
+</ul>
+<p>Combined with careful coding of the operating system, it is intended
+that these provide full separation of processes, so that no two programs
+can see the contents of the other’s memory unless they have both asked
+the operating system to enable that.</p>
+<p>Since 2017, it has become known that these protections are not quite
+as complete as they were once thought to be. Although these protections
+do ensure that one process cannot directly access another’s memory, they
+do not guarantee the absence of side-effects of memory access that
+another process can detect. For example, many hardware accelerations are
+based on the principle that what happens once is likely to happen again,
+so timing how long a memory access takes can leak some information about
+what other memory accesses other processes may have made.</p>
+<p>This is one example of how a side channel might exist, and why it is
+challenging to reason about their absence. Securing primary channels is
+easy to think about, even if not always easy to do, because the data in
+question is known. That the timing of individual memory accesses was
+information that needed protection was not even known for decades after
+it became a potential side channel.</p>
+<h1 data-number="3" id="page-tables"><span
+class="header-section-number">3</span> Page Tables</h1>
+<p>A page table is conceptually just a map between virtual page numbers
+(which are fixed-size integers) and page table entries (which are each a
+physical page number and a set of Boolean flags).</p>
+<h2 data-number="3.1" id="single-level-page-tables"><span
+class="header-section-number">3.1</span> Single-level page tables</h2>
+<p>In the early days of virtual memory, when the entire addressable
+space was not large, a single array could suffice for implementing an
+efficient page table. A special kernel-access-only register, called the
+<strong>page table base register</strong> or PTBR, stores the address of
+this array.</p>
+<div class="example long">
+<p>Consider a system with 16-bit virtual addresses. If that memory was
+broken into 2<sup>7</sup> pages of 2<sup>9</sup> bytes each, and if each
+page table entry consists of 6 flag bits and a 10-bit physical page
+number, then the single-level page table is an array containing
+2<sup>7</sup> 2-byte integers (i.e., 2<sup>8</sup> bytes in total).</p>
+<p>If the virtual address is 1010 1111 0000 0101<sub>2</sub>, then the
+page offset is 1 0000 0101<sub>2</sub>, and the virtual page number is
+101 0111<sub>2</sub>. Thus, the hardware accesses page table entry
+101 0111<sub>2</sub>—that is, physical address PTBR +
+1010 1110<sub>2</sub>—to find a page table entry. If that page table
+entry’s flags allow access and it has the physical page number, say,
+11 0011 0011<sub>2</sub>, then the resulting physical address is the
+physical page number (11 0011 0011<sub>2</sub>) concatenated with the
+page offset (1 0000 0101<sub>2</sub>) for a physical address of
+110 0110 0111 0000 0101<sub>2</sub>.</p>
+<p>Note that this example maps 16-bit virtual addresses to 19-bit
+physical addresses: each <em>process</em> is limited to 64KB of
+addressable memory but the hardware can support 512KB physical RAM.</p>
+
+</div>
+<p>Single-level page tables are inefficient for 32-bit addresses and
+basically untenable for 64-bit addresses.</p>
+<h2 data-number="3.2" id="multi-level-page-tables"><span
+class="header-section-number">3.2</span> Multi-level page tables</h2>
+<p>Multi-level page tables are a particular instance of a linked data
+structure known as a high-arity (or wide node) fixed-depth tree, which
+is an efficient way for storing large, sparse arrays, particularly when
+entries are clustered. Since this is not a data structure that is
+generally taught in data structure courses, this section provides a full
+overview of the data structure itself before discussing how they are
+used for virutal memory.</p>
+<h3 data-number="3.2.1" id="fixed-depth-high-arity-trees"><span
+class="header-section-number">3.2.1</span> Fixed-depth high-arity
+trees</h3>
+<p>A tree is a linked data structure where each node contains an array
+of pointers to additional nodes. The best-known tree types use arity-2
+(also known as binary or width-2) trees, where the arrays are all 2
+elements long, but trees with higher-arity are common when hardware is
+involved.</p>
+<p>Many trees have variable depth: the number of steps from the root to
+the node containing the desired data may be different for different
+data. That design allows the tree to scale in size, but also mean that
+conditional checks are needed at each node. Alternatively, a tree can be
+designed with a fixed depth, with all data stored the same number of
+steps from the root. Fixed-depth trees typically store all data in the
+leaves of the tree, with separate data design for the internal nodes and
+the leaf nodes.</p>
+<div class="example long">
+<p>The following code defines a tree with arity 16 and three levels of
+intermediate nodes. It has a fixed height of (depending on how you
+count) 3 or 4.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define WIDTH </span><span class="dv">16</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> leaf <span class="op">{</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    PAYLOAD data<span class="op">[</span>WIDTH<span class="op">];</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> height1 <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> leaf <span class="op">*</span>kids<span class="op">[</span>WIDTH<span class="op">];</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> height2 <span class="op">{</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> height1 <span class="op">*</span>kids<span class="op">[</span>WIDTH<span class="op">];</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> height3 <span class="op">{</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> height2 <span class="op">*</span>kids<span class="op">[</span>WIDTH<span class="op">];</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">/* ... */</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> height3 <span class="op">*</span>root <span class="op">=</span> <span class="co">/* ... */</span></span></code></pre></div>
+<p>This tree has the ability to store 16<sup>4</sup> = 2<sup>16</sup> =
+65,536 <code>PAYLOAD</code> values using a total of 16<sup>3</sup> +
+16<sup>2</sup> + 16<sup>1</sup> + 1 = 4,369 pointers, including the
+<code>root</code> pointer.</p>
+
+</div>
+<p>Fixed-depth trees with power-of-two width in each node can be
+accessed with integer indexes, like an array, by using bit masks to turn
+indexes into tree navigation. The bits of the index are split up, using
+the high-order bits for the first tree node index and lower-order bits
+for subsequent nodes until a leaf is reached.</p>
+<div class="example long">
+<p>In the following figure, which uses width 8 instead of 16 to avoid
+over-cluttering the figure, the value 23 has index
+100 111 011 100<sub>2</sub>.</p>
+<svg version="1.1" viewBox="0 0 203.2 137.16" xmlns="http://www.w3.org/2000/svg" style="max-width:24em; margin:auto; display:table;">
+<defs> <marker id="DotM" overflow="visible" orient="auto">
+<path transform="matrix(.4 0 0 .4 2.96 .4)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+</marker> <marker id="Arrow2Mend" overflow="visible" orient="auto">
+<path transform="scale(-.6)" d="m8.71859 4.03374-10.9259-4.01772 10.9259-4.01772c-1.7455 2.37206-1.73544 5.61745-6e-7 8.03544z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".625"/>
+</marker> </defs> <g transform="translate(0,-159.84)">
+<g fill="none" stroke="#000"> <g stroke-width=".264583px">
+<path d="m10.16 185.24v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h-162.56v-15.24h162.56"/>
+<path d="m25.4 215.72v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h-162.56v-15.24h162.56"/>
+<path d="m20.32 246.2v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h-162.56v-15.24h162.56"/>
+<path d="m35.56 276.68v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h20.32v-15.24h20.32v15.24h-162.56v-15.24h162.56"/>
+</g> <g stroke-width=".5">
+<path d="m10.16 175.08-1e-5 10.16" marker-end="url(#Arrow2Mend)" marker-start="url(#DotM)"/>
+<path d="m35.56 225.88c0 20.32-15.24 0-15.24 20.32" marker-end="url(#Arrow2Mend)" marker-start="url(#DotM)"/>
+<path d="m132.08 256.36c0 20.32-96.52 0-96.52 20.32" marker-end="url(#Arrow2Mend)" marker-start="url(#DotM)"/>
+</g> </g> <g font-size="8px" text-anchor="middle" word-spacing="0px">
+<text x="106.67999" y="286.83997" text-align="center"><tspan x="106.67999" y="286.83997">23</tspan></text>
+<text x="81.279991" y="185.23994" text-align="center"><tspan x="81.279991" y="185.23994">100</tspan></text>
+<text x="35.559986" y="215.71996" text-align="center"><tspan x="35.559986" y="215.71996">111</tspan></text>
+<text x="132.07999" y="246.19995" text-align="center"><tspan x="132.07999" y="246.19995">011</tspan></text>
+<text x="106.67999" y="276.67993" text-align="center"><tspan x="106.67999" y="276.67993">100</tspan></text>
+<text x="10.474821" y="169.95105" text-align="center"><tspan x="10.474821" y="169.95105">root</tspan></text>
+</g>
+<path d="m81.28 195.4c0 20.32-55.88 0-55.88 20.32" fill="none" marker-end="url(#Arrow2Mend)" marker-start="url(#DotM)" stroke="#000" stroke-width=".5"/>
+</g>
+</svg>
+
+</div>
+<div class="example long">
+<p>Continuing the previous code example, each tree can be treated as if
+it were an array of 65,536 entries:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>PAYLOAD arr<span class="op">(</span><span class="kw">struct</span> height3 <span class="op">*</span>root<span class="op">,</span> <span class="dt">unsigned</span> <span class="dt">short</span> index<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> height2 <span class="op">*</span>child1 <span class="op">=</span> root  <span class="op">[(</span>index<span class="op">&gt;&gt;</span><span class="dv">12</span><span class="op">)&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> height1 <span class="op">*</span>child2 <span class="op">=</span> child1<span class="op">[(</span>index<span class="op">&gt;&gt;</span><span class="dv">8</span><span class="op">)&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> leaf    <span class="op">*</span>child3 <span class="op">=</span> child2<span class="op">[(</span>index<span class="op">&gt;&gt;</span><span class="dv">4</span><span class="op">)&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> child3<span class="op">[</span>index<span class="op">&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+
+</div>
+<p>Such a structure is significantly less efficient than a simple array:
+it requires more memory than a simple array because of the additional
+pointers; it requires more time because it requires multiple memory
+accesses per element access. However, it can save significant space if
+the majority of the indexes have no value, as entire subtrees can be
+omitted.</p>
+<div class="example long">
+<p>By adding intermediate null checks, most of the tree can be omitted
+if only a few indices are needed:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>PAYLOAD <span class="op">*</span>arr<span class="op">(</span><span class="kw">struct</span> height3 <span class="op">*</span>root<span class="op">,</span> <span class="dt">unsigned</span> <span class="dt">short</span> index<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>root<span class="op">)</span> <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> height2 <span class="op">*</span>child1 <span class="op">=</span> root  <span class="op">[(</span>index<span class="op">&gt;&gt;</span><span class="dv">12</span><span class="op">)&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>child1<span class="op">)</span> <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> height1 <span class="op">*</span>child2 <span class="op">=</span> child1<span class="op">[(</span>index<span class="op">&gt;&gt;</span> <span class="dv">8</span><span class="op">)&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>child2<span class="op">)</span> <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> leaf    <span class="op">*</span>child3 <span class="op">=</span> child2<span class="op">[(</span>index<span class="op">&gt;&gt;</span> <span class="dv">4</span><span class="op">)&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>child3<span class="op">)</span> <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">&amp;</span>child3<span class="op">[</span>index<span class="op">&amp;(</span>WIDTH<span class="op">-</span><span class="dv">1</span><span class="op">)];</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>While this code is even less time-efficient than the previous code,
+it is significantly more space-efficient if only a few values are in the
+<q>array.</q> For example, if only indices 0–10 (0x0000–0x000A) and
+60,000–60,050 (0xEA60–0xEA92) are used, the only non-NULL pointers are
+to:</p>
+<ul>
+<li>In the root, 0x0 and 0xE
+<ul>
+<li>in child1 0x0: 0x0
+<ul>
+<li>in child2 0x0: 0x0,
+<ul>
+<li>in child3 0x0: 0x0 through 0xA</li>
+</ul></li>
+</ul></li>
+<li>in child1 0xE: 0xA
+<ul>
+<li>in child2 0xA: 0x6 through 0x9
+<ul>
+<li>in child3 0x6: 0x0 through 0xF</li>
+<li>in child3 0x7: 0x0 through 0xF</li>
+<li>in child3 0x8: 0x0 through 0xF</li>
+<li>in child3 0x9: 0x0 through 0x2</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Thus, only ten intermediate nodes and 5 × 16 = 80
+<code>PAYLOAD</code> values are allocated rather than the 65,536
+<code>PAYLOAD</code> values that would have been allocated for a simple
+array.</p>
+
+</div>
+<h3 data-number="3.2.2" id="multi-level-page-table-implementation"><span
+class="header-section-number">3.2.2</span> Multi-level page table
+implementation</h3>
+<p>Most programs access only a few megabytes of memory, allocated in a
+few contiguous chunks, out of a 64-bit address space with 2<sup>64</sup>
+= 18,446,744,073,709,551,616 possible addresses. This is, in many ways,
+an ideal scenario for using fixed-depth high-arity trees to store a very
+sparse array of page table entries.</p>
+<p>x86-64-compatible processors handle 64-bit addresses as follows:</p>
+<ul>
+<li><p>They completely ignore the top 16 bits of each virtual address.
+2<sup>48</sup> = 281,474,976,710,656 is seen as more than large enough
+an address space for the current generation of software
+applications.</p></li>
+<li><p>They use 64-bit page table entries, with larger physical page
+numbers than virtual page numbers. This does not mean that all physical
+page numbers are used: it is the OS’s job, when creating new page table
+entries, to ensure that the physical page number picked corresponds to
+an actual address in available RAM.</p></li>
+<li><p>They pick a page size such that every page table node exactly
+fits in one page.</p>
+<p>The most common such page size is 4KB with 2<sup>9</sup> PTEs per
+node, using a four-level page table (9+9+9+9+12 = 48). Other page sizes
+also work: for example, 256KB pages with 2<sup>15</sup> PTEs per node,
+using a two-level page table (15+15+18 = 48), fits perfectly, and at a
+slight loss of space efficiency other sizes can be used as
+well.</p></li>
+</ul>
+<div class="aside long">
+<p>Page size selection is a trade-off. The smaller the pages, the fewer
+bytes of memory are wasted because of partially-used pages, but the more
+time and space is devoted to the page table.</p>
+<p>At one extreme, 16-byte pages (2 PTE per node) means almost no unused
+allocated memory but also means 44 intermediate page table nodes
+separate the PTBR and the PTE.</p>
+<p>At the other extreme, 2<sup>26</sup>-byte pages (a single-level page
+table filling half a page with 2<sup>22</sup> PTE) means that the
+smallest possible program needs at least two pages (128MB of memory) to
+run: one for the page table and one for the code, and a more realistic
+minimal program with at least 1 page of code, 1 page of read-only
+globals, 1 page of read/write globals, 1 page of heap, 1 page of stack,
+1 page of shared library functions, and 1 page of kernel memory, plus
+the page table itself, requires 512MB.</p>
+<p>4KB pages are generally seen as a nice intermediate point between
+tiny and huge pages, though how well they compare with other sizes in
+practice depends in large part on the application domain.</p>
+<p>The trade-off between big and small pages becomes more significant as
+the address space increases. Trying to mitigate this trade-off is part
+of the reason why x86-64 only actually uses 48 bits of its 64-bit
+addresses.</p>
+<p>x86-64 also allows mixed-size pages, where most pages are 4KB but a
+few are 2MB. These <q>big pages</q> are only used for data, not page
+table nodes, meaning some paths down the page table tree pass through
+one fewer node (9+9+9+21 = 48). This adds some complexity to the page
+table traversal process, but allows the operating system more control
+over how pages are distributed.</p>
+
+</div>
+<ul>
+<li><p>Each address translation that the <a
+href="#translation-lookaside-buffer">TLB</a> does not optimize runs a
+process similar to the following:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> vpn<span class="op">[</span><span class="dv">4</span><span class="op">]</span> <span class="op">=</span> split_bits<span class="op">(</span>va<span class="op">&gt;&gt;</span><span class="dv">12</span><span class="op">,</span> <span class="dv">9</span><span class="op">);</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> ppn <span class="op">=</span> PTBR<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span><span class="dv">4</span><span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    PTE pte <span class="op">=</span> ram<span class="op">[(</span>ppn<span class="op">&lt;&lt;</span><span class="dv">12</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span>vpn<span class="op">[</span>i<span class="op">]&lt;&lt;</span><span class="dv">3</span><span class="op">)];</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>pte<span class="op">.</span>unmapped<span class="op">)</span> page fault<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>pte<span class="op">.</span>flags <span class="op">&amp;</span> current_usage<span class="op">)</span> protection fault<span class="op">;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    ppn <span class="op">=</span> pte<span class="op">.</span>ppn<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>pa <span class="op">=</span> <span class="op">(</span>ppn<span class="op">&lt;&lt;</span><span class="dv">12</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span>va <span class="op">&amp;</span> <span class="op">((</span><span class="dv">1</span><span class="op">&lt;&lt;</span><span class="dv">12</span><span class="op">)-</span><span class="dv">1</span><span class="op">));</span></span></code></pre></div></li>
+</ul>
+<p>All of the above is performed by hardware, having been compiled down
+to physical transistors. It is not programmable.</p>
+<p>The programmable parts are the fault handlers. A page fault handler
+(written in the OS software) might do something like</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>handle_page_fault<span class="op">(</span><span class="dt">size_t</span> va<span class="op">,</span> <span class="dt">int</span> access_type<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> flags <span class="op">=</span> permitted_actions<span class="op">(</span>va<span class="op">,</span> segment_list<span class="op">);</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">((</span>access_type <span class="op">&amp;</span> flags<span class="op">)</span> <span class="op">!=</span> access_type<span class="op">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        send_signal<span class="op">(</span>SIGSEGV<span class="op">);</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">ssize_t</span> ppn <span class="op">=</span> get_unused_physical_page<span class="op">();</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>ppn <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> ppn <span class="op">=</span> swap_page<span class="op">();</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    create_page_table_entry<span class="op">(</span>va<span class="op">,</span> ppn<span class="op">,</span> flags<span class="op">);</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The above pseudocode uses several function stubs:</p>
+<dl>
+<dt><code>permitted_actions</code></dt>
+<dd>
+Check the OS list of <a href="#segments-revisited">segments</a> to see
+what kinds of access (reading, writing, executing, etc) the segment
+containing this address allows. If this address is not in a segment,
+returns that no actions are allowed.
+</dd>
+<dt><code>get_unused_physical_page</code></dt>
+<dd>
+The OS maintains a list of all of the physical pages in RAM and which
+process is using each. The idea here is to pull one page from the
+<q>unused</q> list onto the <q>used by current process</q> list.
+</dd>
+<dt><code>swap_page</code></dt>
+<dd>
+<p>In the event that <code>get_unused_physical_page</code> fails to find
+an unused page, the OS picks a page currently being used by some process
+and <q>swaps it out</q>: that is, it</p>
+<ol type="1">
+<li>Picks a physical page</li>
+<li>Writes its contents onto a region of disk known as the <q>swap
+space</q></li>
+<li>Changes the PTE for that page such that
+<ol type="a">
+<li>the unmapped bit is set</li>
+<li>the rest of the bits tell where the contents are located on
+disk</li>
+</ol></li>
+<li>Change that page to be owned by the current process</li>
+<li>Return the newly-freed physical page number</li>
+</ol>
+<p>See <a href="#page-swapping">Page Swapping</a> for more on
+swapping.</p>
+</dd>
+<dt><code>create_page_table_entry</code></dt>
+<dd>
+Ensures that the page table entry is in the page table (possibly
+creating intermediate nodes in the tree) and sets the appropriate
+permissions and physical page number in the PTE. If the PTE already
+exists and notes where in the swap space the old contents of this page
+are located, loads the swapped-out contents back from disk into memory
+as well.
+</dd>
+</dl>
+<p>An important thing to note about the above: software (the operating
+system) writes the page table in a format that the hardware understands
+and can read.</p>
+<div class="example">
+<p>The following depicts all of the lookups used by x86-64’s virtual
+memory system with 4K pages. Virtual addresses are in yellow, physical
+addresses in cyan, and page table entries in white.</p>
+<p><img src="address-trans.svg" style="width:100%"/></p>
+<p>The three zero bits at the end of the first four physical addresses
+accomplish the <q>index × 8</q> needed to compute the address of an
+8-byte PTE by its index.</p>
+<p>Of the above</p>
+<ul>
+<li>The user/compiler puts data in memory and picks the virtual
+address</li>
+<li>The OS puts the data into the PTBR and the PTEs into RAM</li>
+<li>The hardware does everything else depicted</li>
+</ul>
+</div>
+<h2 data-number="3.3" id="translation-lookaside-buffer"><span
+class="header-section-number">3.3</span> Translation Lookaside
+Buffer</h2>
+<p>Address translation needs to happen for every instruction, at least
+once to fetch the instruction and a second time if the instruction
+contains a memory access, so making it fast is vital to keeping the
+computer efficient.</p>
+<p>Modern processors use a special cache called the <strong>translation
+lookaside buffer</strong> (or TLB) to keep the most-used address
+translations in high-speed memory.</p>
+<p>Conceptually, the TLB is used as follows:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> vpn_full <span class="op">=</span> va<span class="op">&gt;&gt;</span><span class="dv">12</span><span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>tlb_has<span class="op">(</span>vpn_full<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    pte <span class="op">=</span> tlb_lookup<span class="op">(</span>vpn_full<span class="op">);</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>pte<span class="op">.</span>flags <span class="op">&amp;</span> current_usage<span class="op">)</span> protection fault<span class="op">;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    ppn <span class="op">=</span> pte<span class="op">.</span>ppn<span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> vpn<span class="op">[</span><span class="dv">4</span><span class="op">]</span> <span class="op">=</span> split_bits<span class="op">(</span>vpn_full<span class="op">,</span> <span class="dv">9</span><span class="op">);</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> ppn <span class="op">=</span> PTBR<span class="op">;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span><span class="op">(</span><span class="dt">int</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span><span class="dv">4</span><span class="op">;</span> i<span class="op">+=</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        pte <span class="op">=</span> ram<span class="op">[(</span>ppn<span class="op">&lt;&lt;</span><span class="dv">12</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span>vpn<span class="op">[</span>i<span class="op">]&lt;&lt;</span><span class="dv">3</span><span class="op">)];</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>pte<span class="op">.</span>unmapped<span class="op">)</span> page fault<span class="op">;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>pte<span class="op">.</span>flags <span class="op">&amp;</span> current_usage<span class="op">)</span> protection fault<span class="op">;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        ppn <span class="op">=</span> pte<span class="op">.</span>ppn<span class="op">;</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    tlb_store<span class="op">(</span>vpn_full<span class="op">,</span> pte<span class="op">);</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>pa <span class="op">=</span> <span class="op">(</span>ppn<span class="op">&lt;&lt;</span><span class="dv">12</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span>va <span class="op">&amp;</span> <span class="op">((</span><span class="dv">1</span><span class="op">&lt;&lt;</span><span class="dv">12</span><span class="op">)-</span><span class="dv">1</span><span class="op">));</span></span></code></pre></div>
+<p>For more details on how caches like the TLB work, see <a
+href="cache.html">the reading on caches</a>.</p>
+<h1 data-number="4" id="usage"><span
+class="header-section-number">4</span> Usage</h1>
+<p>Various uses of virtual memory are alluded to above to motivate the
+various features of virtual memory; this section focuses on those
+uses.</p>
+<h2 data-number="4.1" id="lazy-allocation"><span
+class="header-section-number">4.1</span> Lazy allocation</h2>
+<p>When a program requests memory or is initially loaded, rather than
+having the program wait until all the requested space is actually setup,
+the operating system can let the program proceed right away. Then, if
+the program tries to access part of that newly allocated space too
+early, the operating system can finish setting it up in the page table
+handler. This <q>lazy</q> allocation idea might, for example, help
+programs start faster.</p>
+<h2 data-number="4.2" id="page-swapping"><span
+class="header-section-number">4.2</span> Page Swapping</h2>
+<p>Because addresses in code can be mapped to other addresses (with
+operating system intervention if needed), virtual memory lets code act
+beyond the constraints of available memory. This is traditionally
+handled by the operating system storing some pages on the disk instead
+of in memory. moving these pages between disk and memory is called
+<q>swapping.</q> (If the program tries to access pages that are not in
+memory, the operating system can trigger swapping from the page fault
+handler.)</p>
+<p>Because disks are <em>vastly</em> slower than memory, there is a
+desire to make this happen rarely, meaning that operating systems
+sometimes devote significant effort to selecting pages to swap out of
+memory that it believes are likely not to be swapped back in again
+anytime soon. Predicting which pages will be needed next is
+undecidable<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>, so this is always at best a
+heuristic and sometimes incorrect. If it is consistently incorrect (or
+there is not enough physical memory available for accuracy to matter)
+and the process begins spending more time swapping pages in and out than
+it does doing actual work, it is said that the process is
+<strong>thrashing</strong>.</p>
+<p>As memory has become less expensive and more plentiful, swap is
+arguably<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a> less important than it once was, but
+it is still a part of every major end-user OS.</p>
+<h3 data-number="4.2.1" id="shared-memory"><span
+class="header-section-number">4.2.1</span> Shared Memory</h3>
+<p>One of the goals of virtual memory is to allow each process to have
+its own address space, but because this is done by having a mapping
+between virtual and physical pages, it is quite possible to map the same
+physical page into multiple different processes’ virtual address
+spaces—potentially even to have the same physical page mapped to
+different virtual pages in each process.</p>
+<p>Shared memory, as this is called, is used for several purposes,
+notably including the following:</p>
+<dl>
+<dt>Shared libraries.</dt>
+<dd>
+<p>If several programs are going to load in the same shared library
+code, it can be more efficient to have its code in just one physical
+page shared in each process’s virtual address space.</p>
+<p>Not all libraries are linked in as shared memory. Since shared memory
+must come in in full page chunks, shared memory library linkage can be
+inefficient if library code is small or not shared by several running
+processes. Additionally, sharing library code requires all processes
+that use it to use the exact same version of the code; as library code
+is frequently updated, this can itself be a challenge to engineer
+around.</p>
+<p>Static library code is linked during compilation, while shared (also
+called <q>dynamic</q>) library code is linked by the loader or in some
+cases even part-way through execution.</p>
+</dd>
+<dt>Kernel memory.</dt>
+<dd>
+<p>Consider the page of memory that contains the instruction that
+changes the PTBR. For the next instruction to be fetched properly, that
+instruction’s virtual page needs to map to the same physical page in
+both the old and new page tables.</p>
+<p>Different operating systems handle this differently; in Linux, for
+example, half of the entire address space (all with addresses
+0x800000000000 or above) is reserved for the OS and is mapped to the
+same set of physical pages in every process’s page table.</p>
+</dd>
+<dt>Shared-memory communication.</dt>
+<dd>
+Processes can communicate with one another by each reading what others
+have written into a shared region of memory. This can be a very
+efficient way of sharing large quantities of data but does not, by
+itself, provide mechanisms for efficiently awaiting a response.
+</dd>
+<dt>Memory-mapped files</dt>
+<dd>
+As an alternative to reading and writing a file with system calls, many
+operating systems allow a process to <q>map</q> a file into their
+memory. The bytes of the file then appear as bytes in that process’s
+memory. The operating system can ensure that all processes share a
+single copy of the file’s data, so the bytes always reflect the current
+version of the file.
+</dd>
+</dl>
+<h2 data-number="4.3" id="process-switching"><span
+class="header-section-number">4.3</span> Process Switching</h2>
+<p>Switching between processes happens in the operating system’s code.
+When the OS was invoked (in an <a href="#handling">Exception
+Handler</a>), the state of the original process was stored somewhere;
+when changing processes,</p>
+<ul>
+<li>the saved user state is moved into an OS data structure to track the
+not-currently-running processes.</li>
+<li>the PTBR is changed to point to the page table of the new process,
+and the user page table entries in the translation lookaside buffer are
+marked as invalid.</li>
+<li>the saved state from the OS data structure is moved back into the
+saved user state location to be restored when the exception handler
+returns.</li>
+</ul>
+<p>As this happens in operating system software, other computation is
+often attached to it. It is not uncommon for the operating system to
+perform many different bookkeeping and other operations each time a
+context switch is performed.</p>
+<h2 data-number="4.4" id="direct-memory-access"><span
+class="header-section-number">4.4</span> Direct Memory Access</h2>
+<p>Physical memory pages can be given to systems other than software
+processes. It is common for various input/output operations to be
+performed by allocating a page (or more) of memory to be accessed
+directly by the I/O systems. This direct memory access model allows I/O
+to happen at the slower pace of I/O systems concurrently with the
+processor doing other work as well as the processor to access it at the
+higher speed of memory access once the transfer into or out of memory is
+completed. This model is called <strong>direct memory access</strong>
+(DMA).</p>
+<p>Technically, DMA does not require virtual memory—disks could be given
+access to physical memory even if code accesses memory with physical
+addresses—but it is generally implemented as an extension of the virtual
+memory system.</p>
+<h1 data-number="5" id="further-resources"><span
+class="header-section-number">5</span> Further resources</h1>
+<h2 data-number="5.1" id="general"><span
+class="header-section-number">5.1</span> General</h2>
+<ul>
+<li><p>Arpaci-Dusseau and Arpaci-Dusseau, <a
+href="https://pages.cs.wisc.edu/~remzi/OSTEP/"><em>Operating Systems:
+Three Easy Pieces</em></a> chapters 13, 15, 18, 36. More detailed
+textbook on all these topics, intended in the context of a more
+dedicated operating systems course.</p></li>
+<li><p><a href="https://diveintosystems.org/book/C13-OS/vm.html">Dive
+into Systems, Chapter 13.3</a> — doesn’t cover multi-level page tables,
+but covers idea of virtual memory</p></li>
+</ul>
+<h2 data-number="5.2" id="virtual-memory-system-examples"><span
+class="header-section-number">5.2</span> Virtual memory system
+examples</h2>
+<ul>
+<li><p>Levy and Lipman (1982), <q><a
+href="https://doi.org/10.1109/MC.1982.1653971">Virtual Memory Management
+in the VAX/VMS Operating System</a></q> in IEEE Computer. An old virtual
+memory design that looks very similar to those of today.</p></li>
+<li><p>x86-64 paging hardware</p>
+<ul>
+<li><p>OSdev wiki’s (hobbiest OS developer resource) <a
+href="https://wiki.osdev.org/Paging">description</a></p></li>
+<li><p>The complete but difficult to read references: Volume 3, Chapters
+3-4 of <a
+href="https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html">Intel’s
+x86 manuals</a> or Volume 2, Chapters 4-5 of <a
+href="https://www.amd.com/system/files/TechDocs/24593.pdf">AMD’s x86
+manuals</a>. Describes the virtual memory system actually implemented by
+x86-64. This is made much more complicated because 32-bit x86 supports
+<em>segmentation</em> and <em>paging</em> simultaneously. In
+segmentation, rather than dividing up memory into many fixed-sized
+pieces, it is divided up into fewer, variable-sized pieces. Most
+operating systems on x86-64 mostly avoid using segmentation but use
+paging extensively.</p></li>
+</ul></li>
+</ul>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Note, however, that keeping with the tradition of using
+the same English word to mean multiple unrelated technical concepts,
+x86-64 uses the word <q>segment</q> in a distinct hardware sense to mean
+<q>the high-order bits of addresses we don’t want to express in
+full.</q><a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>In case you have not yet had the pleasure of studying
+computational theory—or (even more sad to contemplate!) have forgotten
+important bits of it—<q>undecidable</q> basically means <q>only solvable
+in special cases, not in general.</q></p>
+<p>In the happier case where you do remember computational theory and
+were hoping to find a proof here, Rice’s Theorem is sufficient to
+demonstrate the undecidability of determining what pages will be needed
+in what order.<a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Arguably as in, I have heard friendly arguments between
+people who know more about this than I do on this topic.<a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech, with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

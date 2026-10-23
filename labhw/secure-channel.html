@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Secure channels lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/secure-channel.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#our-simulation-api" id="toc-our-simulation-api"><span
+class="toc-section-number">1</span> Our simulation API</a>
+<ul>
+<li><a href="#manipulating-and-creating-messages"
+id="toc-manipulating-and-creating-messages"><span
+class="toc-section-number">1.1</span> Manipulating and creating
+messages</a></li>
+</ul></li>
+<li><a href="#the-scenarios" id="toc-the-scenarios"><span
+class="toc-section-number">2</span> The scenarios</a>
+<ul>
+<li><a href="#scenario-0" id="toc-scenario-0"><span
+class="toc-section-number">2.1</span> Scenario 0</a></li>
+<li><a href="#scenario-1" id="toc-scenario-1"><span
+class="toc-section-number">2.2</span> Scenario 1</a></li>
+<li><a href="#scenario-2" id="toc-scenario-2"><span
+class="toc-section-number">2.3</span> Scenario 2</a></li>
+<li><a href="#scenario-3" id="toc-scenario-3"><span
+class="toc-section-number">2.4</span> Scenario 3</a></li>
+<li><a href="#scenario-4" id="toc-scenario-4"><span
+class="toc-section-number">2.5</span> Scenario 4</a></li>
+<li><a href="#scenario-5" id="toc-scenario-5"><span
+class="toc-section-number">2.6</span> Scenario 5</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>3 Nov 2023: update securelab.tar for this semester</li>
+<li>6 Nov 2023: remove notes about old versions of securelab.tar</li>
+<li>6 Nov 2023: for scenario 3 request that B not think A sent too many
+payments</li>
+<li>12 Nov 2023: hopefully be more clear about
+<code>./lab X attack</code> being what you have to get
+<q>working</q></li>
+<li>16 Apr 2026: add missing comma to exmaple code for adding a
+message</li>
+</ul>
+</div>
+<div class="exercise long">
+<p>Possibly working with a partner or two —</p>
+<ol type="1">
+<li><p>Download <a href="files/securelab.tar">securelab.tar</a>
+<em>[last updated 3 November]</em> and extract it.</p></li>
+<li><p>In this lab, you will act as a network attacker on several
+examples of attempts to communicate securely. Since this a new lab, I’m
+not sure how many are easily doable in the lab time. <em>Do as many as
+you can within the lab time.</em> I recommend working with a
+partner.</p>
+<p>Run</p>
+<pre><code>make</code></pre>
+<p>to build the testing program and then run</p>
+<pre><code>./lab 0 normal</code></pre>
+<p>to see the first scenario. (It is also listed below in this
+document.) You’ll see a transcript showing an exchange where A asks B to
+pay M $1000, then asks B to pay $438 dollars.</p>
+<p>At the end of the simulation, we report how much M is paid by B.</p>
+<p>You are playing the role of the network attacker M and will
+demostrate how you get B to pay you more by having control over the
+network.</p></li>
+<li><p>When sending messages over the network, our testing program can
+call one of the <code>forward_...()</code> functions in
+<code>attack.c</code>. In this function, you can process the messages
+sent between A and B, including changing messages, adding new messages,
+or discarding messages.</p>
+<p>When you run <code>./lab N normal</code>, we’ll forward messages
+without changes function for scenario N (where N is 0, 1, 2, 3, or
+4).</p>
+<p>When you run <code>./lab N attack</code>, we’ll use the
+<code>forward_attack_N</code> function to decide what to do with sent
+messages.</p></li>
+<li><p>For scenario 0, Modify the <code>forward_attack_0</code> function
+so B thinks A asked them to pay M (you) $10001438 instead of $1438.
+(Hint: This does not require sending a lot of messages.)</p>
+<p>When you’re successful, this should be reflected in the output
+<code>./lab 0 attack</code>.</p></li>
+<li><p>Do the same for scenario <q>1</q> and
+<code>forward_attack_1</code>. You can examine what scenario 1 is
+with</p>
+<pre><code>./lab 1 normal</code></pre>
+<p>and run your attack on it with</p>
+<pre><code>./lab 1 attack</code></pre></li>
+<li><p>Scenario 2 is trickier. Get B to pay at least $2000 (we don’t
+care about the exact amount) instead of $1438.</p></li>
+<li><p>Do the same for scenario 3 as scenario 2 without causing B to
+think A sent too many payment requests.</p></li>
+<li><p>(optional) If you have time, do the same as scenario 4 for
+scenarios 2 and 3. In this scenario, B initiates the communication with
+A and tries to use a nonce to prevent replay attacks. It will help that
+A will also accept messages from you (M), but will always indicate that
+there are no more payments. You can use this to run a man-in-the-middle
+attack on B and A; see also the famous flaws of the <a
+href="https://en.wikipedia.org/wiki/Needham%E2%80%93Schroeder_protocol">Needham-Schroeder
+protocol</a>. The basic idea is that because A will communicate with you
+(M), you can get them to decrypt B’s message to A for you.</p></li>
+<li><p>Submit your <code>attack.c</code> to the submission site or show
+your code to a TA for checkoff.</p>
+<p>If you submit the lab, we expect scenarios 0-3 to be complete.</p>
+<p>If you checkoff the lab, we will give credit if you do not complete
+scenario 3 but have significant progress by the end of the lab.</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="our-simulation-api"><span
+class="header-section-number">1</span> Our simulation API</h1>
+<p>The code for forward_normal looks like:</p>
+<pre><code>void forward_normal(struct message *message) {
+    send_message(message);
+}</code></pre>
+<p>It just forwards the message without making changes.</p>
+<p>You can modify this to change the messages in various ways, for
+example:</p>
+<ul>
+<li><p>change the contents of certain message</p>
+<pre><code> void forward_change_to_B(struct message *message) {
+     if (message-&gt;to == &#39;B&#39;) {
+         strcpy(message-&gt;data, &quot;This replaces the original message.&quot;);
+         message-&gt;data_size = strlen(&quot;This replaces the original message.&quot;);
+     }
+     send_message(message);
+ }</code></pre></li>
+<li><p>change the recipient or sender of certain message:</p>
+<pre><code> void forward_send_A_back_to_B(struct message *message) {
+     if (message-&gt;to == &#39;B&#39; &amp;&amp; message-&gt;from == &#39;A&#39;) {
+         message-&gt;to = &#39;A&#39;;
+         message-&gt;from = &#39;B&#39;;
+     }
+     send_message(message);
+ }</code></pre></li>
+<li><p>add a brand new message before the first message:</p>
+<pre><code> static int counter = 0;
+ void forward_with_additional(struct message *message) {
+     if (counter == 0) {
+         send_message(new_message(
+             &#39;A&#39;, &#39;B&#39;,
+             &quot;This is an additional message.&quot;,
+             false, false
+         ))
+         counter += 1;
+     }
+     send_message(message);
+ }</code></pre></li>
+</ul>
+<h2 data-number="1.1" id="manipulating-and-creating-messages"><span
+class="header-section-number">1.1</span> Manipulating and creating
+messages</h2>
+<p>The <code>struct message</code> is defined as follows:</p>
+<pre><code>struct message {
+    char from;              // message sender
+    char to;                // message recipient
+    bool is_encrypted;      
+    bool is_signed;         // if true, &#39;data&#39; is signed using from&#39;s private key
+    char data[1024];        
+    size_t data_size;
+    char signature[64];     // only used if is_signed is true
+};</code></pre>
+<p><code>to</code> indicates where the network will attempt to deliver
+the message when you can <code>send_message()</code>.</p>
+<p>Signed messages will have <code>signature</code> set to some
+meaningful data.</p>
+<p>You can construct messages (including encrypting them) using the
+following utility function:</p>
+<pre><code>struct message *new_message(
+    char from,
+    char to,
+    const char *data,   // NULL-terminated string
+    bool is_encrypted,  // encrypt the message
+    bool is_signed      // sign the message --- only supported if &#39;from&#39; is &#39;M&#39;
+);</code></pre>
+<p>You can decrypt messages encrypted to <q>M</q> using:</p>
+<pre><code>void decrypt_message_for_M(
+    const struct message *message,
+    char *buffer,
+    size_t buffer_size
+);</code></pre>
+<p>which will copy the decrypted contents of the message into
+<code>buffer</code> (truncating the contents if the buffer_size is too
+small).</p>
+<p>Encrypting a message will public-key encrypt it to <code>to</code>’s
+public key. <code>new_message</code> has a list of all the public keys
+to do this.</p>
+<p>If you manipulate the <code>data</code> or <code>data_size</code> of
+an encrypted message directly or unset the <code>is_encrypted</code>
+field of an existing message (instead of encrypting a new message to the
+public key), then most likely the resulting message will be considered
+malformed.</p>
+<p>Signing a message will only work if <code>from</code> is M;
+<code>new_message</code> does not have any other private keys.</p>
+<h1 data-number="2" id="the-scenarios"><span
+class="header-section-number">2</span> The scenarios</h1>
+<h2 data-number="2.1" id="scenario-0"><span
+class="header-section-number">2.1</span> Scenario 0</h2>
+<pre><code>A-&gt;B [not encrypted]: PAY $1000 TO M
+B-&gt;A [not encrypted]: PAID
+A-&gt;B [not encrypted]: PAY $0438 TO M
+B-&gt;A [not encrypted]: PAID</code></pre>
+<h2 data-number="2.2" id="scenario-1"><span
+class="header-section-number">2.2</span> Scenario 1</h2>
+<pre><code>A-&gt;B [encrypted to B&#39;s public key]: PAY $1000 TO M
+B-&gt;A [encrypted to A&#39;s public key]: PAID
+A-&gt;B [encrypted to B&#39;s public key]: PAY $0438 TO M
+B-&gt;A [encrypted to A&#39;s public key]: PAID</code></pre>
+<h2 data-number="2.3" id="scenario-2"><span
+class="header-section-number">2.3</span> Scenario 2</h2>
+<pre><code>A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: PAY $1000 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: PAID
+A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: PAY $0438 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: PAID</code></pre>
+<h2 data-number="2.4" id="scenario-3"><span
+class="header-section-number">2.4</span> Scenario 3</h2>
+<pre><code>A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: PAY $0001 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: PAID #1 OF UP TO 3
+A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: PAY $1000 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: PAID #2 OF UP TO 3
+A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: PAY $0437 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: PAID #3 OF UP TO 3</code></pre>
+<h2 data-number="2.5" id="scenario-4"><span
+class="header-section-number">2.5</span> Scenario 4</h2>
+<pre><code>B-&gt;A [encrypted to A&#39;s public key]: START [random number 1]
+A-&gt;B [encrypted to B&#39;s public key]: [random number 1] PAY $1000 TO M
+B-&gt;A [encrypted to B&#39;s public key]: [random number 1] PAID
+B-&gt;A [encrypted to A&#39;s public key]: START [random number 2]
+A-&gt;B [encrypted to B&#39;s public key]: [random number 2] PAY $0438 TO M
+B-&gt;A [encrypted to B&#39;s public key]: [random number 2] PAID
+B-&gt;A [encrypted to A&#39;s public key]: START [random number 3]
+A-&gt;B [encrypted to B&#39;s public key]: [random number 3] NO MORE PAYMENTS FOR YOU</code></pre>
+<h2 data-number="2.6" id="scenario-5"><span
+class="header-section-number">2.6</span> Scenario 5</h2>
+<pre><code>B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: START [random number 1]
+A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: [random number 1] PAY $1000 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: [random number 1] PAID
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: START [random number 2]
+A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: [random number 2] PAY $0438 TO M
+B-&gt;A [encrypted to A&#39;s public key, then signed by B&#39;s private key]: [random number 1] PAID
+B-&gt;A [encrypted to A&#39;s public key, then signed by A&#39;s private key]: START [random number 3]
+A-&gt;B [encrypted to B&#39;s public key, then signed by A&#39;s private key]: [random number 3] NO MORE PAYMENTS FOR YOU</code></pre>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

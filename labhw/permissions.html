@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Permissions</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/permissions.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>2026-09-17: fixup answer sheet link to go to correct semester
+URL</li>
+</ul>
+</div>
+<p>Creating, renaming, removing, opening, reading from, writing to, and
+executing files can only be done the operating system. As such, the OS
+gets to decide when to approve a request to do one of these things and
+when to reject it. Although not all OSs use the same system, the POSIX
+standard defines a set of file permissions that are commonly used.</p>
+<div class="exercise long">
+<p>Work, ideally with a partner<a href="#fn1" class="footnote-ref"
+id="fnref1" role="doc-noteref"><sup>1</sup></a>, to achieve the
+following:</p>
+<ol type="1">
+<li><p>Answer the first question about converting from a letter
+permission to numeric permission or vice-versa on the <a
+href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/quiz.php?qid=permissions-answer-sheet">answer
+sheet</a>.</p></li>
+<li><p>Create a directory in <code>/localtmp</code> on the portal
+machines. (<code>/bigtemp</code> will not work, it does not support
+ACLs.) Do each of the following steps in that directory.</p></li>
+<li><p>Make sure the directory is accessible to your partner. Use
+<code>chmod</code> or <code>setfacl</code> to set permissions on the
+directory.</p>
+<ul>
+<li><p>If it is in your home directory, then by default the permissions
+on your home directory disallow access to anything inside it, even if
+those files or directories are themselves set to allow access. You can
+change this with something like <code>chmod og+x /u/COMPUTING-ID</code>
+(On directories, <code>x</code> is <q>search</q> permission; which
+allows accessing files within the direcgtory if you know their
+names).</p></li>
+<li><p>If it is in <code>/localtmp</code>, make sure you are on the same
+portal backend machine as your partner. To do this, first SSH into
+portal.cs.virginia.edu and run <code>uname -n</code> to find out what
+server you are on (portal## for some two-digit number ##). Then, have
+your partner’s SSH (or yours, if you reconnect) go directly into that
+portal##.cs.virginia.edu.</p></li>
+</ul></li>
+<li><p>Create a directory <code>dir</code> with a file <code>foo</code>
+and a file <code>baz</code> where you can <code>ls</code> and
+<code>cat</code> freely, but your partner finds that</p>
+<ol type="a">
+<li><code class="sourceCode bash"><span class="fu">ls</span> dir</code>
+refuses to run</li>
+<li><code
+class="sourceCode bash"><span class="fu">cat</span> dir/foo</code>
+works</li>
+<li><code
+class="sourceCode bash"><span class="fu">cat</span> dir/baz</code>
+refuses to run</li>
+</ol></li>
+<li><p>Create a file <q>shared.txt</q> and set its access control list
+so that</p>
+<ol type="a">
+<li>you can read and write it</li>
+<li>your partner can read it</li>
+<li>other users (including TAs) cannot do either one</li>
+</ol></li>
+<li><p>Make a file <code>simple.sh</code> which can be run both by <code
+class="sourceCode bash"><span class="fu">bash</span> simple.sh</code>
+and <code
+class="sourceCode bash"><span class="ex">./simple.sh</span></code>
+containing bash commands that</p>
+<ol type="a">
+<li>appends a line containing the current day and time to file
+<code>simple_runs</code></li>
+<li>reports how many lines <code>simple_runs</code> contains (See the
+section of the reading on executable text files.)</li>
+</ol></li>
+<li><p>Determine which of the following are possible after creating a
+file <code>xyxxy</code> and setting its permissions. Write your answers
+with a brief explanation on the <a
+href="https://kytos02.cs.virginia.edu/cs3130-spring2026/quizzes/quiz.php?qid=permissions-answer-sheet">answer
+sheet</a>.</p>
+<ol type="a">
+<li><code
+class="sourceCode bash"><span class="fu">cat</span> xyxxy</code> works
+but <code
+class="sourceCode bash"><span class="bu">echo</span> <span class="st">&#39;hi&#39;</span> <span class="op">&gt;&gt;</span> xyxxy</code>
+does not</li>
+<li><code
+class="sourceCode bash"><span class="bu">echo</span> hi <span class="op">&gt;&gt;</span> xyxxy</code>
+works but <code
+class="sourceCode bash"><span class="fu">cat</span> xyxxy</code> does
+not</li>
+<li><code class="sourceCode bash"><span class="ex">./xyxxy</span></code>
+works but <code
+class="sourceCode bash"><span class="fu">cat</span> xyxxy</code> does
+not</li>
+<li><code class="sourceCode bash"><span class="ex">./xyxxy</span></code>
+works but <code
+class="sourceCode bash"><span class="bu">echo</span> hi <span class="op">&gt;&gt;</span> xyxxy</code>
+does not</li>
+</ol></li>
+<li><p>Either:</p>
+<ol type="a">
+<li>check off your lab completion with a TA, or</li>
+<li>from your home directory, run
+<code>tar --acls -cvf permissions-lab.tar BASE-DIRECTORY</code> where
+<code>BASE-DIRECTORY</code> is the directory you created for everything
+in the lab. Then upload <code>permissions-lab.tar</code> to the
+submission site.</li>
+</ol></li>
+</ol>
+
+</div>
+<p>The information needed to achieve these goals is explained in the <a
+href="../readings/permissions.html">reading on permissions</a>. We
+recommend you read it in full, discussing it with a partner and asking
+clarifying questions of TAs as you go, then return to the tasks
+above.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>If you don’t work with a partner, you may use the
+username <q>nobody</q> in place of what would be your partner’s
+username. But you won’t be able to verify that some of your permissions
+settings work, which is why I would very strongly recommend having a
+partner.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Side channel lab</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/side-channel.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#overview" id="toc-overview"><span
+class="toc-section-number">1</span> Overview</a></li>
+<li><a href="#your-task" id="toc-your-task"><span
+class="toc-section-number">2</span> Your Task</a></li>
+<li><a href="#hints" id="toc-hints"><span
+class="toc-section-number">3</span> Hints</a>
+<ul>
+<li><a href="#understanding-the-supplied-code"
+id="toc-understanding-the-supplied-code"><span
+class="toc-section-number">3.1</span> Understanding the supplied
+code</a></li>
+<li><a href="#suggested-approach" id="toc-suggested-approach"><span
+class="toc-section-number">3.2</span> Suggested approach</a></li>
+<li><a href="#on-ensuring-measurement-consistency"
+id="toc-on-ensuring-measurement-consistency"><span
+class="toc-section-number">3.3</span> On ensuring measurement
+consistency</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>22 April 2024: emphasize that fewer guesses only needs to happen
+with large enough length and that the difference should be large and
+not-passphrase dependent; add footnote exponential versus linear
+scaling</li>
+</ul>
+</div>
+<h1 data-number="1" id="overview"><span
+class="header-section-number">1</span> Overview</h1>
+<p>In this lab, we will give you a <code>check_passphrase</code>
+function that compares a passphrase with a stored passphrase one
+character at a time.</p>
+<p>Your task is to write a function that will figure out the passphrase
+by calling <code>check_passphrase</code> and timing how long it takes.
+Rather than trying all possible passphrases, you should be able to tell
+whether you have the first few characters correct by examining how long
+it takes the function to run.</p>
+<h1 data-number="2" id="your-task"><span
+class="header-section-number">2</span> Your Task</h1>
+<ol type="1">
+<li><p>As usual for labs, you may work with other students.</p></li>
+<li><p>Download the supplied skeleton code at <a
+href="files/side-channel.tar">here</a> (or via something like
+<code>wget https://www.cs.virginia.edu/~cr4bd/3130/S2023/labhw/files/side-channel.tar</code>).</p>
+<p>When woring on the department machines, run
+<code>module load gcc</code> since our Makefile requires a more recent
+version of <code>gcc</code> than the default.</p>
+<p>Build the supplied code using <code>make</code>.</p></li>
+<li><p>Examine the <code>find_passphrase</code> function in
+<code>lab.c</code>.</p>
+<p>Try running our test harness with a target passphrase of <q>foo</q>
+with</p>
+<pre><code>./lab foo</code></pre>
+<p>or with a target passphrase of <q>b</q> with</p>
+<pre><code>./lab b</code></pre></li>
+<li><p>In <code>lab.c</code>, modify the
+<code>find_passphrase(buffer, length)</code> function so it will figure
+out which passphrase <code>check_passphrase</code> accepts. Your
+function may assume that passphrases consist of only of the letter
+<code>a</code> through <code>z</code> and are exactly
+<code>length</code> characters long.</p>
+<p>Your function must <em>only</em> use information obtained by running
+and timing <code>check_passphrase</code>.</p>
+<p>We provide advice on how to understand the supplied code and utility
+functions and to write your <code>find_passphrase</code> function in the
+hints below.</p>
+<p>When the passphrase length is large enough, a correct solution will
+use <em>many</em> times fewer guesses overall than trying all possible
+passphrases of the specified length regardless of the chosen
+passphrase.<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></p></li>
+<li><p>Test your solution by running <code>./lab</code> with various
+target passphrases.</p></li>
+<li><p>Either:</p>
+<ul>
+<li>Submit your modified <code>lab.c</code> to the submission site,
+or</li>
+<li>Show a TA your code working for checkoff.</li>
+</ul></li>
+</ol>
+<h1 data-number="3" id="hints"><span
+class="header-section-number">3</span> Hints</h1>
+<h2 data-number="3.1" id="understanding-the-supplied-code"><span
+class="header-section-number">3.1</span> Understanding the supplied
+code</h2>
+<ol type="1">
+<li><p>Run <code>make</code> to build a <code>./lab</code> program
+from:</p>
+<ul>
+<li><code>lab.c</code>: the file with the implementation of
+<code>find_passphrase</code> you are going to modify</li>
+<li><code>timing.c</code>: high-precision timing code that you can use
+from <code>lab.c</code></li>
+<li><code>main.c</code>: our supplied testing code</li>
+<li><code>check_passphrase.s</code>: the check_passphrase() function
+written in assembly</li>
+</ul></li>
+<li><p>The <code>./lab</code> program can be run like:</p>
+<pre><code>./lab passphrase</code></pre>
+<p>in which case it will set the passphrase to <q>passphrase</q>, invoke
+the <code>find_passphrase</code> function and report the results
+like:</p>
+<pre><code>found passphrase [passphrase] after 702 queries</code></pre>
+<p>or, if the function fails to fill in <code>buffer</code> with the
+correct passphrase, it will report results like</p>
+<pre><code>found [z], but that was not the passphrase</code></pre></li>
+<li><p>With unmodified code, <code>find_passphrase</code> (in lab.c)
+will try the passphrases <code>a</code>, <code>b</code>, and
+<code>c</code>, in that order. If any of them work, it will return that
+answer, then the code in <code>main.c</code> will print out the answer.
+So for example, running</p>
+<pre><code>./lab b</code></pre>
+<p>will print out</p>
+<pre><code>found passphrase [b] after 2 queries</code></pre>
+<p>and</p>
+<pre><code>./lab c</code></pre>
+<p>will print out</p>
+<pre><code>found passphrase [c] after 3 queries</code></pre>
+<p>.</p>
+<p>If you select a passphrase that is not one of the ones it checks, it
+will print out the timings for checking <code>a</code>, <code>b</code>,
+and <code>c</code> and return the answer <code>c</code>, which will not
+be correct.</p></li>
+<li><p>To run and time <code>check_passphrase</code>, the supplied
+<code>find_passphrase</code> uses a utility function we supplied called
+<code>measure_once</code>, which it calls using code like:</p>
+<pre><code>long time = measure_once(&amp;result, buffer, check_passphrase);</code></pre>
+<p>This does something similar to the pseudocode:</p>
+<pre><code>long start = GetTime();
+result = check_passphrase(buffer);
+long end = GetTime();
+long time = end - start;</code></pre>
+<p>The <code>measure_once</code> function attempts to follow advice in
+Intel’s documentation for obtaining high-precision timings of code. (It
+also includes some x86-64 assembly, so it will not work on non-x86-64
+systems.)</p></li>
+<li><p>On my system running <code>./lab bx</code> prints out something
+like:</p>
+<pre><code>&#39;a&#39; took 426 cycles
+&#39;b&#39; took 418 cycles
+&#39;c&#39; took 146 cycles
+found [c], but that was not the passphrase</code></pre>
+<p>and <code>./lab cx</code> prints out something like:</p>
+<pre><code>&#39;a&#39; took 710 cycles
+&#39;b&#39; took 134 cycles
+&#39;c&#39; took 328 cycles
+found [c], but that was not the passphrase</code></pre></li>
+<li><p>In both cases, running the test for <code>a</code>, the first
+thing timed, took a while. This is probably because values were not
+loaded into caches yet. We would probably get more consistent timings
+for <code>a</code> if we called <code>check_passphrase</code> earlier to
+make sure values were loaded into caches.</p></li>
+<li><p>Notice that the time the function took to test <code>b</code> or
+<code>c</code> varied depending on whether the passphrase started with
+<code>c</code> or <code>b</code>. You’ll take advantage of that to
+modify <code>find_passphrase</code>.</p></li>
+</ol>
+<h2 data-number="3.2" id="suggested-approach"><span
+class="header-section-number">3.2</span> Suggested approach</h2>
+<ol type="1">
+<li><p>I would recommend starting by modifying the code to time all the
+letters <code>a</code> through <code>z</code> and printing out all those
+timings.</p></li>
+<li><p>To deal with the problem of the first thing timed being slow
+every time (probably because of caches being loaded for the first time),
+I would recommend taking multiple measurements for each letter. Taking
+multiple measurements will also mitigate against measurement errors from
+other activities happening on the system.</p></li>
+<li><p>When you’ve done this, you should be able to see that when you
+run, for example</p>
+<pre><code>./lab fxxxx</code></pre>
+<p>you’ll get significantly longer timings for testing <code>f</code>
+compared to other items and when you run, for example</p>
+<pre><code>./lab axxxx</code></pre>
+<p>you’ll get significantly longer timings for testing
+<code>a</code>.</p></li>
+<li><p>Next, expand your code from testing the first letter to guessing
+multiple letters. I would recommend structuring your code like:</p>
+<ul>
+<li><p>Fill in the string with all \0s to start with an empty
+string.</p></li>
+<li><p>In a loop for each index <em>i</em> up to length:</p>
+<ul>
+<li><p>Try each possibility for the <em>i</em>’th letter and see which
+seems most likely based on the timings you’ve measured.</p></li>
+<li><p>Fill in the best guess of the <em>i</em>th letter for future
+iterations</p></li>
+</ul></li>
+<li><p>If you get to the end of the loop and none of the guesses were
+correct, repeat the process. Hopefully, this was just caused by
+something interfering with the timings that won’t happen over and over
+again.</p></li>
+</ul></li>
+</ol>
+<h2 data-number="3.3" id="on-ensuring-measurement-consistency"><span
+class="header-section-number">3.3</span> On ensuring measurement
+consistency</h2>
+<ol start="3" type="1">
+<li><p>When consolidating mulitple measurements, it may be better to use
+an approach that is not very sensitive to outliers (for example, such as
+taking a median; or retrying whenever multiple measurements don’t agree
+about what is slowest).</p>
+<p>(Note that outliers might occur, e.g., because of an exception
+occuring while the passphrase is being checked, which isn’t relevant to
+the timing we care about.)</p></li>
+<li><p>To get consistent measurements, you should try to measure all the
+possible letters under consistent conditions. (This helps avoid issues
+where, for example, the processor changes clock speeds dynamically to
+save power or manage heat.)</p>
+<p>So, for example, it might be good to do things like:</p>
+<ul>
+<li>(especially if taking lots of measurements) interleaving when each
+possiblity is measured rather than doing all the measurements for the
+first possiblity, then the second, and so on, and/or</li>
+<li>measuring all the letters for an index before printing any
+measurements out</li>
+</ul></li>
+</ol>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p> Trying all possible passphrases would take
+Theta(26<sup>n</sup>) guesses (averaging 26<sup>n</sup>/2 passphrases
+before it finds the correct one), but the timing information should
+allow around Theta(n) guesses. It’s possible your timing-based solution
+may sometimes get confused by a spuriously low or high measurement and
+therefore not achieve linear scaling. But it should still be much better
+than the <q>trying all passphrases</q> solution.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

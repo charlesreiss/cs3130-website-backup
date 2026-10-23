@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Using SSH</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/ssh.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#use-ssh-without-passwords"
+id="toc-use-ssh-without-passwords"><span
+class="toc-section-number">1</span> Use SSH without passwords</a>
+<ul>
+<li><a href="#concept" id="toc-concept"><span
+class="toc-section-number">1.1</span> Concept</a></li>
+<li><a href="#setup" id="toc-setup"><span
+class="toc-section-number">1.2</span> Setup</a></li>
+</ul></li>
+<li><a href="#edit-local-compile-remote"
+id="toc-edit-local-compile-remote"><span
+class="toc-section-number">2</span> Edit local, compile remote</a></li>
+</ul></nav>
+<p>If you are running a POSIX-compatible system, most of the coding
+you’ll be asked to do this semester should work fine on your own
+machine. If not, you should have a department account which will allow
+you to access remote servers either via SSH (as described in this
+document) or via <a
+href="https://www.cs.virginia.edu/wiki/lib/exe/fetch.php?media=nx-setup_v3a.pdf">remote
+desktop</a> (via NoMachine).</p>
+<h1 data-number="1" id="use-ssh-without-passwords"><span
+class="header-section-number">1</span> Use SSH without passwords</h1>
+<p>Typing passwords is both less secure (key-sniffers, typos, typing
+wrong passwords, etc) and more tedious than using a private key.</p>
+<h2 data-number="1.1" id="concept"><span
+class="header-section-number">1.1</span> Concept</h2>
+<p>You’ll place a file on your computer and a file on the remote
+computer. They are matched, and each provides half of the work needed to
+do a job. When you log in, the remote computer will do half the work
+with its file, then send that to your computer to do the other half,
+then send it back, thus allowing both computers to be confident the
+other computer is who it says it is<a href="#fn1" class="footnote-ref"
+id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
+<h2 data-number="1.2" id="setup"><span
+class="header-section-number">1.2</span> Setup</h2>
+<p>The following commands should work on any system with SSH installed<a
+href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>,</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-keygen</span> <span class="at">-f</span> ~/.ssh/id_rsa <span class="at">-t</span> rsa <span class="at">-b</span> 2048</span></code></pre></div>
+<p>When prompted for a passphrase by <code>ssh-keygen</code>, just press
+enter without typing anything. Once <code>ssh-keygen</code> is done,
+type the following<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a> with appropriate changes to
+<code>username@the.server.edu</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ssh-copy-id</span> <span class="at">-i</span> ~/.ssh/id_rsa.pub username@the.server.edu</span></code></pre></div>
+<p>When prompted for a passphrase by <code>ssh-copy-id</code>, use your
+UVA CS account password.</p>
+<h1 data-number="2" id="edit-local-compile-remote"><span
+class="header-section-number">2</span> Edit local, compile remote</h1>
+<p>You can edit files on your own machine and send them to the servers
+just for compiling and running.</p>
+<p>You should put each program in its own folder in this course.</p>
+<dl>
+<dt>To push files from your computer to the servers</dt>
+<dd>
+<ol type="1">
+<li><p>Open the terminal or command prompt your operating system
+supports</p></li>
+<li><p>Change to the directory of your code</p></li>
+<li><p>Run
+<code>scp * mst3k@portal.cs.virginia.edu:code/project/directory/</code>,
+where</p>
+<ul>
+<li><code>*</code> means <q>all files in the current directory</q></li>
+<li><code>mst3k</code> is your computing ID</li>
+<li><code>code/project/directory/</code> is the path to the directory on
+the department servers where your code will live. You may have to create
+this directory on the department servers first.</li>
+</ul></li>
+</ol>
+</dd>
+<dt>To run commands remotely</dt>
+<dd>
+<ol type="1">
+<li><p>Open the terminal or command prompt your operating system
+supports</p></li>
+<li><p>Run
+<code>ssh mst3k@portal.cs.virginia.edu "the command you want to run on the server"</code>,
+where</p>
+<ul>
+<li><p><code>mst3k</code> is your computing ID</p></li>
+<li><p><code>the command you want to run on the server</code> is a valid
+linux command, which may be several commands separated by
+<code>;</code></p>
+<p>For example, you might do something like
+<code>"cd coa2/warmup; make"</code></p></li>
+</ul></li>
+</ol>
+</dd>
+</dl>
+<p>You can even put all of this in a makefile, as e.g.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> remote</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="dv">remote:</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>scp * mst3k@portal.cs.virginia.edu:code/project/directory/</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    ssh mst3k@portal.cs.virginia.edu <span class="st">&quot;cd code/project/directory/; make&quot;</span></span></code></pre></div>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This is a gross over-simplification, but gets the core
+idea across. We’ll see what’s really going on when we discuss digital
+certificates<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>If on Windows, you also may need to use <code>\</code>
+instead of <code>/</code> (whether you do or not depends on which
+command line tool you use).</p>
+<p>There is a slight chance that <code>~/.ssh</code> will not already
+exist. In that case <code>ssh-keygen</code> will fail; if you see such a
+failure you can fix it by running</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> ~/.ssh</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> 700 ~/.ssh</span></code></pre></div>
+<p>and then re-run the above commands<a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><code>ssh-copy-id</code> is simple enough, some
+distributions of OpenSSL don’t include it. If you don’t have it, try</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="st">&quot;~/.ssh/id_rsa.pub&quot;</span> <span class="kw">|</span> <span class="fu">ssh</span> username@portal.cs.virginia.edu <span class="st">&quot;cat &gt;&gt; .ssh/authorized_keys&quot;</span></span></code></pre></div>
+<p>On Windows, you might need to use <code>type</code> instead of
+<code>cat</code>:</p>
+<pre><code>type &quot;~/.ssh/id_rsa.pub&quot; | ssh username@portal.cs.virginia.edu &quot;cat &gt;&gt; .ssh/authorized_keys&quot;</code></pre>
+<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

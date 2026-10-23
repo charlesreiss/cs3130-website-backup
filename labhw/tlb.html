@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Translation lookaside buffer</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/tlb.html">
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#task" id="toc-task"><span
+class="toc-section-number">1</span> Task</a></li>
+<li><a href="#separation-of-concerns"
+id="toc-separation-of-concerns"><span
+class="toc-section-number">2</span> Separation of Concerns</a>
+<ul>
+<li><a href="#on-unused-virtual-address-bits"
+id="toc-on-unused-virtual-address-bits"><span
+class="toc-section-number">2.1</span> On unused virtual address
+bits</a></li>
+</ul></li>
+<li><a href="#tips" id="toc-tips"><span
+class="toc-section-number">3</span> Tips</a></li>
+<li><a href="#examples" id="toc-examples"><span
+class="toc-section-number">4</span> Examples</a>
+<ul>
+<li><a href="#example-1" id="toc-example-1"><span
+class="toc-section-number">4.1</span> example 1</a></li>
+<li><a href="#example-2" id="toc-example-2"><span
+class="toc-section-number">4.2</span> example 2</a></li>
+<li><a href="#example-3" id="toc-example-3"><span
+class="toc-section-number">4.3</span> example 3</a></li>
+<li><a href="#example-4" id="toc-example-4"><span
+class="toc-section-number">4.4</span> example 4</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>29 March 2025: update example 2 test to access all other sets and
+more aggressively use page offsets, so it hopefully finds errors more
+reliably</li>
+</ul>
+</div>
+<p>Implement a TLB wrapper around the page table interface from previous
+assignments. Note you will <em>not</em> need to implement a page table
+for this assignment; you’ll merely use its API, as defined in
+<code>mlpt.h</code></p>
+<h1 data-number="1" id="task"><span
+class="header-section-number">1</span> Task</h1>
+<p>Implement a 4-way set-associative 16-set translation lookaside buffer
+with a single VPN → PA mapping per block<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. In
+addition to its block, each cache line should also store</p>
+<ul>
+<li>a valid bit</li>
+<li>necessary bookkeeping to implement LRU replacement within the
+set</li>
+</ul>
+<p>You should design your own data structures, etc, to make this work
+properly.</p>
+<p>The public API should be the following <code>tlb.h</code></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;config.h&quot;</span><span class="pp"> </span><span class="co">/* see pagtable guidance on this file */</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;mlpt.h&quot;</span><span class="pp">   </span><span class="co">/* see pagetable this file */</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">/** invalidate all cache lines in the TLB */</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> tlb_clear<span class="op">();</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"> * return 0 if this virtual address does not have a valid</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"> * mapping in the TLB. Otherwise, return its LRU status: 1</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"> * if it is the most-recently used, 2 if the next-to-most,</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"> * etc.</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> tlb_peek<span class="op">(</span><span class="dt">size_t</span> va<span class="op">);</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"> * If this virtual address is in the TLB, return its</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"> * corresponding physical address. If not, use</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"> * `translate(va)` to find that address, store the result</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"> * in the TLB, and return it. In either case, make its</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"> * cache line the most-recently used in its set.</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"> * As an exception, if translate(va) returns -1, do not</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"> * update the TLB: just return -1.</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> tlb_translate<span class="op">(</span><span class="dt">size_t</span> va<span class="op">);</span></span></code></pre></div>
+<p>Note that we do not have a <code>tlb_allocate</code>. This is by
+design: allocation is performed by software (a part of the operating
+system, accessed through a system call) and not by the hardware.</p>
+<p>You should submit <code>tlb.h</code>, and other <code>.h</code> and
+<code>.c</code> files you create for your implementation. You may also
+submit a <code>Makefile</code> if you wish, but do not need to do so.
+(Please, however, do not submit <code>.c</code> files that include
+<code>main()</code> or <code>translate()</code> functions (not disabled
+via an <code>#ifdef</code> or similar) since that will interfere with us
+testing your code.)</p>
+<h1 data-number="2" id="separation-of-concerns"><span
+class="header-section-number">2</span> Separation of Concerns</h1>
+<p>Your TLB code <strong>must not</strong> depend on any implementation
+detail of your page tables. It may use <code>translate</code>, plus the
+<code>#define</code>s in <code>config.h</code>, and should append the
+page offset to the PPN it finds cached itself, but should not invoke any
+code or use any variables defined in your implementations of pagetable
+besides <code>translate</code>, <code>LEVELS</code>, and
+<code>POBITS</code>. Each call to <code>translate</code>
+<strong>must</strong> be to a page-beginning address, and that only if
+it is not in the cache.</p>
+<div class="example long">
+<p>If <code>POBITS</code> is 12 and <code>tlb_translate</code> is invoke
+with addresses <code>0x12345</code>, <code>0x12468</code>, and
+<code>0x13579</code> in that order,</p>
+<ul>
+<li><code>tlb_translate(0x12345)</code> should invoke
+<code>translate(0x12000)</code>,</li>
+<li><code>tlb_translate(0x12468)</code> should not invoke
+<code>translate</code> at all (it’s a cache hit), and</li>
+<li><code>tlb_translate(0x13579)</code> should invoke
+<code>translate(0x13000)</code></li>
+</ul>
+
+</div>
+<h2 data-number="2.1" id="on-unused-virtual-address-bits"><span
+class="header-section-number">2.1</span> On unused virtual address
+bits</h2>
+<p>Depending on the value of <code>LEVELS</code> and
+<code>POBITS</code>, some of the most significant bits of a virtual
+address may be unused. We do not care how your TLB implementation deals
+with these bits being set, so it permissible for you to not use the
+value of <code>LEVELS</code>.</p>
+<h1 data-number="3" id="tips"><span
+class="header-section-number">3</span> Tips</h1>
+<p>You can test this code without a working implementation of
+multi-level page tables, possibly even more easily than you can with a
+working MLPT, by creating a <em>stub</em>: a special implementation of
+<code>translate</code> that returns specific values designed to let you
+test the <code>tlb_</code> functions. Even something as simple as</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">/** stub for the purpose of testing tlb_* functions */</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> translate<span class="op">(</span><span class="dt">size_t</span> va<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> va<span class="op">;</span> <span class="op">}</span></span></code></pre></div>
+<p>gives enough behavior to test most TLB behaviors; adding some logging
+code to the stub can help make sure that <code>translate</code> is only
+called as needed.</p>
+<p>TLBs typically do not have a CPU-write-to-TLB functionality, so they
+do not need to be write-through or write-back.</p>
+<h1 data-number="4" id="examples"><span
+class="header-section-number">4</span> Examples</h1>
+<p>With a POBITS of 12, if you stub <code
+class="sourceCode c">translate<span class="op">(</span>va<span class="op">)</span></code>
+as:</p>
+<pre><code>if (va &lt; 0x1234000)
+    return va + 0x20000;
+else if (va &gt; 0x2000000 &amp;&amp; va &lt; 0x2345000)
+    return va + 0x100000;
+else
+    return -1;</code></pre>
+<p>then the following tests should work:</p>
+<h2 data-number="4.1" id="example-1"><span
+class="header-section-number">4.1</span> example 1</h2>
+<p>Several accesses to different sets, including with various offsets,
+then verifying that accesses after tlb_clear still work.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0020000</span><span class="op">);</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x20200</span><span class="op">);</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x400</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x20400</span><span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2001200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2101200</span><span class="op">);</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0005200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0025200</span><span class="op">);</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0008200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0028200</span><span class="op">);</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0002200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0022200</span><span class="op">);</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2001000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0001000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0004000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0005000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0008000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0002000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0000000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2001000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0005000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0008000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0002000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0000000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x20000</span><span class="op">);</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span></code></pre></div>
+<h2 data-number="4.2" id="example-2"><span
+class="header-section-number">4.2</span> example 2</h2>
+<p>Accessing a single set several times, then making sure accesses to a
+different set don’t interfere, then checking that accesses still work
+after tlb_clear:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0001200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0021200</span><span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2101200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2201200</span><span class="op">);</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0801200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0821200</span><span class="op">);</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2301200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2401200</span><span class="op">);</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0501200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0521200</span><span class="op">);</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0A01200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0A21200</span><span class="op">);</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0001200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2101200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2301200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0501200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0801200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0A01200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2301800</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2401800</span><span class="op">);</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0001000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2101000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2301000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0501000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0801000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0A01000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">16</span><span class="op">;</span> i <span class="op">+=</span> <span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>i <span class="op">!=</span> <span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x400000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="op">(</span><span class="bn">0x420000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">)));</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x500000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="op">(</span><span class="bn">0x520000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">)));</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x600000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="op">(</span><span class="bn">0x620000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">)));</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x700000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="op">(</span><span class="bn">0x720000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">)));</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x800000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="op">(</span><span class="bn">0x820000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">)));</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x800000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x400000</span> <span class="op">+</span> <span class="op">(</span>i <span class="op">&lt;&lt;</span> <span class="dv">12</span><span class="op">))</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0001000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2101000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2301000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0501000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0801000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>        assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0A01000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x301000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x501000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x801000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0xA01000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xA01200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0xA21200</span><span class="op">);</span></span></code></pre></div>
+<h2 data-number="4.3" id="example-3"><span
+class="header-section-number">4.3</span> example 3</h2>
+<p>Accessing invalid addresses and making sure it doesn’t change
+translation/LRU for valid address:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xA0001200</span><span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0xA0001000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x1200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x21200</span><span class="op">);</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0xA0001200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x1000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xA0001200</span><span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xB0001200</span><span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xC0001200</span><span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xD0001200</span><span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0xE0001200</span><span class="op">)</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x1000</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x1200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x21200</span><span class="op">);</span></span></code></pre></div>
+<h2 data-number="4.4" id="example-4"><span
+class="header-section-number">4.4</span> example 4</h2>
+<p>Filling a single set, then calling tlb_clear, then doing more access
+to the set and checking LRU results.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0001200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0021200</span><span class="op">);</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2101200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2201200</span><span class="op">);</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0801200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0821200</span><span class="op">);</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2301200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2401200</span><span class="op">);</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>tlb_clear<span class="op">();</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2101200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2201200</span><span class="op">);</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0001200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0021200</span><span class="op">);</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2101200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2201200</span><span class="op">);</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x2301200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x2401200</span><span class="op">);</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_translate<span class="op">(</span><span class="bn">0x0011200</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x0031200</span><span class="op">);</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0001200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2101200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x2301200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>tlb_peek<span class="op">(</span><span class="bn">0x0011200</span><span class="op">)</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span></code></pre></div>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>You may hard-code 4 and 16 in your implementation,
+though a design that has these in <code>#define</code>s may actually
+help you keep your code organized.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

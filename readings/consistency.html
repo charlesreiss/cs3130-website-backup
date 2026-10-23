@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Consistency</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/readings/consistency.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#introduction" id="toc-introduction"><span
+class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#memory-barriers" id="toc-memory-barriers"><span
+class="toc-section-number">2</span> Memory Barriers</a></li>
+<li><a href="#some-consistency-models"
+id="toc-some-consistency-models"><span
+class="toc-section-number">3</span> Some Consistency Models</a>
+<ul>
+<li><a href="#strong-consistency-sequential-consistency"
+id="toc-strong-consistency-sequential-consistency"><span
+class="toc-section-number">3.1</span> Strong Consistency / Sequential
+Consistency</a></li>
+<li><a href="#weak-consistency" id="toc-weak-consistency"><span
+class="toc-section-number">3.2</span> Weak consistency</a></li>
+<li><a href="#sequential-consistency"
+id="toc-sequential-consistency"><span
+class="toc-section-number">3.3</span> Sequential consistency</a></li>
+<li><a href="#eventual-consistency" id="toc-eventual-consistency"><span
+class="toc-section-number">3.4</span> Eventual consistency</a></li>
+</ul></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>9 Oct 2023: remove section on strict consistency; add section on
+memory barriers; add brief discussion of typical memory models for
+processors/compilers</li>
+<li>10 Oct 2023: cleanup description of compiler requirements re:
+synchronization guarnetees; fix a bunch of grammatical issues in memory
+barriers section, add mention of partial barriers + the term
+<q>fence</q></li>
+</ul>
+</div>
+<h1 data-number="1" id="introduction"><span
+class="header-section-number">1</span> Introduction</h1>
+<p>In practice, true shared-memory concurrency (where there is only one
+piece of hardware that stores the bits of a particular memory location)
+is not very scalable. L1 caches routinely create separate copies for
+each core; systems with multiple CPU chips may replicate across all
+cache layers; supercomputers may have multiple copies of the entirety of
+RAM; and distributed systems, where separate computers are communicating
+over a network, virtually always replicate data at each computer.</p>
+<p>Thus, we need to worry about the consistency of multiple copies.
+Roughly speaking, by <em>consistent</em> we mean</p>
+<blockquote>
+<p>when one processor writes to an address, other processors see when
+they read that address.</p>
+</blockquote>
+<p>There are <em>many</em> more formal definitions of consistency<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>. This writeup mentions just a few of
+the most common.</p>
+<p>For memory accesses with multiple cores, most processors provide
+something in between the strong consistency model and the weak
+consistency model discussed below. This means that not all processors
+will have a fully consistent view of the values in memory — reads and
+writes may appear to occur in different order on different cores.</p>
+<p>Memory consistency is also a concern for compilers. For example, when
+there’s a loop accessing a global variable, an optimizing compiler may
+want to store the global variable temporarily in a register. But this
+optimization prevents the value being visible to other threads while it
+is being changed. In contrast to most processors, compilers typical only
+provide relatively minimal consistency guarentees. Essentially, most
+compilers require code to use synchronization primitives (like locks,
+thread joining functions, etc.) to get any gaurentees about
+modifications to shared values being visible to other threads.</p>
+<h1 data-number="2" id="memory-barriers"><span
+class="header-section-number">2</span> Memory Barriers</h1>
+<p>Most processors provide special instructions called <em>memory
+barriers</em> to allow a program to ensure that values are made
+consistently between processors. A memory barrier gaurentees that all
+reads and writes before memory barrier appear to occur before all
+operations after the memory barrier to all other processors.</p>
+<p>Implementations of synchronization primitives often use memory
+barriers. For example, a common way to implement a unlock method might
+look something like:</p>
+<pre><code>MemoryBarrier();
+the_lock-&gt;locked = FALSE;</code></pre>
+<p>The memory barrier here ensures that, even under <q>weaker</q>
+consistency models, any processor that sees the lock as unlocked will
+also see the results of all operations performed while the lock was
+locked.</p>
+<p>Memory barriers are sometimes called <em>memory fences</em>.</p>
+<p>Many processors provide partial memory barriers, where, rather than
+gaurenteeing the apparent order of all operations as observed on other
+processors, only a subset (e.g. only stores) are guarenteed.</p>
+<p>On most architectures, in addition to dedicated memory barrier
+instructions, the read/modify/write atomic operations, used to implement
+most synchronziation primitives, also act as memory barrier or partial
+memory barrier.</p>
+<h1 data-number="3" id="some-consistency-models"><span
+class="header-section-number">3</span> Some Consistency Models</h1>
+<h2 data-number="3.1"
+id="strong-consistency-sequential-consistency"><span
+class="header-section-number">3.1</span> Strong Consistency / Sequential
+Consistency</h2>
+<blockquote>
+<p>All accesses (read and write) are seen by all parallel processors
+<strong>in the same sequential order</strong>.</p>
+</blockquote>
+<p>If you programmed only with <em>memory barriers</em> between every
+memory access, you’d have strong consistency.</p>
+<h2 data-number="3.2" id="weak-consistency"><span
+class="header-section-number">3.2</span> Weak consistency</h2>
+<blockquote>
+<p>All accesses (read and write) <strong>to synchronization
+variables</strong> are seen by all parallel processors in the same
+sequential order.</p>
+</blockquote>
+<p>This is a relaxation of strong consistency to apply to only a few
+special memory locations. It is what is provided by correct use of
+things like <code
+class="sourceCode c">pthread_mutex_lock<span class="op">(&amp;</span>m<span class="op">)</span></code>
+– <code>m</code> is one such <q>synchronization variable.</q></p>
+<h2 data-number="3.3" id="sequential-consistency"><span
+class="header-section-number">3.3</span> Sequential consistency</h2>
+<blockquote>
+<p>The <strong>result</strong> of execution is the same as if each
+process was interleaved <strong>in some order</strong> on a single
+sequential processor.</p>
+</blockquote>
+<p>This definition is similar to <em>strong</em> consistency, but is
+based on <em>result</em>, not event. Some people even use the terms
+interchangeably.</p>
+<p>Sequential consistency, being about <em>the</em> result (instead of
+<em>each</em> result), requires <a href="#eventual-consistency">Eventual
+consistency</a>.</p>
+<div class="example long">
+<p>Suppose process 1 performed operations <code>A; B; C;</code> in
+parallel with process 2 performing <code>x; y;</code>. If the outcomes
+are the same when one processor executes any one of the following:</p>
+<ul>
+<li><code>A; B; C; x; y;</code></li>
+<li><code>A; B; x; C; y;</code></li>
+<li><code>A; B; x; y; C;</code></li>
+<li><code>A; x; B; C; y;</code></li>
+<li><code>A; x; B; y; C;</code></li>
+<li><code>A; x; y; B; C;</code></li>
+<li><code>x; A; B; C; y;</code></li>
+<li><code>x; A; B; y; C;</code></li>
+<li><code>x; A; y; B; C;</code></li>
+<li><code>x; y; A; B; C;</code></li>
+</ul>
+<p>then it is sequentially consistent. If any of the outcomes are
+different, it is not.</p>
+
+</div>
+<h2 data-number="3.4" id="eventual-consistency"><span
+class="header-section-number">3.4</span> Eventual consistency</h2>
+<blockquote>
+<p>There <strong>exists a time after</strong> the last write to each
+address when all processors will receive the <strong>same value</strong>
+when reading from that address.</p>
+</blockquote>
+<p>Note that this does not make any guarantees about <em>what</em> will
+be seen in that address, only that every process will agree.</p>
+<div class="example long">
+<p>Suppose one processor executes <code
+class="sourceCode c"><span class="op">*</span>x <span class="op">=</span> <span class="bn">0x1234</span></code>
+and another executes <code
+class="sourceCode c"><span class="op">*</span>x <span class="op">=</span> <span class="bn">0x5678</span></code>.
+Eventual consistency can be satisfied even if</p>
+<ul>
+<li>there is a time when the two disagree about <code
+class="sourceCode c"><span class="op">*</span>x</code>’s value</li>
+<li>they eventually converge on the value being <code
+class="sourceCode c"><span class="bn">0x1278</span></code> or some other
+value neither of them tried to write.</li>
+</ul>
+
+</div>
+<p>Even providing eventual consistency requires some effort, but it is
+achievable enough that many distributed systems guarantee it.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>See, e.g., the <a
+href="https://en.wikipedia.org/wiki/Category:Consistency_models">Wikipedia
+category</a> and <a
+href="https://en.wikipedia.org/wiki/Consistency_model">summary
+article</a><a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech and Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

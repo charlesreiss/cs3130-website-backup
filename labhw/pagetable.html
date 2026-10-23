@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: page table</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/pagetable.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#specification" id="toc-specification"><span
+class="toc-section-number">1</span> Specification</a>
+<ul>
+<li><a href="#config.h" id="toc-config.h"><span
+class="toc-section-number">1.1</span> <code>config.h</code></a></li>
+<li><a href="#mlpt.h" id="toc-mlpt.h"><span
+class="toc-section-number">1.2</span> <code>mlpt.h</code></a></li>
+</ul></li>
+<li><a href="#pages-page-table-and-ptbr-format"
+id="toc-pages-page-table-and-ptbr-format"><span
+class="toc-section-number">2</span> Pages, page table and ptbr
+format</a></li>
+<li><a href="#coding-style" id="toc-coding-style"><span
+class="toc-section-number">3</span> Coding Style</a></li>
+<li><a href="#license-and-licenses.txt"
+id="toc-license-and-licenses.txt"><span
+class="toc-section-number">4</span> <code>LICENSE</code> and
+<code>licenses.txt</code></a>
+<ul>
+<li><a href="#licenses.txt" id="toc-licenses.txt"><span
+class="toc-section-number">4.1</span> <code>licenses.txt</code></a></li>
+<li><a href="#license" id="toc-license"><span
+class="toc-section-number">4.2</span> <code>LICENSE</code></a></li>
+</ul></li>
+<li><a href="#not-required-create-a-manual-page"
+id="toc-not-required-create-a-manual-page"><span
+class="toc-section-number">5</span> Not required: create a manual
+page</a></li>
+<li><a href="#hints" id="toc-hints"><span
+class="toc-section-number">6</span> Hints</a>
+<ul>
+<li><a href="#common-c-issues" id="toc-common-c-issues"><span
+class="toc-section-number">6.1</span> Common C issues</a>
+<ul>
+<li><a href="#posix_memalign-issues"
+id="toc-posix_memalign-issues"><span
+class="toc-section-number">6.1.1</span> posix_memalign issues</a></li>
+<li><a href="#using-ptbr" id="toc-using-ptbr"><span
+class="toc-section-number">6.1.2</span> using ptbr</a></li>
+<li><a href="#integers-versus-pointers"
+id="toc-integers-versus-pointers"><span
+class="toc-section-number">6.1.3</span> integers versus
+pointers</a></li>
+</ul></li>
+<li><a href="#page-table-format-and-page-numbers"
+id="toc-page-table-format-and-page-numbers"><span
+class="toc-section-number">6.2</span> Page table format and page
+numbers</a></li>
+<li><a href="#testing-translate-without-allocate_page"
+id="toc-testing-translate-without-allocate_page"><span
+class="toc-section-number">6.3</span> Testing <code>translate</code>
+without <code>allocate_page</code></a></li>
+<li><a href="#testing-allocate_page"
+id="toc-testing-allocate_page"><span
+class="toc-section-number">6.4</span> Testing
+<code>allocate_page</code></a></li>
+<li><a href="#example-for-levels4-pobits12"
+id="toc-example-for-levels4-pobits12"><span
+class="toc-section-number">6.5</span> Example for LEVELS=4,
+POBITS=12</a></li>
+<li><a href="#diagrams-of-translate-and-lookup"
+id="toc-diagrams-of-translate-and-lookup"><span
+class="toc-section-number">6.6</span> Diagrams of translate and
+lookup</a>
+<ul>
+<li><a href="#level-translate" id="toc-level-translate"><span
+class="toc-section-number">6.6.1</span> 1-level translate</a></li>
+<li><a href="#level-allocate_page" id="toc-level-allocate_page"><span
+class="toc-section-number">6.6.2</span> 1-level allocate_page</a></li>
+<li><a href="#level-translate-1" id="toc-level-translate-1"><span
+class="toc-section-number">6.6.3</span> 2-level translate</a></li>
+</ul></li>
+<li><a href="#reading" id="toc-reading"><span
+class="toc-section-number">6.7</span> reading</a></li>
+</ul></li>
+</ul></nav>
+<div class="exercise long">
+<p>Your task:</p>
+<ol type="1">
+<li><p>This assignment has multiple submissions.</p>
+<p>For <strong>all</strong> parts of this assignment, please follow the
+coding style described below (although we won’t grade it until part 3)
+and make sure your code does not give warnings when compiled with
+<code>-Wall</code><a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>.</p>
+<p>For the first submission, you must complete one of the following:</p>
+<ol type="1">
+<li><code>ptbr</code> and <code>translate</code> from item 2 for
+LEVELS=1 and POBITS=12. We describe below how you can test translate
+without working <code>allocate_page</code>.</li>
+<li><code>ptbr</code> and <code>allocate_page</code> from item 2 for
+LEVELS=1 and POBITS=12.</li>
+</ol>
+<p>(You can choose which to complete; if you attempt both, we will take
+the grade based on whichever option’s implementation is more
+complete.)</p>
+<p>For the second submission, which is in preparation for a code review,
+you must complete all of items 2 and 3 below.</p>
+<p>For the final submission, you must complete all parts below (and
+should fix any problems identified in the code review).</p>
+<p>(This assignment will be worth considerably more than a normal
+one-week assignment. A vast majority of the grade for the assignment
+will be based on what you submit on the final submission. The
+submissions for the first two parts will be worth less than a normal
+submission. A significant part of the grade for the final submission
+will be based on functionality which should also have been completed in
+earlier submissions.)</p></li>
+<li><p>Implement a simulation of multi-level page table lookup and
+allocation.</p>
+<p><strong>For the purposes of this simulation <q>physical</q> addresses
+are the ones your simulation program can access via
+pointers.</strong></p>
+<p>The layout of this page table must be configurable via
+<code>config.h</code> (example shown below), which will
+<code>#define</code> the constants:</p>
+<ul>
+<li><code>LEVELS</code> – number of levels in the page table</li>
+<li><code>POBITS</code> – the size of page offsets (which, as described
+below, also determined the size of each page table)</li>
+</ul>
+<p>Page tables will follow the format described below.</p>
+<p>Although virtual addresses will be represented using 64-bit
+<code>size_t</code>s, usually not all bits of those <code>size_t</code>s
+will be used; you may assume that any unused bits will be set to
+<code>0</code> when your code is called.</p>
+<p>Your code must implement API provided by a header file called
+<code>mlpt.h</code>, an version of which is supplied <a
+href="files/mlpt.h">here</a> <em>[last updated 6 Oct 2025]</em>. It
+includes:</p>
+<ul>
+<li><p><code>extern size_t ptbr</code> — page table base register; must
+be initially 0. Later, will contain the address of a page table your
+code allocates as a result of calls to
+<code>allocate_page</code>.</p></li>
+<li><p><code>size_t translate(size_t va)</code> — translate the virtual
+address <code>va</code> using the currently setup page table. If the
+address is not allocated, return a value with all bits set to
+1.</p></li>
+<li><p><code>int allocate_page(size_t start_va)</code> — allocates and
+maps the virtual page which starts at virtual address
+<code>start_va</code> (if it is not allocated ready).</p>
+<p>If <code>start_va</code> is not the address at the start of a page,
+returns <code>-1</code>. If <code>start_va</code> is the address at the
+start of a page, but the page is already allocated, returns
+<code>0</code>; otherwise, returns <code>1</code>.</p>
+<p>Any data pages and page tables not yet allocated will be allocated
+using <code>posix_memalign</code>. (Any data page or page tables already
+created, such as by a prior call to <code>allocate_page</code> will be
+reused. If the mapping is already entirely setup, the function should
+not change page tables.)</p></li>
+</ul></li>
+<li><p>Prepare a <code>Makefile</code> for your code that:</p>
+<ul>
+<li>produces, as its default target, a library called libmlpt.a that
+exports the API defined in <code>mlpt.h</code> (and does not export a
+function called <code>main</code>)</li>
+<li>has CC, CFLAGS defined</li>
+<li>uses the defined argument variables (CFLAGS, etc.) in its work</li>
+<li>has correct dependencies for each target</li>
+<li>has <code>all</code> and <code>clean</code> targets</li>
+</ul></li>
+<li><p>Write a <code>README</code> explaining (at a minimum):</p>
+<ul>
+<li>How to customize <code>config.h</code>, with some guidance on how to
+pick values for that file.</li>
+<li>Any known bugs or limitations (if you know of none, there is no need
+to say so; if you have an incomplete implementation so far, you’ll
+probably have some to document).</li>
+</ul>
+<p>You may also include additional detail in your README.</p>
+<p>If anyone or any resource helped your implementation, also include an
+<code>ACKNOWLEDGEMENTS</code> file acknowledging those people and/or
+resources.</p></li>
+<li><p>Include a <code>LICENSE</code> and <code>licenses.txt</code>
+files as described below.</p></li>
+<li><p>The interface we describe above does not support deallocating
+memory.</p>
+<p>Propose some kind of interface to support de-allocation for the page
+table implementation. You can decide what kind of function(s) should be
+part of this interface, but it must be possible to implement your
+interface without modifications to <code>allocate_page</code> or
+<code>translate</code>. Document this interface in your README,
+including at least:</p>
+<ul>
+<li>function prototype(s)<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> for the interface;</li>
+<li>an explanation of what any arguments to the function(s) mean;</li>
+<li>what each function will deallocate when it is called (including any
+way in which this depends on its arguments or other factors)</li>
+</ul>
+<p>Then, implement this interface (including appropriate changes to
+<code>mlpt.h</code> and your .c files).</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="specification"><span
+class="header-section-number">1</span> Specification</h1>
+<p>We supply two header files.</p>
+<h2 data-number="1.1" id="config.h"><span
+class="header-section-number">1.1</span> <code>config.h</code></h2>
+<p><code>config.h</code> does nothing other than <code>#define</code>ing
+two constants.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">/** LEVELS = number of PTEs used to translate one address. */</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define LEVELS  </span><span class="dv">1</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">/** POBITS = number of bits used for the page offset. */</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#define POBITS  </span><span class="dv">12</span></span></code></pre></div>
+<p>and must continue to work even if we change their values. For
+example, if we compile with a different <code>config.h</code> that
+<code>#define</code>s <code>LEVELS</code> as <code>3</code> instead of
+<code>1</code>, your code should create a 3-level page table instead of
+a 1-level page table. Your code should work for all integer values of
+<code>LEVELS</code> between <code>1</code> and <code>6</code> inclusive
+and all integer values of <code>POBITS</code> between <code>4</code> and
+<code>18</code> inclusive. As an exception, it does not need to (but
+may) support cases where (<code>POBITS</code> − 3) ×
+(<code>LEVELS</code> + 1) &gt; 60.</p>
+<h2 data-number="1.2" id="mlpt.h"><span
+class="header-section-number">1.2</span> <code>mlpt.h</code></h2>
+<p><code>mlpt.h</code> defines the public API your code will use. You
+are welcome to edit it, provided such edits will not cause testing code
+to fail to compile.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * Page table base register.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"> * Declared here so tester code can look at it; because it is extern</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"> * you&#39;ll need to define it (without extern) in exactly one .c file.</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">size_t</span> ptbr<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"> * Given a virtual address, return the physical address.</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"> * Return a value consisting of all 1 bits</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"> * if this virtual address does not have a physical address.</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> translate<span class="op">(</span><span class="dt">size_t</span> va<span class="op">);</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"> * Allocates and maps the virtual page which starts at virtual address `start_va`</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"> * (if it is not allocated ready).</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"> * If `start_va` is not the address at the start of a page, returns `-1`.</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"> * If `start_va` is the address at the start of a page, but the</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"> * page is already allocated, returns `0`; otherwise, returns `1`.</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"> * Any data pages and page tables not yet allocated will be</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"> * allocated using `posix_memalign`.</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"> * (Any data page or page tables already created, such as by a prior</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"> * call to `allocate_page` will be reused. If the mapping is already entirely</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"> * setup, the function should not change page tables.)</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> allocate_page<span class="op">(</span><span class="dt">size_t</span> start_va<span class="op">);</span></span></code></pre></div>
+<h1 data-number="2" id="pages-page-table-and-ptbr-format"><span
+class="header-section-number">2</span> Pages, page table and ptbr
+format</h1>
+<ol type="1">
+<li><p>Since <code>POBITS</code> is the size of page offsets,
+<em>pages</em> occupy 2<sup><code>POBITS</code></sup> bytes (where
+<code>POBITS</code> is a constant defined in <code>config.h</code> that
+we may change).</p></li>
+<li><p>Each <em>page table</em> will be an array of 8-byte page table
+entries. Each page table will occupy one physical page. (For example,
+with <code>POBITS</code> set to 12, this means that page tables will
+contain 2<sup>12</sup>/8 = 512 entries.)</p></li>
+<li><p>When interpreted as a <code>size_t</code>, a <em>page table
+entry</em>’s least significant bit will indicate whether it is
+valid:</p>
+<ul>
+<li><p>If that bit is 0, then that indicates that there is no
+corresponding physical page. The remaining bits have no meaning, so you
+may use them however you wish.</p></li>
+<li><p>If that bit is 1, then most significant <code>(64-POBITS)</code>
+are the physical page number of the corresponding physical page. For a
+non-last-level page table entry, this will be the location of the next
+level’s page table; otherwise, this will be a location where
+(non-page-table) data could be stored.</p>
+<div class="example">
+<p>If <code>POBITS</code> is set to 12, then PTE
+<code>0x1234567812345679</code> has a one in the low-order bit, and thus
+indicates the presence of a physical page or another level page table.
+If <code>POBITS</code> is 12, the physical page number (of the page or
+next page table level) is <code>0x1234567812345</code>. The
+corresponding physical address of the first byte of that page is
+<code>0x1234567812345000</code>.</p>
+
+</div></li>
+</ul></li>
+<li><p>There will be <code>LEVELS</code> level of page tables (where
+<code>LEVELS</code> is a constant defined in <code>config.h</code> that
+we may change).</p>
+<p>The number of LEVELS and the size of page tables will determine the
+effective size of virtual addresses. Typically, the effective size of
+virtual addresses will be less than 64 bits, so the most significant
+bits of the <code>size_t</code> passed into translate and allocate_page
+will be unused. The virtual page number for the first part will appear
+immediately after these unused bits.</p>
+<div class="example">
+<p>With <code>POBITS</code> set to 12 and <code>LEVELS</code> set to 2,
+page tables each contain 2<sup>12</sup>/8 = 512 = 2<sup>9</sup> entries
+and only 30 bits from virtual addresses will be used: a 12-bit page
+offset and an 18-bit (2 times 9 bits) virtual page number, which will be
+divided into two parts for the page table lookup. Bits 21-29 will be
+used for virtual page number part 1, bits 12-20 will be used for virtual
+page number part 2, and bits 0-11 will be used for the page offset.</p>
+
+</div></li>
+<li><p>The global variable <code>ptbr</code> represents the page table
+register. It should be <code>0</code> (a null pointer) when no page
+tables are allocated. (Even though it is a <code>size_t</code>, it
+represents an address.)</p></li>
+</ol>
+<h1 data-number="3" id="coding-style"><span
+class="header-section-number">3</span> Coding Style</h1>
+<ul>
+<li><p>4-space indentation</p></li>
+<li><p><code class="sourceCode c"><span class="op">{</span></code> on
+the same line as <code>)</code> and <code
+class="sourceCode c"><span class="op">}</span></code> on a line by
+itself; this means that else-if statements should be written like</p>
+<pre><code>  if (condition) {
+      ...
+  }
+  else if (condition) {
+      ...
+  }
+  else {
+      ...
+  }</code></pre></li>
+<li><p>No empty statements</p></li>
+<li><p>Spaces around binary operators (including <code>&lt;&lt;</code>,
+<code>=</code>, <code>|</code>, etc., but not including <code>(</code>
+or <code>)</code> or <code>[</code> or <code>]</code> or
+<code>~</code>))</p></li>
+<li><p>Space before <code>(</code> if and only if it is preceded by a
+control construct (e.g., <code>if (</code> but
+<code>translate(</code>)</p></li>
+<li><p>No postfix <code
+class="sourceCode c"><span class="op">++</span></code> or <code
+class="sourceCode c"><span class="op">--</span></code> unless part of an
+expression that uses the return value (such as <code>a[i++]</code>).
+Replacing with either prefix <code
+class="sourceCode c"><span class="op">++</span></code> or <code
+class="sourceCode c"><span class="op">+=</span> <span class="dv">1</span></code>
+is OK.</p></li>
+<li><p>Lower-case identifiers with underscores separating words
+(identifiers include all function and variable names)</p></li>
+<li><p>Upper-case <code
+class="sourceCode c"><span class="pp">#define</span></code>
+constants</p></li>
+<li><p><code class="sourceCode c"><span class="kw">typedef</span></code>
+such that each type name uses a single identifier (e.g., no <code
+class="sourceCode c"><span class="dt">unsigned</span> <span class="dt">char</span></code>
+except as part of a <code>typedef</code>).</p></li>
+<li><p>Use variable names that indicate the meaning of the contents of
+the variable; function names that indicate the purpose of the function;
+etc.</p></li>
+<li><p>Use variable and function names which are consistent throughout
+your code;</p></li>
+<li><p>Have a readable code organization; as rough (not strict)
+guidelines,</p>
+<ul>
+<li>If a sequence of lines of code depend upon one another more than
+they depend on the code around them and appear together in multiple
+places, they should be in their own function.</li>
+<li>Functions should be small enough to look at on one screen unless
+that have a very orderly structure such as a long <code
+class="sourceCode c"><span class="cf">switch</span></code> with simple
+code in the <code
+class="sourceCode c"><span class="cf">case</span></code>s.</li>
+<li>Comments should be present to describe any esoteric code
+decisions</li>
+<li>All code should have a clear purpose.</li>
+</ul></li>
+</ul>
+<h1 data-number="4" id="license-and-licenses.txt"><span
+class="header-section-number">4</span> <code>LICENSE</code> and
+<code>licenses.txt</code></h1>
+<p>You need to choose a license for the code you supply. Include the
+chosen license as <code>LICENSE</code> and a file
+<code>licenses.txt</code> indicating your exploration of licenses.</p>
+<p>This should be based on an existing family of license agreements.
+Unless you have had formal training in commercial law, we recommend
+using an existing license, not trying to create your own.</p>
+<h2 data-number="4.1" id="licenses.txt"><span
+class="header-section-number">4.1</span> <code>licenses.txt</code></h2>
+<p>In <code>licenses.txt</code>, list at least three licenses you
+considered, include a short (sentence or two) summary of what they
+seemed to say (ideally focused on the factors that mattered to you).
+Then describe briefly (sentence or two) why you chose the license you
+chose.</p>
+<p>Your review should include</p>
+<ul>
+<li>at least one of GPL, LGPL, or AGPL</li>
+<li>at least one of MIT, BSD, Boost, Apache, or SQLite</li>
+</ul>
+<p>All should be <em>software</em> licenses; this excludes licenses such
+as the various CC licenses for creative works, the SIL Open Font
+License, operating system licenses, etc.</p>
+<h2 data-number="4.2" id="license"><span
+class="header-section-number">4.2</span> <code>LICENSE</code></h2>
+<p>Include a <code>LICENSE</code> file with the license agreement under
+which you provide your code to us.</p>
+<h1 data-number="5" id="not-required-create-a-manual-page"><span
+class="header-section-number">5</span> Not required: create a manual
+page</h1>
+<p>If you want to understand the real world a bit better, you might also
+try writing a manual page. These are written in a language known as
+<q>roff</q>; to see an example of what this looks like, try running</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> /usr/share/man/man3p/poll.3p.gz ./</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">gunzip</span> poll.3p.gz</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">less</span> poll.3p</span></code></pre></div>
+<p>to see the roff source of the manual page <code>man 3p poll</code>. I
+don’t personally know anyone who writes roff by hand; generally it is
+output from a source-code processing tool like <code>doxygen</code><a
+href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a> or a converter like
+<code>pandoc</code> from an easier-to-write format like markdown or
+reStrucuredText.</p>
+<p>Including man page <code>allocate_page.3.gz</code> and
+<code>translate.3.gz</code> in your submission will earn you kudos. To
+test that these work properly,</p>
+<ol type="1">
+<li><p>create a directory <code>man3</code> (i.e., <code
+class="sourceCode bash"><span class="fu">mkdir</span> man3</code>)</p></li>
+<li><p>gzip the <code>roff</code> file and move it to
+<code>man3/term_to_look_up.3.gz</code> (e.g., <code
+class="sourceCode bash"><span class="fu">gzip</span> translate.roff<span class="kw">;</span> <span class="fu">mv</span> translate.roff.gz man3/translate.3.gz</code>)
+– note that some authoring tools may do some of this for you</p></li>
+<li><p>use the <code>-M</code> flag with <code>man</code> pointing to
+the parent directory of <code>man3</code> (i.e., <code
+class="sourceCode bash"><span class="fu">man</span> <span class="at">-M.</span> 3 translate</code>)</p></li>
+</ol>
+<h1 data-number="6" id="hints"><span
+class="header-section-number">6</span> Hints</h1>
+<h2 data-number="6.1" id="common-c-issues"><span
+class="header-section-number">6.1</span> Common C issues</h2>
+<h3 data-number="6.1.1" id="posix_memalign-issues"><span
+class="header-section-number">6.1.1</span> posix_memalign issues</h3>
+<ol type="1">
+<li><p><code>posix_memalign(&amp;x, ...)</code> is similar to
+<code>x = malloc(...)</code> except that the address <code>x</code> is
+guarenteed at a multiple of a particular value. The pointer to pointer
+passed into <code>posix_memalign</code> is used in lieu of returning a
+pointer to the memory allocated. (The return value of
+<code>posix_memalign</code> indicates success (<code>0</code>) or
+failure (non-zero error code).)</p></li>
+<li><p>If <code>posix_memalign</code> is not defined after
+<code>#include &lt;stdlib.h&gt;</code>, adding
+<code>#define _XOPEN_SOURCE 700</code> or similar before any
+<code>#include</code> may help.</p>
+<p><code>posix_memalign</code> is not part of standard C; it’s something
+Linux and other Unix-like systems have added. If you are compiling with
+<code>-std=c11</code> or similar, then by default
+<code>&lt;stdlib.h&gt;</code> only includes things from the C standard.
+You can override this to request additional functions with <q>feature
+test macros</q> like <code>_XOPEN_SOURCE</code>. On Linux, the command
+<code>man feature_test_macros</code> brings up the full documentation
+about thea available feature test macros.</p></li>
+<li><p><code>posix_memalign</code> does not initialize the memory it
+allocates to any particular value (so you cannot rely on it being all
+0s, for example).</p></li>
+</ol>
+<h3 data-number="6.1.2" id="using-ptbr"><span
+class="header-section-number">6.1.2</span> using ptbr</h3>
+<ol type="1">
+<li><code>(size_t*) ptbr</code> uses the value contained in
+<code>ptbr</code> as a pointer — in other words, it interprets
+<code>ptbr</code> as a memory address and allows it to be dereferenced
+to access that memory address. In contrast, <code>&amp;ptbr</code> gets
+a pointer to the value contained in <code>ptbr</code>; in other words,
+it makes a pointer <strong>to</strong> <code>ptbr</code> — derferencing
+that pointer will modify <code>ptbr</code> itself, not things around the
+address it contains.</li>
+</ol>
+<h3 data-number="6.1.3" id="integers-versus-pointers"><span
+class="header-section-number">6.1.3</span> integers versus pointers</h3>
+<ol type="1">
+<li><p>If you have an integer (such as something declared as a
+<code>size_t</code>) and want to access the value stored there, you can
+convert it to a pointer and then dereference it:</p>
+<pre><code>size_t address;
+size_t *address_as_pointer;
+...
+address = /* some code that computes an address as an integer */;
+address_as_pointer = (size_t *) address;
+size_t value_from_address = *address_as_pointer;</code></pre></li>
+<li><p>If you add to a pointer, it modifies the address based on the
+size of what the pointer points to. For example given:</p>
+<pre><code>size_t *ptr;
+size_t *new_ptr;
+...
+new_ptr = ptr + 10;</code></pre>
+<p>will set <code>new_ptr</code> to an address that is
+<code>10*sizeof(size_t) = 80</code> more than new_ptr, similar to if one
+did:</p>
+<pre><code>size_t temp;
+temp = (size_t) ptr;
+temp = temp + 80;
+new_ptr = (size_t*) temp;</code></pre></li>
+</ol>
+<h2 data-number="6.2" id="page-table-format-and-page-numbers"><span
+class="header-section-number">6.2</span> Page table format and page
+numbers</h2>
+<ol type="1">
+<li>Our testing code will expect you to follow the page table format
+specified above. We specify the format in terms of <em>page numbers</em>
+rather than full addresses (which would have a page number and page
+offset). If our testing code seems to think that page table entries
+don’t contain the addresses you think they do, using a different format
+might be why.</li>
+</ol>
+<h2 data-number="6.3" id="testing-translate-without-allocate_page"><span
+class="header-section-number">6.3</span> Testing <code>translate</code>
+without <code>allocate_page</code></h2>
+<ol type="1">
+<li><p>You can manually set <code>ptbr</code> to a hard-coded page table
+array to test <code>translate</code> without <code>allocate_pgae</code>
+being implemented. The below items show examples of how to do this with
+POBITS = 12 and LEVELS = 1.</p></li>
+<li><p>After including <code>&lt;stdalign.h&gt;</code>, you can use
+<code>alignas(4096)</code><a href="#fn4" class="footnote-ref"
+id="fnref4" role="doc-noteref"><sup>4</sup></a> to make a variable be
+allocated at an address that is a multiple of 4096. Using this, you can
+declare an array of <code>size_t</code>s which takes up a (simulated)
+<q>physical</q> page as follows:</p>
+<pre><code>alignas(4096)
+static size_t page_of_data[512];</code></pre>
+<p>We could also declare it as an array of 1-byte <code>char</code>s as
+follows:</p>
+<pre><code>alignas(4096)
+static char page_of_data[4096];</code></pre>
+<p>though this would make it more difficult to set individual page table
+entries later.</p></li>
+<li><p>By default, global-scope variables in C (and C++) will be
+zero-initialized, so <code>page_of_data</code> declared as above will
+initially be an array of 0s. Since these have a valid bit of 0 in our
+page table format, you can test <code>translate()</code> with an empty
+page table by doing something like:</p>
+<pre><code>alignas(4096)
+static size_t testing_page_table[512];
+
+static void set_testing_ptbr(void) {
+    ptbr = (size_t) &amp;testing_page_table[0];
+}</code></pre>
+<p>(and calling <code>set_testing_ptbr()</code>)</p>
+<p>With a proper implementation of <code>translate()</code>,
+<code>translate(X)</code> will be <code>~0</code> (all 1 bits) for every
+address (that is not too big to be a virtual address).</p></li>
+<li><p>Since page table entries are 8 bytes (the size of
+<code>size_t</code>), setting index <em>X</em> of the array declared
+will set index <em>X</em> of the page table. So, let’s say (with POBITS
+= 12 and LEVELS = 1), we want to set virtual page 3 to point to a
+(simulated) <q>physical</q> page of data. We’ll first allocate memory
+for that physical page of data as a global variable:</p>
+<pre><code>alignas(4096)
+static char data_for_page_3[4096];</code></pre>
+<p>Then, we need to convert the physical address of
+<code>data_for_page_3</code> into a page table entry. To do this, we can
+first extract the page number from the address:</p>
+<pre><code>size_t address_of_data_for_page_3_as_integer = (size_t) &amp;data_for_page_3[0];
+size_t physical_page_number_of_data_for_page_3 = address_of_data_for_page_3_as_integer &gt;&gt; 12;
+    // instead of &gt;&gt; 12, we could have written:
+        // address_of_data_for_page_3_as_integer / 4096
+size_t page_table_entry_for_page_3 = (
+        // physical page number in upper (64-POBITS) bits
+        (physical_page_number_of_data_for_page_3 &lt;&lt; 12)
+    |
+        // valid bit in least significant bit, set to 1
+        1
+);</code></pre>
+<p>Then, we can store that page number at index 3 in a page table:</p>
+<pre><code>// assuming testing_page_table initialized as above and ptbr points to it
+testing_page_table[3] = page_table_entry_for_page_3;</code></pre>
+<p>After this, we should observe that passing an address with virtual
+page number 3 to <code>translate()</code> will return <q>physical</q>
+addresses that are part of <code>data_for_page_3</code>. For example, we
+would expect</p>
+<pre><code>translate(0x3045) == (size_t) &amp;data_for_page_3[0x45]</code></pre></li>
+</ol>
+<h2 data-number="6.4" id="testing-allocate_page"><span
+class="header-section-number">6.4</span> Testing
+<code>allocate_page</code></h2>
+<ol type="1">
+<li><p>Since <code>allocate_page</code>’s primary job is to allocate
+memory when neeeded, for testing, I would recommend having some way to
+count how many allocations occur.</p></li>
+<li><p>With <code>LEVELS=1</code>, there are three cases to test for
+<code>allocate_page</code>:</p>
+<ul>
+<li>on the first call, two physical pages should be allocated — one to
+create the page table (and set <code>ptbr</code> to a non-zero value)
+and one to allocate a page for data</li>
+<li>on later calls:
+<ul>
+<li>if the page number supplied to <code>allocate_page</code> hasn’t
+been used before (is not marked valid in the page table), then one page
+for data should be allocated;</li>
+<li>otherwise, no pages should be allocated</li>
+</ul></li>
+</ul></li>
+<li><p><code>allocate_page</code> should set page table entries pointed
+to by <code>ptbr</code>. You can treat <code>ptbr</code> like an array
+of <code>size_t</code>s to examine them. For example, to print out the
+page table entry with index 3 (with POBITS=12, LEVELS=1):</p>
+<pre><code>size_t *pointer_to_table;
+pointer_to_table = (size_t *) ptbr;
+size_t page_table_entry = pointer_to_table[3];
+printf(&quot;PTE @ index 3: valid bit=%d  physical page number=0x%lx\n&quot;,
+    (int) (page_table_entry &amp; 1),
+    (long) (page_table_entry &gt;&gt; 12)
+);</code></pre></li>
+</ol>
+<h2 data-number="6.5" id="example-for-levels4-pobits12"><span
+class="header-section-number">6.5</span> Example for LEVELS=4,
+POBITS=12</h2>
+<p>The comments in the following code correctly describe the number of
+pages that have ever been allocated <strong>assuming that
+<code>LEVELS</code> is 4 and <code>POBITS</code> is 12</strong>. (With
+smaller LEVELS values, either you would not use all the non-zero bits of
+the virtual addresses being tested or the virtual page numbers would be
+out of range.)</p>
+<p>If you want to use this code to test your solution, it would be
+useful to have a counter of how often <code>posix_memalign</code> is
+called.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;assert.h&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;mlpt.h&quot;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;config.h&quot;</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 0 pages have been allocated</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    assert<span class="op">(</span>ptbr <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    allocate_page<span class="op">(</span><span class="bn">0x456789abc000</span><span class="op">);</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 5 pages have been allocated: 4 page tables and 1 data</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    assert<span class="op">(</span>ptbr <span class="op">!=</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    allocate_page<span class="op">(</span><span class="bn">0x456789abc000</span><span class="op">);</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">// no new pages allocated (still 5)</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="op">*</span>p1 <span class="op">=</span> <span class="op">(</span><span class="dt">int</span> <span class="op">*)</span>translate<span class="op">(</span><span class="bn">0x456789abcd00</span><span class="op">);</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>p1 <span class="op">=</span> <span class="bn">0xaabbccdd</span><span class="op">;</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">short</span> <span class="op">*</span>p2 <span class="op">=</span> <span class="op">(</span><span class="dt">short</span> <span class="op">*)</span>translate<span class="op">(</span><span class="bn">0x456789abcd02</span><span class="op">);</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">%04hx\n</span><span class="st">&quot;</span><span class="op">,</span> <span class="op">*</span>p2<span class="op">);</span> <span class="co">// prints &quot;aabb\n&quot;</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    assert<span class="op">(</span>translate<span class="op">(</span><span class="bn">0x456789ab0000</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0xFFFFFFFFFFFFFFFF</span><span class="op">);</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    allocate_page<span class="op">(</span><span class="bn">0x456789ab0000</span><span class="op">);</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1 new page allocated (now 6; 4 page table, 2 data)</span></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    assert<span class="op">(</span>translate<span class="op">(</span><span class="bn">0x456789ab0000</span><span class="op">)</span> <span class="op">!=</span> <span class="bn">0xFFFFFFFFFFFFFFFF</span><span class="op">);</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    allocate_page<span class="op">(</span><span class="bn">0x456780000000</span><span class="op">);</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2 new pages allocated (now 8; 5 page table, 3 data)</span></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 data-number="6.6" id="diagrams-of-translate-and-lookup"><span
+class="header-section-number">6.6</span> Diagrams of translate and
+lookup</h2>
+<p>All these assume a <code>ptbr</code> variable stored at address
+<code>0x5898</code>, containing <code>0x10000</code> and a
+<code>POBITS</code> setting of 12.</p>
+<p>The diagrams show <q>physical</q> memory addresses, with lowest
+address at the bottom of the diagram and the address of each thing
+labeled on the left-hand side. For example, <q>translate(va)</q>
+labeling a line indicates that the <q>translate(va)</q> (that is, the
+return value of translate) is equal to the address of this line. Lines
+with arrows at both ends marking a portion of the address space indicate
+that the size of that space is based on the value of something. For
+example, the region labeled <q>virtual page number from va</q> indicates
+that the size of that region is computed from the virtual page number
+stored in va.</p>
+<h3 data-number="6.6.1" id="level-translate"><span
+class="header-section-number">6.6.1</span> 1-level translate</h3>
+<p><img src="files/pagetable/translate-1level.svg" width="50%"></p>
+<h3 data-number="6.6.2" id="level-allocate_page"><span
+class="header-section-number">6.6.2</span> 1-level allocate_page</h3>
+<p><img src="files/pagetable/allocate-1level.svg" width="50%"></p>
+<h3 data-number="6.6.3" id="level-translate-1"><span
+class="header-section-number">6.6.3</span> 2-level translate</h3>
+<p><img src="files/pagetable/translate-2level.svg" width="50%"></p>
+<h2 data-number="6.7" id="reading"><span
+class="header-section-number">6.7</span> reading</h2>
+<p>In addition to materials from slides, our reading on <a
+href="../readings/vm.html#multi-level-page-tables">multi-level page
+tables work generally</a> also include some relevant diagrams and
+pseudocode.</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p> …because you resolved the warnings, not because you
+disabled them with warning-ignoring <code>#pragma</code>s or the like.<a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>In C, a function prototype is a function declaration
+like you might find in a header file, including the function’s return
+type and argument types.<a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>which is installed on department machines; see <code
+class="sourceCode bash"><span class="fu">man</span> doxygen</code> for
+more.<a href="#fnref3" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>An alternate way to do this, mentioned by previous
+version of this writeup, is to use
+<code>__attribute__((aligned(4096)))</code> instead of
+<code>alignas(4096)</code>. This is only likely to work in GCC or Clang
+(and, in my opinion, is a lot uglier).<a href="#fnref4"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Luther Tychnoviech with modifications by Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

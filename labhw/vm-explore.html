@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CS3130: Virtual memory exploration</title>
+  <meta name="description" content="">
+
+  <link rel="stylesheet" href="../assets/main.css">
+  <link rel="canonical" href="https://www.cs.virginia.edu/~cr4bd/3130/F2026/labhw/vm-explore.html">
+  <link rel="stylesheet" href="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.css">
+  <script defer src="https://www.cs.virginia.edu/~cr4bd/katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+   var mathElements = document.getElementsByClassName("math");
+   for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+     var content = texText.textContent;
+     if (content.substring(0, 1) == "$") {
+	 content = content.substring(1, content.length - 1);
+     }
+     katex.render(content, mathElements[i], {
+      displayMode: mathElements[i].classList.contains('display'),
+      throwOnError: false,
+      fleqn: false
+     });
+  }}});
+  </script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/~cr4bd/3130/F2026/">CS 3130 Fall2026</a>
+
+    <nav class="site-nav" aria-label="Site Menu">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger"><a class="page-link" href="/~cr4bd/3130/F2026/exams.html"  
+          >Study Materials</a><a class="page-link" href="/~cr4bd/3130/F2026/"  
+          >Main/Readings</a><a class="page-link" href="/~cr4bd/3130/F2026/oh.html"  
+          >Office Hours</a><a class="page-link" href="/~cr4bd/3130/F2026/policies.html"  
+          >Policies</a><a class="page-link" href="/~cr4bd/3130/F2026/assignments.html"  
+          >HWs+Labs</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/quizzes/">Quizzes</a><a class="page-link" target="_top" 
+          href="https://kytos02.cs.virginia.edu/cs3130-fall2026/submit/">Submission</a><a class="page-link" href="/~cr4bd/3130/F2026/schedule.html"  
+          >Schedule</a></div>
+    </nav>
+
+  </div>
+
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <nav id="toc" aria-label="Table of Contents"><ul>
+<li><a href="#program" id="toc-program"><span
+class="toc-section-number">1</span> the <code>./lab</code>
+program</a></li>
+<li><a href="#item-specific-infohintsadvice"
+id="toc-item-specific-infohintsadvice"><span
+class="toc-section-number">2</span> Item-specific info/hints/advice</a>
+<ul>
+<li><a href="#item-1" id="toc-item-1"><span
+class="toc-section-number">2.1</span> Item 1</a>
+<ul>
+<li><a href="#array-decl" id="toc-array-decl"><span
+class="toc-section-number">2.1.1</span> array declaration</a></li>
+<li><a href="#demand" id="toc-demand"><span
+class="toc-section-number">2.1.2</span> Linux and
+allocate-on-demand</a></li>
+</ul></li>
+<li><a href="#item-2" id="toc-item-2"><span
+class="toc-section-number">2.2</span> Item 2</a>
+<ul>
+<li><a href="#item-2-opt" id="toc-item-2-opt"><span
+class="toc-section-number">2.2.1</span> preventing access from being
+optimized away</a></li>
+<li><a href="#accesses-and-resulting-real-allocations-by-malloccalloc"
+id="toc-accesses-and-resulting-real-allocations-by-malloccalloc"><span
+class="toc-section-number">2.2.2</span> accesses and resulting real
+allocations by malloc/calloc</a></li>
+</ul></li>
+<li><a href="#item-3" id="toc-item-3"><span
+class="toc-section-number">2.3</span> Item 3</a>
+<ul>
+<li><a href="#mmap-alloc" id="toc-mmap-alloc"><span
+class="toc-section-number">2.3.1</span> using mmap to allocate
+memory</a></li>
+</ul></li>
+<li><a href="#item-45" id="toc-item-45"><span
+class="toc-section-number">2.4</span> Item 4 and Item 5</a>
+<ul>
+<li><a href="#find-the-location-of-the-heap"
+id="toc-find-the-location-of-the-heap"><span
+class="toc-section-number">2.4.1</span> find the location of the
+heap</a></li>
+<li><a href="#mmap_allocate" id="toc-mmap_allocate"><span
+class="toc-section-number">2.4.2</span> mmap to allocate memory at a
+particular location</a></li>
+<li><a href="#addr-random" id="toc-addr-random"><span
+class="toc-section-number">2.4.3</span> address randomization</a></li>
+<li><a href="#why-different-increases"
+id="toc-why-different-increases"><span
+class="toc-section-number">2.4.4</span> why different increases</a></li>
+<li><a href="#mmap-generally" id="toc-mmap-generally"><span
+class="toc-section-number">2.4.5</span> mmap generally</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#special" id="toc-special"><span
+class="toc-section-number">3</span> Special regions in the memory
+layout</a></li>
+</ul></nav>
+<div class="changelog">
+<p>Changelog:</p>
+<ul>
+<li>17 Feb 2025: remove some text leftover from last semester regarding
+late changes to this lab; add footnote regarding why page table sie
+would change.</li>
+<li>19 Feb 2025: add missing <code>,</code> to mmap example code</li>
+<li>20 Feb 2025: correct x86-64 page table layout footnote not appearing
+as a footnote</li>
+</ul>
+</div>
+<blockquote>
+<p>This lab requires a <strong>64-bit Linux environment</strong> with
+4096 byte pages, like on portal.</p>
+</blockquote>
+<div class="exercise long">
+<p>Possibly working with a partner —</p>
+<ol start="0" type="1">
+<li><p>Download the skeleton code (<a
+href="files/vm-explore.tar">here</a> or
+<code>wget https://www.cs.virginia.edu/~cr4bd/3130/S2025/labhw/files/vm-explore.tar</code>)
+and run <code>make</code> to compile it.</p>
+<p>Run the code like <code>./lab 0</code> and observe the output, which
+is explained below in the <q><a href="#program">the ./lab
+program</a></q> section below</p></li>
+<li><p>Make a global array like:</p>
+<pre><code>alignas(4096) volatile char global_array[4096 * 32];</code></pre>
+<p>See the section <q><a href="#array-decl">array declaration</a></q>
+for an explanation of what this code does.</p>
+<p>Change the code in <code>lab.c</code>’s <code>labStuff</code> so that
+when the parameter is <code>1</code>, it runs some code to write to the
+array.</p>
+<p>Make sure you can observe (running <code>./lab 1</code>) that when
+you:</p>
+<ul>
+<li>writing different pages (4096-byte regions) of the array, that
+increases the number of faults and the resident set size</li>
+<li>writing the same page multiple times, that does not increase the
+number of faults or the resident set size more than accessing a page
+once</li>
+</ul>
+<p>See the section <q><a href="#demand">Linux and
+allocate-on-demand</a></q> below for why this should happen.</p></li>
+<li><p>Change the code in <code>lab.c</code>’s <code>labStuff</code> so
+that when the parameter is <code>2</code>, it runs code that:</p>
+<ul>
+<li>allocates 1MB of memory, and</li>
+<li>accesses a few bytes of the allocation</li>
+</ul>
+<p>Make sure you observe (running <code>./lab 2</code>) that:</p>
+<ul>
+<li>the allocation increase the <q>virtual memory size</q> reported is
+about 1MB, but not the resident set size; and</li>
+<li>the resident set size and fault count increases in proportion to how
+many pages of the allocated memory you access (as in item 1)</li>
+</ul></li>
+<li><p>Change the code in <code>lab.c</code>’s <code>labStuff</code> so
+that when the parameter is <code>3</code>, it runs code that increases
+the <q>virtual memory size</q> by 1048576 bytes and the <q>resident set
+size</q> by 131072 bytes and performs the <em>fewest memory accesses
+possible to do so</em>.</p>
+<p>Hint: since <code>malloc()</code> uses some extra space for
+bookkeeping, if you use malloc() you may need to adjust how much space
+is allocated (to somewhat below 1048576 bytes) or how many pages you
+access slightly to compensate for this. Alternately, you can use
+<code>mmap</code> to allocate memory (which won’t use extra memory for
+bookkeeping), as documented in <a href="#mmap-alloc">the hint
+below</a>.</p>
+<p>Hint: You should only need to access each allocated page
+once.</p></li>
+<li><p>For this and the following item, run <code>./lab</code> with <a
+href="#addr-random">address randomization</a> disabled using
+<code>setarch --addr-no-randomize ./lab ...</code> (instead of
+<code>./lab ...</code>).</p>
+<p>Determine the location of the heap, from <code>./lab</code>’s
+output.</p>
+<p>Modify <code>labStuff</code> so that when the parameter is
+<code>4</code>, it allocates and <em>uses</em> (reads or writes) 4096
+bytes of memory at an address 0x200000 bytes after the end of the heap
+(rounded up, if necessary, to the next address that is a multiple of
+4096 (= 0x1000)).</p>
+<p>See <a href="#item-45">below</a> for information about how to do
+this.</p>
+<p>If successful, you should observe that:</p>
+<ul>
+<li><p>the allocation should be visible on the memory layout output by
+the <code>./lab</code> program at the end</p></li>
+<li><p>this results in a small increase in the space used for page table
+entries, which you may not have seen on the previous items<a href="#fn1"
+class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></p></li>
+</ul></li>
+<li><p>Do the same as item 4, but make it so when <code>5</code> it
+allocates and uses 4096 bytes of memory 0x10000000000 bytes after the
+end of the heap (again, with the address rounded up to a multiple of
+4096 if necessary).</p>
+<p>If successful, you should observe that this allocation results in a
+larger increase in the space used for page table entries than what you
+did for item 4.<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a></p></li>
+<li><p>Show a TA your labStuff function and the <code>./lab</code>
+program operating for items 1-5 above <strong>or whatever you managed to
+complete in the lab time</strong>, or submit your <code>lab.c</code>
+(making sure it indicates in a comment anyone you worked with) to the
+submission site.</p></li>
+</ol>
+
+</div>
+<h1 data-number="1" id="program"><span
+class="header-section-number">1</span> the <code>./lab</code>
+program</h1>
+<p>We supply <code>./lab</code> program, built from <code>lab.c</code>
+(which you will modify) and <code>util.c</code> (which you shouldn’t
+need to modify).</p>
+<p>To run it, run</p>
+<pre><code>./lab NUMBER</code></pre>
+<p>where NUMBER is an integer that will be passed to the function
+<code>labStuff</code> which you will edit later in the lab. You can try
+<code>./lab 0</code> to see an example of the output.</p>
+<p>It displays the program’s memory layout, then displays several
+statistics about the program’s memory usage, then runs the function
+<code>labStuff</code>, then prints the new memory usage and the new
+memory layout.</p>
+<p>When displaying memory layout, each line has a range of hexadecimal
+addresses and either what file is loaded into that memory or some other
+label for the memory region. Inaccessible parts of memory are not
+listed. Since Linux does allocate-on-demand, the memory layout does not
+reflect what pages are actually allocated to the process — just what the
+process will be able to successfully access.</p>
+<p>When displaying memory usage, the program displays</p>
+<ul>
+<li><p>the number of page faults that occured. (Page faults are the
+hardware exception that occurs when a program tries to access a memory
+location which has no valid mapping in its page table or which has a
+valid mapping but without appropriate permission bits set.)</p>
+<p>The page faults are divided into <q>minor</q> faults, which are
+resolved without I/O (such as by allocating a new, <q>empty</q> page or
+copying a read-only page for copy-on-write), and <q>major</q> faults
+which require I/O (such as by reading a file from disk into
+RAM).</p></li>
+<li><p>the <q>virtual memory size</q>, the size of available data and
+code, regardless of whether it is currently mapped in the page table or
+will be loaded on demand</p></li>
+<li><p>the <q>resident set size</q>, which is essentially the size of
+loaded data and code</p></li>
+<li><p>the <q>page table entries</q>, which is the total space used to
+store page table entries for the program.</p></li>
+<li><p>the <q>shared</q> size, the amount of available data/code that
+may be shared with other programs</p></li>
+<li><p>the <q>swap</q> size, the amount of available data/code that
+would normally be stored in memory, but is temporarily being stored on
+disk</p></li>
+</ul>
+<p>Your tasks in this lab will be to modify the program to change the
+values displayed for each of these by writing code in the function
+<code>labStuff</code>.</p>
+<p>To help compare the memory usage before and after, the program will
+display the change in parenthesis next to the <q>after</q> values.
+(There is no similar display for changes in the memory layout; you’ll
+need to compare in some other way.)</p>
+<p>In the exercises in this lab, you’ll modify <code>labStuff</code> to
+do some operations with memory and observe how they change those
+statistics.</p>
+<h1 data-number="2" id="item-specific-infohintsadvice"><span
+class="header-section-number">2</span> Item-specific
+info/hints/advice</h1>
+<h2 data-number="2.1" id="item-1"><span
+class="header-section-number">2.1</span> Item 1</h2>
+<h3 data-number="2.1.1" id="array-decl"><span
+class="header-section-number">2.1.1</span> array declaration</h3>
+<p>The array declaration</p>
+<pre><code>alignas(4096) volatile char global_array[4096 * 32];</code></pre>
+<p>declares an array of <code>4096 * 32</code> characters.</p>
+<p>Declaring it as <code>volatile</code> will make our C compilers not
+optimize away memory accesses to the array<a href="#fn3"
+class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>.</p>
+<p>Using <code>alignas(4096)</code> asks the compiler to place
+<code>global_array</code> at an address that is a multiple of 4096; this
+will ensure that the array does not share virtual pages with other
+global variables. It will also ensure that the array starts at the
+beginning of a page, so array indices 0 through 4095 inclusive will be
+one virtual page, indices 4096 through 8191 another, and so on. (One
+needs to include <code>&lt;stdalign.h&gt;</code> to use
+<code>alignas</code>, which our template code does.)</p>
+<p>We deliberately do not set an initial value for this array to ensure
+that the memory for it will be constructed <q>from scratch</q> rather
+than copied from (and potentially shared with, using copy-on-write) an
+executable file’s data (which may already be in memory before the
+executable even starts).</p>
+<h3 data-number="2.1.2" id="demand"><span
+class="header-section-number">2.1.2</span> Linux and
+allocate-on-demand</h3>
+<p>On Linux, the kernel usually sets up page table entries only at the
+last possible moment. That is, when a program first attempts to access a
+page, it will not yet be in the page table, then an exception will occur
+and Linux will update the page table entries accordingly.</p>
+<h2 data-number="2.2" id="item-2"><span
+class="header-section-number">2.2</span> Item 2</h2>
+<h3 data-number="2.2.1" id="item-2-opt"><span
+class="header-section-number">2.2.1</span> preventing access from being
+optimized away</h3>
+<p>Normally when you allocate memory with the stdlib.h functions and do
+not do something useful with the resulting memory, the compiler might
+optimize away the memory allocation. We’ve setup our Makefile to avoid
+this when using <code>malloc</code>.<a href="#fn4" class="footnote-ref"
+id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>Besides the memory allocation itself being optimized, accesses to
+that memory could also be optimized away. Probably the simplest way to
+avoid this is to make a pointer to <code>volatile char</code> (or
+<code>volatile int</code> or any other <code>volatile</code> type) and
+access values through that pointer.</p>
+<h3 data-number="2.2.2"
+id="accesses-and-resulting-real-allocations-by-malloccalloc"><span
+class="header-section-number">2.2.2</span> accesses and resulting real
+allocations by malloc/calloc</h3>
+<p>It’s possible that <code>malloc</code> will access some memory to do
+bookkeeping This may cause additional pages to be allocated, increasing
+the resident set size even if you do no accesses — even though it is
+still the case that the memory is only allocated on demand. This may
+also mean that the <q>virtual memory size</q> may increase by sligthly
+more than you allocated to accomodate this bookkeeping information.</p>
+<p>Also, sometimes <code>malloc</code> will keep memory it uses for
+bookkeeping near the allocation itself. In this case, it’s possible that
+if you values access near the beginning or end of the allocation, that
+your access will be part of the same page that <code>malloc</code> used
+and therefore caused to be allocated already.</p>
+<h2 data-number="2.3" id="item-3"><span
+class="header-section-number">2.3</span> Item 3</h2>
+<h3 data-number="2.3.1" id="mmap-alloc"><span
+class="header-section-number">2.3.1</span> using mmap to allocate
+memory</h3>
+<ol type="1">
+<li><p>On Linux, <code>mmap</code> can also be used for memory
+allocation, without involving any actual files. Unlike
+<code>malloc</code>, this invokes the kernel directly and therefore does
+not use any of the process’s memory for bookkeeping (just the OS’s
+memory).</p>
+<p>To use <code>mmap</code> to allocate memory, one supplies the invalid
+file descriptor <code>-1</code> and specifies <code>MAP_ANONYMOUS</code>
+as one of the <code>mmap</code> <q>flags</q>. (The mapping is anonymous
+in the sense that there is no file name it corresponds to.) For
+example,</p>
+<pre><code>char *ptr;
+ptr = mmap(NULL, /* hint address */
+           8192, /* length */
+           PROT_READ | PROT_WRITE,
+           MAP_PRIVATE | MAP_ANONYMOUS,
+           -1, /* file descriptor (-1 for &quot;none&quot;) */
+           0
+    );
+if (ptr == MAP_FAILED) { handle_error(); }</code></pre>
+<p>will make <code>ptr</code> point to a new allocation of 8192
+bytes.</p></li>
+</ol>
+<h2 data-number="2.4" id="item-45"><span
+class="header-section-number">2.4</span> Item 4 and Item 5</h2>
+<h3 data-number="2.4.1" id="find-the-location-of-the-heap"><span
+class="header-section-number">2.4.1</span> find the location of the
+heap</h3>
+<ol type="1">
+<li><p>The memory layout we display indicates the range of the address
+that correspond to the heap (labeled <code>[heap]</code>)</p>
+<p>If you run the program with address randomization disabled, it should
+be the same every time.</p></li>
+</ol>
+<h3 data-number="2.4.2" id="mmap_allocate"><span
+class="header-section-number">2.4.2</span> mmap to allocate memory at a
+particular location</h3>
+<ol type="1">
+<li><p>As documented in the hint for item 3 above, <code>mmap</code> can
+be used for memory allocation without involving any actual
+files.</p></li>
+<li><p>By defaut <code>mmap</code> chooses a new location for the
+mapping.</p>
+<p>But you can use the MAP_FIXED_NOREPLACE or MAP_FIXED flags to require
+the mapping be located in at a particular virtual address.</p>
+<p>For example:</p>
+<pre><code>char *ptr;
+ptr = mmap((void*) 0x123456000,
+           8192,
+           PROT_READ | PROT_WRITE,
+           MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE,
+           -1,
+            0
+    );
+if (ptr == MAP_FAILED) { handle_error(); }</code></pre>
+<p>will allocate 8192 bytes of memory at virtual address 0x123456000 and
+set <code>ptr</code> to 0x123456000 if it succeeds. If something is
+already at that address or it fails for some other reason,
+<code>ptr</code> will be set to MAP_FAILED.</p>
+<p>Unlike MAP_FIXED_NOREPLACE, using MAP_FIXED will not fail if
+something is already allocated at the requested address; instead those
+address will be reassigned (probably breaking the program if anything
+important was there).</p></li>
+<li><p>Note that the location you specify must be at the beginning of a
+page, which on our systems is a multiple of 4096 (0x1000)</p></li>
+</ol>
+<h3 data-number="2.4.3" id="addr-random"><span
+class="header-section-number">2.4.3</span> address randomization</h3>
+<p>By default most OSes, including Linux, randomizes the addresses of
+allocations.</p>
+<p>This is typically done as a security feature. Although, ideally, it
+should not matter whether some attacking a program can guess the
+addresses of important code and data in the program, this information is
+helpful when there are other bugs in the program. For example, a common
+form of security bug might allow an attacker to execute code at an
+address they choose. If the addresses in the program are randomized, it
+is harder for an attacker to take advantage of that security bug.</p>
+<p>The <code>setarch</code> command we mention allows running programs
+with this feature turned off.</p>
+<h3 data-number="2.4.4" id="why-different-increases"><span
+class="header-section-number">2.4.4</span> why different increases</h3>
+<p>As we’ll learn in lecture and our readings later, the multi-level
+page table structure used on modern systems to store page table entries
+is more efficient when pages are closer to together.</p>
+<p>There is a tree data structure where the bits of the virtual page
+number are used starting with the most significant bits to determine how
+to traverse the tree. This means that virtual page numbers that share
+more significant bits will share nodes of this tree. If all the virtual
+page numbers under a node of the tree are invalid, then that node does
+not need to be stored at all. Therefore, when more virtual page numbers
+that are valid have common significant bits, there will be fewer nodes
+and therefore fewer space devoted to storing the page table
+information.</p>
+<h3 data-number="2.4.5" id="mmap-generally"><span
+class="header-section-number">2.4.5</span> mmap generally</h3>
+<ol type="1">
+<li><p>The <code>mmap</code> library function (documented in
+<code>man mmap</code>) was originally built to load a file’s data into a
+program’s memory. For example:</p>
+<pre><code>int file_descriptor = open(&quot;foo.dat&quot;, O_RDWR);
+if (file_descriptor &lt; 0) { handle_error(); }
+char *ptr;
+ptr = mmap(NULL /* &quot;hint&quot; address, NULL for &quot;don&#39;t care what address chosen&quot; */,
+           8192 /* length of mapping */,
+           PROT_READ | PROT_WRITE /* types of access allowed */,
+           MAP_SHARED /* &quot;flags&quot; controlling mapping */,
+           file_descriptor,
+           0 /* offset in file */
+);
+if (ptr == MAP_FAILED) { handle_error(); }</code></pre>
+<p>will make <code>ptr</code> point to the first 8192 bytes (two pages
+on x86-64 Linux) of the file <code>foo.dat</code>. Since
+<code>MAP_SHARED</code> was selected, modifying what <code>ptr</code>
+points to will modify the file <code>foo.dat</code>. (The modifications
+will be <q>shared</q> with other users of the file; the alternate
+<code>MAP_PRIVATE</code> will give a private copy of the file’s
+data.)</p></li>
+</ol>
+<h1 data-number="3" id="special"><span
+class="header-section-number">3</span> Special regions in the memory
+layout</h1>
+<ol type="1">
+<li><p>When our program displays the memory layout, you may see some
+regions whose purpose is not obvious:</p>
+<ul>
+<li><p><q>dynamic allocation</q> — this is an allocation of <q>empty</q>
+memory that is not on the heap. This can be used for global variables
+that are initially zero or by functions like malloc() when you request a
+large amount of memory. (It’s more efficient to make large allocations
+outside the heap, since then they can be freed without disrupting other
+things on the heap.)</p></li>
+<li><p><q>vvar</q>, <q>vdso</q> — To speed up some operations that would
+otherwise be system calls, Linux implements a feature called <a
+href="https://man7.org/linux/man-pages/man7/vdso.7.html">vDSO</a>
+(<q>virtual dynamic shared object</q>). The kernel loads a dynamically
+linked library into every program and this library has implementations
+of some operations which were previously system calls entirely in
+user-space.</p>
+<p>Some of these operations require access to data tracked by the OS,
+such as about how to translate the processor’s clock to a usable date
+and time. This information is shared with all processes through the
+<q>vvar</q> region.</p></li>
+</ul></li>
+</ol>
+<aside id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>On x86-64 Linux, the 36-bit virtual page number (VPN) is
+split up into 9-bit parts and used to do a lookup in a four-level page
+table structure.</p>
+<p>The first part is used to lookup the first-level page table entry and
+find the second-level page table. After finding the second level page
+table, the second part of the VPN is used to lookup the second-level
+page table entry and find the third-level page table. Then third part
+similarly finds the fourth-level page table, and fourth-level page table
+entry finds the actual program data page.</p>
+<p>So, addresses that share the same first, second, and third parts of
+their VPN will all use the same fourth-leve page table. When we only
+allocate a small amount of heap space or mmap space close the heap, all
+the addresses we allocated will likely share the beginning of their
+VPN.</p>
+<p>When we add 0x200000 to address, we end up with an address which will
+have a different third part of its VPN. This means the OS will need to
+allocate a different fourth-level page table for it. Because of this,
+you should see an increase the space used for page tables by the size of
+one page table – 4096 on x86-64 Linux.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>This larer address should have a different third and
+fourth VPN part, so it should require a the OS allocate a new
+third-level page table and fourth-level page table.<a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The <code>volatile</code> keyword is intended primarily
+for the purpose of supporting <q>memory-mapped I/O</q>, where reading
+and writing memory locations causes an input or output operation to
+occur instead of just storing or retrieving values. So, generally,
+assembly that the compiler generates will not omit reads and writes to
+volatile values even if they superficially appear to do nothing.</p>
+<p>An alternate, more direct strategy to avoid such optimizations would
+be to use assembly to do the memory accesses.<a href="#fnref3"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>By passing <code>-fno-builtin-malloc</code> to gcc or
+clang. Alternately you could prevent this from happening by using
+non-C-standard-library memory allocation functions like
+<code>mmap</code> or by accessing the resulting memory through
+<code>volatile</code> pointers (which one probably needs to do anyways
+as we describe above).<a href="#fnref4" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/~cr4bd/3130/F2026/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">CS 3130 Fall2026</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Charles Reiss</li><li><a class="u-email" href="mailto:creiss@virginia.edu">creiss@virginia.edu</a></li></ul>
+      </div>
+      <div class="footer-col footer-col-2">
+        By Charles Reiss.
+        Released under the <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /> CC-BY-NC-SA 4.0</a>.
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
